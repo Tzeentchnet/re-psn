@@ -45,7 +45,7 @@ jobs:
             echo
             echo "### Files"
             echo
-            echo "Each archive holds one self-contained server binary (no installer, no runtime needed), LICENSE and NOTICE.md."
+            echo "Each archive holds one self-contained server binary (no installer, no runtime needed), LICENSE, NOTICE.md and an examples folder (settings file, systemd unit, proxy configs)."
             echo "Check a download with \`sha256sum -c SHA256SUMS\`."
             echo
             echo '```'

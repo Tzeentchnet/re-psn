@@ -1,0 +1,27 @@
+# Traefik dynamic configuration. TCP: PROXY protocol v2 to psnr so it sees the real player address. Set on psnr:
+#   PSNR_TRUSTED_PROXIES=<the address Traefik connects from>   PSNR_PROXY_PROTOCOL=true
+# UDP is not proxied: publish UDP straight to the psnr host. The status page needs PSNR_HTTP_TOKEN if you expose it.
+tcp:
+  routers:
+    game:
+      entryPoints: [game]
+      rule: "HostSNI(`*`)"
+      service: psnr-tcp
+  services:
+    psnr-tcp:
+      loadBalancer:
+        proxyProtocol:
+          version: 2
+        servers:
+          - address: "127.0.0.1:36100"
+http:
+  routers:
+    status:
+      entryPoints: [web]
+      rule: "PathPrefix(`/`)"
+      service: psnr-http
+  services:
+    psnr-http:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:36101"

@@ -13,6 +13,8 @@ rm -rf "$dist" && mkdir -p "$dist"
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 
+"$root/scripts/check-deploy.sh"
+
 for target in windows/amd64 linux/amd64 linux/arm64; do
   os="${target%/*}"; arch="${target#*/}"
   exe=psnr; [ "$os" = windows ] && exe=psnr.exe
@@ -21,6 +23,7 @@ for target in windows/amd64 linux/amd64 linux/arm64; do
   (cd "$root" && CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
     go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$d/$exe" ./server)
   cp "$root/LICENSE" "$root/NOTICE.md" "$d/"
+  cp -r "$root/deploy" "$d/examples"
   if [ "$os" = windows ]; then
     (cd "$stage" && zip -qrX "$dist/$name.zip" "$name")
   else
