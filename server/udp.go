@@ -67,7 +67,7 @@ func (s *Server) ServeUDP(pc net.PacketConn) error {
 		if mismatch {
 			// Not this player's address: a spoofed source, a stolen token, or a network whose UDP leaves from another address (-udp-any-source).
 			if warn {
-				s.log.Warn("UDP probe refused", "client", id, "reason", "source address differs from the TCP connection's", "udp", ip.String(), "tcp", ipString(c.ip))
+				s.log.Warn("UDP probe refused", "client", id, "reason", "source address differs from the TCP connection's", "udp", ip.String(), "tcp", ipString(c.ip), "opt_out", "-udp-any-source")
 			}
 			continue
 		}

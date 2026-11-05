@@ -47,7 +47,7 @@ What it does not cover: a forger who can send packets with the player's own sour
 address (the same household or carrier NAT). It also refuses players whose UDP leaves from a different public address
 than their TCP (multi-WAN routers that balance per connection, some carrier NAT): their probes go unanswered, so other
 players on other networks get the address TCP shows instead of the router's mapping. The first refused probe per player is
-logged at warn level (`UDP probe refused`, with both addresses). If you see it for real players, `-udp-any-source` turns the
+logged at warn level (`UDP probe refused`, with both addresses and the flag that turns the check off). If you see it for real players, `-udp-any-source` turns the
 check off. The same check means UDP must reach psnr with the player's own address: published straight to the host (see
 the next section), not through a proxy or port forwarder that rewrites the source. A TCP proxy without `-trusted-proxies`
 makes every player look like the proxy, so every probe is refused.

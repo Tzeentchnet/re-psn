@@ -38,14 +38,18 @@ this repository, and keep `psnr.env` private). Status page, from this machine on
 ```
 
 `podman logs psnr` shows the log; `podman rm -f psnr` stops and removes it. Tested with Podman 6.1 on Linux: the image builds, a TCP connection to the
-published port is accepted, the status page answers 401 without the token and 200 with it, and the restart policy is set. Not tested: UDP through the
-published port, compose (`podman compose` needs a compose provider), a systemd unit for the container (Quadlet), and Windows or macOS Podman machines.
+published port is accepted, the status page answers 401 without the token and 200 with it, and the restart policy is set. Not tested: compose (`podman compose` needs a compose provider), a systemd unit for the container (Quadlet), and Windows or macOS Podman machines.
 
 **Check the address psnr sees.** Rootless Podman forwards published ports itself, and in the test a connection from 127.0.0.1 was logged inside the
 container as the machine's own LAN address. psnr uses the player's address for `-max-conns-per-addr`, the same-name reconnect rule and the address it
 tells other players. Connect from another machine, look at the `hello` line in `podman logs psnr`, and make sure it shows that machine's address and not
-the host's; if every player shows the host's address, those features lump everyone together. Running with `--network=host` (not tested here) avoids the
-forwarding.
+the host's; if every player shows the host's address, those features lump everyone together. Running with `--network=host` avoids the
+forwarding: there the addresses reach psnr unchanged.
+
+**UDP and the source address check.** psnr refuses a UDP probe whose source address differs from the player's TCP address (`docs/running.md`,
+"UDP source address"). Tested with rootless Podman 6.1.4 (pasta, the default network mode) and the commands above: a client sending TCP and UDP from one
+address was accepted, a client sending them from two different addresses was refused, and `PSNR_UDP_ANY_SOURCE=true` accepted it; the same held with
+`--network=host`. Not tested: a client on another machine, a NAT between client and host, slirp4netns, rootful Podman, and Docker.
 
 ## Settings
 
