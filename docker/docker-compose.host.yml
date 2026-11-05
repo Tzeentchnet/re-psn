@@ -1,0 +1,36 @@
+# Opt-in: run re-psn on the host's network instead of publishing ports.
+#
+#   docker compose -f docker/docker-compose.host.yml up
+#
+# Why: with host networking the container sees each player's real address. Use it where the
+# container runtime rewrites source addresses on the way in (every player then looks like the
+# host or the gateway), so re-psn's UDP source check refuses address probes. It also keeps
+# -max-conns-per-addr and the address given to other players correct.
+#
+# Linux only: this works with Docker Engine and Podman on Linux. Docker Desktop on macOS and
+# Windows runs containers in a virtual machine, so `network_mode: host` does not expose the
+# game port on your machine; use docker-compose.yml there.
+#
+# There is no `ports` list: the container listens on the host directly, so the firewall must
+# allow 36100/tcp and 36100/udp, and a port change in RE_PSN_ADDR is the port on the host.
+#
+# The status page lists every online ID. Leave RE_PSN_HTTP on localhost (the default), or set
+# RE_PSN_HTTP_TOKEN before binding it to another address; on the host network it is reachable
+# from the network as soon as it is bound to a non-local address.
+services:
+  re-psn:
+    build:
+      context: ..                 # the repository root; the Dockerfile copies go.mod and server/
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      # Any flag is RE_PSN_<FLAG> (the old PSNR_<FLAG> still works); see docs/running.md.
+      RE_PSN_ADDR: ":36100"
+      # The status page is on 127.0.0.1:36101 by default, which on the host network is this
+      # machine's own localhost. Beyond localhost, set a token too:
+      #   RE_PSN_HTTP: "0.0.0.0:36101"
+      #   RE_PSN_HTTP_TOKEN: "<a long random string>"
+      # Relay is off by default; it carries traffic between players who can't reach each other
+      # directly and uses this server's bandwidth:
+      #   RE_PSN_RELAY: "true"
