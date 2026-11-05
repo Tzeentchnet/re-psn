@@ -1,6 +1,14 @@
 # Roadmap
 
+What re-psn has, what is being worked on, and what comes next. Each item starts with its id in
+[docs/features.md](docs/features.md), where its status, evidence and notes are. No dates are promised.
+
 ## Scope
+
+> [!NOTE]
+> This section is upstream's, written by sp00nz for [psnr](https://github.com/sp00nznet/psnr), and re-psn keeps it.
+> Upstream's own roadmap, including the work on the ps3recomp side (player names, more titles, per-player storage,
+> voice), is in [psnr's ROADMAP.md](https://github.com/sp00nznet/psnr/blob/main/ROADMAP.md).
 
 re-psn is for a group of players running their own server: a LAN, a tailnet, or
 friends connecting to one person's machine. The goal is for that group to have
@@ -15,93 +23,104 @@ It is **not** a public PSN replacement, and won't grow into one:
 
 ## Done
 
+Merged into main. Most of it is not in a release yet.
+
+[Rooms and matchmaking](docs/features.md#rooms-and-matchmaking)
+- [rooms-basic] Create, search, join and leave rooms, with room messages and owner handoff.
+- [rooms-data] Room and member data, and room flags that searchers see.
+- [rooms-codes] Invite-only rooms with an 8-character code, hidden from search and the status page.
+
+[Leaderboards](docs/features.md#leaderboards) and [players](docs/features.md#players)
+- [scores-boards] Leaderboards with a best score per player, kept in memory.
+- [players-names] One player per name on a server; a second player cannot take a name in use.
+
+[Limits](docs/features.md#limits), [logging](docs/features.md#logging) and the [status page](docs/features.md#status-page)
+- [limits-requests] Limits on rooms, connections, request rate and room data size, each refusal logged.
+- [logs-levels] Log levels, text or JSON output, and an optional log file.
+- [status-page] A status page and `/api/stats` on localhost by default, with an optional token.
+
+[Reverse proxy](docs/features.md#reverse-proxy), [deployment](docs/features.md#deployment) and [settings](docs/features.md#settings)
+- [proxy-support] PROXY protocol v1 and v2 and trusted proxies, so the real client address counts.
+- [deploy-examples] A settings file, a systemd unit and a Traefik example, shipped in the release archives.
+- [deploy-nginx-haproxy] nginx and HAProxy examples, not yet run against the server.
+- [deploy-container] A Dockerfile and compose file, run under Podman.
+- [settings-env] Every flag as a `RE_PSN_*` variable, with the old `PSNR_*` names as aliases.
+
+[Network](docs/features.md#network) and the [client](docs/features.md#client)
+- [net-punch] Address discovery and hole punching over UDP, reproduced in the NAT lab.
+- [net-relay] An optional relay for players who cannot reach each other directly.
+- [net-udp-guard] UDP packets accepted only from the address of the player's TCP connection.
+- [client-c] A one-file C client with no dependencies.
+
+[Testing and CI](docs/features.md#testing-and-ci), [release](docs/features.md#release) and [documentation](docs/features.md#documentation)
+- [test-fuzz] Fuzz tests for the frame parser, the request handlers and the PROXY header.
+- [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning.
+- [release-archives] Release archives with checksums, built by a workflow; partial, as nothing has been released yet.
+- [docs-features] This features list, generated from one data file and checked in CI.
+- [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
+
+On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`
   ([ps3recomp#196](https://github.com/sp00nznet/ps3recomp/pull/196), merged).
 - **Rooms and leaderboards:** Matching2, Score, Lookup and Avc2 over psnr
   ([ps3recomp#200](https://github.com/sp00nznet/ps3recomp/pull/200), draft).
 - **First online match:** Simpsons Arcade, two instances on one machine, lobby
-  to Stage 1 in sync. It also needed a lifter fix in the title's zlib
+  to Stage 1 in sync, and later across two machines, with either player behind a NAT
   ([ps3recomp#202](https://github.com/sp00nznet/ps3recomp/pull/202)).
 
-## 1. Players
+## Now
 
-- **A name per player.** `--username NAME` on the game's command line, or
-  `PS3_NP_ONLINE_ID`. Without either, an online game uses the OS login name.
-  Offline stays "PS3Player", so offline saves don't change. The name also
-  derives the console identity (OpenPSID, MAC), which titles use to tell
-  players apart.
-- **`--psnr host[:port]`** to go online with one flag instead of two
-  environment variables.
-- **One name everywhere:** `sceNpManagerGetOnlineId`, the NP ID and psnr all
-  report the same name.
-- **Duplicate names:** the server refuses a second player taking a name
-  that is already connected.
+- [docs-markdown] Every doc in Markdown with one layout, diagrams for deploy and Docker, and a link check.
 
-## 2. Across the internet
+## Next
 
-Friends in different homes are behind routers, and peers connect to each
-other directly.
+In about this order.
 
-- **Done:**
-  - **Address discovery and hole punching:** UDP probes and per-viewer
-    endpoints (#6), with `lab/` reproducing it in Docker.
-  - **The relay** (`-relay`): streams into a player behind a router, and
-    datagrams when punching fails.
-  - **Simpsons across machines:** matches across two machines on a LAN,
-    with the host behind a real NAT, and with the joiner behind one (the
-    game setup through the relay).
-- **Next:**
-  - **A guide for the simple case:** forward each player's P2P port, or use a
-    tailnet, where every machine can already reach the others.
-- **Later:**
-  - **UPnP:** open the P2P port on the player's router automatically.
-  - **P2P streams over UDP**, as a console does it, if a title needs direct
-    low-latency streams.
+### Releases and docs
+- [release-process] Written release steps and a dry run, then frequent pre-releases with no fixed release day.
+- [docs-art] A generator for the README banner and terminal images, in one palette.
+- [docs-readme] A rewritten README with a quick start, the features and credit to upstream.
+- [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
 
-## 3. Friends and invites (sceNpBasic)
+### Storage, off unless a host turns it on
+- [store-interface] A storage layer with an in-memory backend and a `-db` setting, changing nothing by default.
+- [store-sqlite] SQLite storage, so leaderboards survive a restart.
+- [store-backup] Backup and restore steps for each database.
 
-- **Friends list:** by default, everyone on the same server. The group
-  running the server already trusts each other, so no friend requests.
-- **Presence:** online, in which title, in which room. The server already
-  knows all three.
-- **Invites and join-a-friend:** a message carrying a room to join, delivered
-  through sceNpBasic's message and event APIs.
-- **Private rooms:** Matching2 room passwords, private slots, join by room ID.
-- **System dialogs.** Many titles open the console's own "invite a friend"
-  or "messages" dialog rather than drawing their own. The runtime needs a
-  simple overlay for those, or a headless default such as inviting everyone
-  online.
-- **Player history and block list**, kept by the server per name.
-- **First step:** survey which titles call the invite and friend APIs, to pick
-  one to test against.
+### Running a server
+- [ha-restart] A health endpoint, a graceful shutdown, and docs on restarts and what players see.
+- [ha-failover] Docs and examples for a standby server that takes over the address.
+- [net-guardrails] UDP rate limits, relay budgets and counters of dropped packets.
+- [deploy-caddy] A Caddy example next to the other proxy examples.
+- [ci-more] More CI checks, such as the C client outside Linux.
 
-## 4. More titles and services
+### Apps
+- [client-desktop] A terminal app for players and hosts, with launch profiles and a host mode.
+- [client-gui] A graphical app and a local web UI with the same screens.
+- [app-themes] Colour presets in the apps, each shipped only once its licence is credited.
+- [app-appearance] Dark, light or follow the system.
+- [app-colours] Custom colours with a contrast warning.
 
-- **Leaderboard screens:** Simpsons' Scoreboards and Crazy Taxi read Score;
-  this needs a live check of what they send and show.
-- **sceNpTus** (per-player storage on the server), for Jackbox and Twisted
-  Metal.
-- **P2P vports:** `SOCK_DGRAM_P2P` maps to plain UDP on one port per
-  instance. That is fine for one P2P datagram socket per title; a title with
-  two needs vport multiplexing.
-- **Voice:** Avc2 connects but carries no audio.
-- **Titles:** You Don't Know Jack (Matching2 + Signaling + RUDP), the
-  Sonic/Gunstar Genesis hub (the same shell as Simpsons), Rampage World Tour
-  (sceNpMatching v1).
-- **Lobbies** (Matching2 lobbies, as opposed to rooms), if a title needs them.
+### Players and rooms
+- [rooms-private] Room passwords, private slots and join by room ID.
+- [players-friends] Friends, presence and invites for everyone on the same server.
+- [net-checks] A connection check that says where a connection fails.
 
-## 5. Server
+## Later
 
-- **State on disk:** leaderboards, TUS data, player history. One file per
-  server, and `SECURITY.md` updated to say what is kept.
-- **Per-title board config:** sort order and score limits from the title
-  rather than the client.
-- **Status page:** friends, presence and invites alongside rooms and boards;
-  trophies, if a title's trophy data is worth showing.
+- [store-postgres] PostgreSQL storage for hosts who bring their own database.
+- [store-mariadb] MariaDB storage for hosts who bring their own database.
+- [ha-multi] Several servers behind one address, kept on the back burner until one server is not enough.
+- [metrics-endpoint] A metrics endpoint for Prometheus, off by default, with no personal data in it.
+- [metrics-dashboard] A Grafana dashboard and alert rules built on that endpoint.
+- [players-accounts] Optional sign-in, which needs the scope above changed first.
+- [release-signing] Signed Windows binaries and signed checksums.
+- [net-upnp] Opening a player's P2P port on their router automatically.
 
-## Out of scope
+## Not planned
 
-- **A public service**, as above.
+- [ha-handover] Live room handover: rooms that survive the loss of a server.
+- **A public service**, as in the scope above.
 - **Tickets and title servers.** Some titles check a PSN ticket with their
   publisher's server; those servers are gone and re-psn won't stand in for them.
 - **Third-party game servers:** Demonware (Guitar Hero III), GameSpy (MUA,

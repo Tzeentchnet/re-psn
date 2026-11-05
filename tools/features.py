@@ -28,7 +28,9 @@ cell holds a straight double quote (GitHub's table view of a .tsv reads one as C
 --check fails when: docs/features.md is missing or not what the data generates; the header is wrong; a row has the
 wrong number of cells; a status is unknown; an id is malformed or used twice; an available row has no evidence; an
 evidence path or test name does not exist; a markdown link in a cell points at a missing file; a cell holds a straight
-double quote; or ROADMAP.md uses an [id] tag that is not in the data.
+double quote; ROADMAP.md uses an [id] tag that is not in the data; or a tag sits under a ROADMAP.md section whose
+statuses do not include the row's (Done: available, unverified, partial; Now: in-progress; Next: planned; Later: later;
+Not planned: declined; tags under any other section are not bucket-checked).
 """
 import argparse
 import io
@@ -60,6 +62,14 @@ TEST_RE = re.compile(r"^(?:Test|Fuzz)[A-Za-z0-9_]*$")
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
 # A roadmap tag: [some-id] that is not the text of a markdown link.
 TAG_RE = re.compile(r"\[([a-z][a-z0-9]*(?:-[a-z0-9]+)+)\](?!\()")
+# ROADMAP.md level-2 section -> the statuses a tagged row in it may have.
+BUCKETS = {
+    "done": {"available", "unverified", "partial"},
+    "now": {"in-progress"},
+    "next": {"planned"},
+    "later": {"later"},
+    "not planned": {"declined"},
+}
 
 
 def read_rows(root, problems):
@@ -201,14 +211,25 @@ def render(rows, root, problems):
 
 
 def check_roadmap(rows, root, problems):
-    """Every [id] tag in ROADMAP.md must be an id in the data. Returns the number of tags found."""
+    """Every [id] tag in ROADMAP.md must be an id in the data, under a section that fits its status. Returns the number of tags."""
     p = root / ROADMAP
     if not p.exists():
         return 0
-    ids = {r["id"] for r in rows}
-    tags = TAG_RE.findall(p.read_text(encoding="utf-8"))
+    status = {r["id"]: r["status"] for r in rows}
+    tags = []
+    section = None
+    for ln, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+        if line.startswith("## "):
+            section = line[3:].strip().lower()
+        for t in TAG_RE.findall(line):
+            tags.append(t)
+            if t not in status:
+                continue
+            allowed = BUCKETS.get(section)
+            if allowed is not None and status[t] not in allowed:
+                problems.append(f"{ROADMAP}:{ln}: [{t}] is {status[t]}, which does not belong under '{section}'")
     for t in sorted(set(tags)):
-        if t not in ids:
+        if t not in status:
             problems.append(f"{ROADMAP}: tag [{t}] is not an id in {DATA}")
     return len(tags)
 
