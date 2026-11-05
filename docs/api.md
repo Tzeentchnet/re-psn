@@ -4,11 +4,21 @@ Game clients talk to the server over one TCP connection (default port 36100).
 The server is in `server/`, the C client is in `client/psnr.h`, and both are
 tested against each other (`server/client_test.go`).
 
+## Contents
+
+- [Framing](#framing)
+- [Session](#session)
+- [Rooms](#rooms)
+- [Leaderboards](#leaderboards)
+- [UDP](#udp)
+- [Relay](#relay)
+- [HTTP](#http)
+
 ## Framing
 
 Every integer is big-endian.
 
-```
+```text
 u8 type | u16 length | payload (length bytes)
 ```
 
@@ -27,7 +37,7 @@ Field notation used below:
 
 `member` is 29 bytes followed by a `blob`:
 
-```
+```text
 member_id u16 | user_id u32 | online_id [16] | ip [4] | p2p_port u16 | owner u8 | data blob
 ```
 
@@ -45,7 +55,7 @@ the same member:
 
 `data` is the member's own data (Matching2 member bin attributes), set when it
 creates or joins the room. Game traffic goes between peers directly; the
-server never carries it.
+server carries it only with `-relay` (see [Relay](#relay)).
 
 ## Session
 
@@ -224,7 +234,7 @@ with the four bytes `PSNR` and a type byte.
   runtime drops it before the title sees it.
 
 A player whose router picks a new public port for every destination
-("symmetric NAT") can't be reached this way. `lab/` reproduces all of this in
+("symmetric NAT") can't be reached this way. [lab/](../lab/README.md) reproduces all of this in
 Docker.
 
 ## Relay
@@ -270,7 +280,7 @@ it came from that member's address.
 ## HTTP
 
 This is a separate listener, `127.0.0.1:36101` by default (`-http`). It is
-read-only and has no authentication.
+read-only and has no authentication unless `-http-token` is set.
 
 | Path | Returns |
 |---|---|
