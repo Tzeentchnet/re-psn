@@ -6,10 +6,6 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Changed
-- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server, `client/psnr.c` and the
-  `PSNR_*` settings keep their names.
-
 ### Added
 - Release archives include an `examples/` folder: `psnr.env.example` with every setting, a systemd unit, and Traefik, nginx and HAProxy
   configs that pass the real client address. `scripts/check-deploy.sh` checks the env file against the server's flags and runs in
@@ -60,6 +56,8 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
+- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server, `client/psnr.c` and the
+  `PSNR_*` settings keep their names.
 - The Dockerfile, compose file and `Dockerfile.dockerignore` moved into `docker/`, with a README. Build from the repository root with
   `docker build -f docker/Dockerfile .`, or run `docker compose -f docker/docker-compose.yml up -d`. `lab/run.sh` and Dependabot follow.
 - The Docker image no longer forces `-http 0.0.0.0:36101` without a token: the status page stays on localhost inside the
