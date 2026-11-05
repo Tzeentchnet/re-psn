@@ -4,6 +4,8 @@ re-psn is a fork of [sp00nznet/psnr](https://github.com/sp00nznet/psnr) (MIT), w
 [LICENSE](LICENSE) and stay in this fork; the server, the C client and the protocol are upstream's work, and this fork's changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
 
+Feature page generator adapted from Project Helghast (https://github.com/undecuple/project-helghast, MIT, Copyright (c) 2026 undecuple): tools/features.py.
+
 | Component | Use | Licence |
 |---|---|---|
 | Go standard library | the server (`server/`) uses nothing else | BSD-3-Clause (Go) |

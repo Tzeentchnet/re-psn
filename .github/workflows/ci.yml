@@ -1,6 +1,7 @@
 # CI for the fork. It checks formatting, vet, the Go tests with the race detector (on Linux this includes the C client
 # against the server), known vulnerabilities in the Go module and its standard library, secrets in the full history,
-# and the NAT lab in Docker. It does not check Windows beyond the tests, or the C client outside Linux.
+# the NAT lab in Docker, and that docs/features.md matches docs/features.tsv. It does not check Windows beyond the tests,
+# or the C client outside Linux.
 name: CI
 on:
   push:
@@ -39,6 +40,12 @@ jobs:
       - name: test (Windows)
         if: runner.os == 'Windows'
         run: go test -v ./...
+      # The features list: the generated page is current and the data is well formed (python3 is on the runner image).
+      - name: features list
+        if: runner.os == 'Linux'
+        run: |
+          python3 tools/features.py --check
+          python3 -m unittest -v
 
   # Known vulnerabilities (Go vulnerability database) in the code that is built and in the standard library it is
   # built with. Runs on a current Go so a fixed standard library is the one that is checked.

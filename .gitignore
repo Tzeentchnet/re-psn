@@ -10,6 +10,7 @@
 /psnr
 /psnr.exe
 *.o
+__pycache__/
 *.obj
 /client/test_psnr
 /client/test_psnr.exe
