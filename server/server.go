@@ -31,6 +31,7 @@ type Server struct {
 	mu       sync.Mutex
 	clients  map[uint32]*client
 	rooms    map[uint64]*room
+	byCode   map[string]*room // invite-only rooms by their code (rooms.go)
 	boards   map[boardKey]*board
 	nextID   uint32
 	nextRoom uint64
@@ -55,12 +56,15 @@ type client struct {
 	onlineID string
 	ip       [4]byte // as the server sees it
 	p2pPort  uint16  // UDP port the title receives peer traffic on
-	token    uint32  // from HELLO_ACK; UDP probes must carry it
-	udpIP    [4]byte // P2P socket's public endpoint, from its UDP probe
-	udpPort  uint16
-	localIP  [4]byte // the client's own address, from its UDP probe
-	rooms    map[uint64]*room
-	sendMu   sync.Mutex
+
+	codeMisses int       // wrong or malformed room codes in the current window
+	codeWindow time.Time // start of that window
+	token      uint32    // from HELLO_ACK; UDP probes must carry it
+	udpIP      [4]byte   // P2P socket's public endpoint, from its UDP probe
+	udpPort    uint16
+	localIP    [4]byte // the client's own address, from its UDP probe
+	rooms      map[uint64]*room
+	sendMu     sync.Mutex
 }
 
 type push struct {
@@ -74,6 +78,7 @@ func NewServer(maxRooms int, verbose bool) *Server {
 		log:      newLogger(os.Stderr, levelFor(verbose), "text"),
 		clients:  map[uint32]*client{},
 		rooms:    map[uint64]*room{},
+		byCode:   map[string]*room{},
 		boards:   map[boardKey]*board{},
 		streams:  map[uint32]*stream{},
 		maxRooms: maxRooms,
@@ -206,6 +211,12 @@ func (s *Server) handle(c *client, t byte, p []byte) {
 		rt, reply, out = s.roomMessage(c, req, r)
 	case msgKickMember:
 		rt, reply, out = s.kick(c, req, r)
+	case msgSetRoomAccess:
+		rt, reply, out = s.setRoomAccess(c, req, r)
+	case msgGetRoomAccess:
+		rt, reply, out = s.getRoomAccess(c, req, r)
+	case msgJoinByCode:
+		rt, reply, out = s.joinByCode(c, req, r)
 	case msgRecordScore:
 		rt, reply = s.recordScore(c, req, r)
 	case msgGetRanking:
@@ -257,6 +268,7 @@ func (s *Server) hello(c *client, req uint32, r *reader) (byte, []byte) {
 	if s.relay {
 		flags |= 1 // the relay is available
 	}
+	flags |= 2 // invite-only rooms (room codes)
 	w.u8(flags)
 	return msgHelloAck, w.b
 }

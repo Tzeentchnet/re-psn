@@ -18,24 +18,28 @@ import (
 
 const (
 	// client -> server
-	msgHello        = 0x01
-	msgHeartbeat    = 0x02
-	msgCreateRoom   = 0x10
-	msgSearchRooms  = 0x11
-	msgJoinRoom     = 0x12
-	msgLeaveRoom    = 0x13
-	msgSetRoomData  = 0x14
-	msgRoomMessage  = 0x15
-	msgKickMember   = 0x16
-	msgRecordScore  = 0x20
-	msgGetRanking   = 0x21
-	msgGetRankingID = 0x22
+	msgHello         = 0x01
+	msgHeartbeat     = 0x02
+	msgCreateRoom    = 0x10
+	msgSearchRooms   = 0x11
+	msgJoinRoom      = 0x12
+	msgLeaveRoom     = 0x13
+	msgSetRoomData   = 0x14
+	msgRoomMessage   = 0x15
+	msgKickMember    = 0x16
+	msgSetRoomAccess = 0x17
+	msgJoinByCode    = 0x18
+	msgGetRoomAccess = 0x19
+	msgRecordScore   = 0x20
+	msgGetRanking    = 0x21
+	msgGetRankingID  = 0x22
 
 	// server -> client replies
 	msgHelloAck      = 0x81
 	msgRoomJoined    = 0x90
 	msgRoomList      = 0x91
 	msgOK            = 0x93
+	msgRoomAccess    = 0x97
 	msgScoreRecorded = 0xB0
 	msgRanking       = 0xB1
 	msgError         = 0x8F

@@ -79,7 +79,7 @@ client's `psnr_poll` sends a HEARTBEAT every 20 seconds.
 
 | Type | Name | Payload (after `req`) |
 |---|---|---|
-| 0x81 | HELLO_ACK | `user_id u32` `public_ip [4]` `token u32` (the token UDP PROBEs carry; 0.3 on) `flags u8` (bit 0: the server relays; 0.3 on) |
+| 0x81 | HELLO_ACK | `user_id u32` `public_ip [4]` `token u32` (the token UDP PROBEs carry; 0.3 on) `flags u8` (bit 0: the server relays; 0.3 on. bit 1: invite-only rooms, see below; 0.4 on) |
 | 0x93 | OK | — |
 | 0x8F | ERROR | `code u32` |
 
@@ -116,6 +116,9 @@ These are modelled on sceNpMatching2 rooms.
 | 0x14 | SET_ROOM_DATA | `room_id u64` `which u8` `data blob` | OK |
 | 0x15 | ROOM_MESSAGE | `room_id u64` `to u16` `data blob` | OK |
 | 0x16 | KICK_MEMBER | `room_id u64` `member_id u16` | OK |
+| 0x17 | SET_ROOM_ACCESS | `room_id u64` `mode u8` (0 public, 1 invite-only) | ROOM_ACCESS |
+| 0x18 | JOIN_BY_CODE | `code [8]` `member_data blob` | ROOM_JOINED |
+| 0x19 | GET_ROOM_ACCESS | `room_id u64` | ROOM_ACCESS |
 
 **Details:**
 - **Room data:** `external` is shown to searchers. `internal` is shown only to
@@ -129,6 +132,13 @@ These are modelled on sceNpMatching2 rooms.
 - **KICK_MEMBER:** only the owner may call it.
 - **SEARCH_ROOMS:** lists rooms of the caller's title that are not full,
   oldest first. `start` is a 0-based offset into that list.
+- **Invite-only rooms (0.4 on):** the owner calls SET_ROOM_ACCESS with mode 1; the room gets an 8-character code, is left out of
+  SEARCH_ROOMS and the status page, and cannot be joined by room ID (error 2) except by a member who is already in it. Mode 0 lists it
+  again and the code stops working; the code also ends with the room. The code uses the symbols
+  `0123456789ABCDEFGHJKMNPQRSTVWXYZ` (40 bits from `crypto/rand`, no I, L, O or U) and is sent as 8 bytes; the server reads it
+  case-insensitively and takes `O` as 0 and `I` or `L` as 1. Any member may read it with GET_ROOM_ACCESS, so anyone in the room can
+  invite. JOIN_BY_CODE answers a wrong, expired or other-title code with error 2 and a malformed one with error 1; either counts as a
+  miss on the connection, and 5 misses in 60 seconds close it. The code is never logged or shown on the status page.
 - **JOIN_ROOM** on a room the caller is already in returns the room again
   instead of an error.
 
@@ -137,6 +147,7 @@ These are modelled on sceNpMatching2 rooms.
 | Type | Name | Payload (after `req`) |
 |---|---|---|
 | 0x90 | ROOM_JOINED | `room_id u64` `my_member u16` `owner u16` `max u8` `flags u32` `external blob` `internal blob` `count u8` `member × count` |
+| 0x97 | ROOM_ACCESS | `mode u8` `code [8]` (NUL bytes unless mode is 1) |
 | 0x91 | ROOM_LIST | `total u16` `count u16`, then `count` × (`room_id u64` `owner online_id [16]` `cur u8` `max u8` `flags u32` `external blob`) |
 
 **Pushes.** These go to every member except the one who acted, unless noted.
