@@ -1,7 +1,9 @@
 # Release build for the fork. A pushed tag vMAJOR.MINOR.PATCH builds the archives and creates a DRAFT PRE-RELEASE for the
 # maintainer to publish; this workflow never publishes. A manual run (workflow_dispatch) only builds and keeps the archives
 # as a run artifact: the dry run. Permissions: read at the top; write only on the job that creates the draft.
-# Checks here: vet and tests, the tag shape, SHA256SUMS verified, and that no release for the tag exists yet.
+# Checks here: on a tag, that the tag is v + VERSION and the version checks pass (scripts/check-release.sh --tag), before
+# anything is built; vet and tests, the tag shape, SHA256SUMS verified, and that no release for the tag exists yet.
+# The notes are scripts/release-notes.sh for VERSION: the CHANGELOG.md entries under that version's heading.
 # Not checked here: that the binaries run on Windows or arm64 (they are cross-built), signing (the exe is unsigned).
 name: release
 on:
@@ -27,6 +29,9 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
           go-version: stable
+      - name: Tag is v + VERSION
+        if: github.ref_type == 'tag'
+        run: scripts/check-release.sh --tag "$TAG"
       - name: vet and test
         run: |
           go vet ./...
@@ -36,13 +41,6 @@ jobs:
       - name: Release notes
         run: |
           {
-            echo "## $TAG"
-            echo
-            echo "Pre-release: this is a 0.x version and may change without notice."
-            echo
-            echo "### Changes"
-            sed -n '/^## \[Unreleased\]/,/^## \[/p' CHANGELOG.md | sed '1d;$d'
-            echo
             echo "### Files"
             echo
             echo "Each archive holds one self-contained server binary (no installer, no runtime needed), LICENSE, NOTICE.md and an examples folder (settings file, systemd unit, proxy configs)."
@@ -53,9 +51,8 @@ jobs:
             echo '```'
             echo
             echo "Developed with AI agent assistance."
-            echo
-            echo "Next planned release: to be set by the maintainer when publishing."
-          } > dist/notes.md
+          } > "$RUNNER_TEMP/files.md"
+          scripts/release-notes.sh --extra "$RUNNER_TEMP/files.md" "$(tr -d '\r\n' < VERSION)" > dist/notes.md
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: release-${{ env.TAG }}

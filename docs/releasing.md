@@ -4,9 +4,8 @@ How a maintainer cuts a re-psn pre-release: where the version lives, the bump, t
 checked on the way. Pre-releases come often and on no schedule, whenever there is something worth trying.
 
 > [!IMPORTANT]
-> Not run yet: there is no tag and nothing has been published. The release workflow has not run on a tag, the dry run
-> (a manual run of the workflow) has not been done, and the workflow still builds its notes itself instead of with
-> `scripts/release-notes.sh` (see [Not checked yet](#not-checked-yet)).
+> Not run yet: there is no tag and nothing has been published. The release workflow has not run on a tag, and the dry
+> run (a manual run of the workflow) has not been done (see [Not checked yet](#not-checked-yet)).
 
 ## Contents
 
@@ -46,7 +45,9 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
    Unreleased entries move under `## [0.2.0] - <today, UTC>`, a fresh empty Unreleased stays above, and an
    `[Unreleased]: .../compare/...` link moves on if the file has one) and the version span in `README.md`. It refuses a
    version that is not `X.Y.Z` or not newer than `VERSION`, an empty Unreleased section, a CHANGELOG whose newest version
-   is not `VERSION`, and a dirty working tree. `--date YYYY-MM-DD` sets the heading's date.
+   is not `VERSION`, and a dirty working tree. `--date YYYY-MM-DD` sets the heading's date. It writes the four files
+   first and then builds the notes for the new version with `scripts/release-notes.sh`, failing if they do not build; a
+   failure there leaves the four files changed for you to look at (`git diff`, `git checkout -- .` to undo).
 3. Review: `git diff` shows only those version places, the span and the CHANGELOG move. Then run the checks and read the
    notes:
 
@@ -64,9 +65,13 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
    git push origin v0.2.0
    ```
 
-6. The tag starts [`.github/workflows/release.yml`](../.github/workflows/release.yml): vet and tests, the archives for
-   windows/amd64, linux/amd64 and linux/arm64 with a `.sha256` file each and `SHA256SUMS` (LF, no BOM), and a **draft**
-   pre-release titled with the tag. The job fails if a release for the tag exists already.
+6. The tag starts [`.github/workflows/release.yml`](../.github/workflows/release.yml). It first runs
+   `scripts/check-release.sh --tag <tag>`, which fails unless the tag is `v` + `VERSION` at the tagged commit and the
+   version checks pass; nothing is built after a failure. Then vet and tests, the archives for windows/amd64, linux/amd64
+   and linux/arm64 with a `.sha256` file each and `SHA256SUMS` (LF, no BOM), the notes, and a **draft** pre-release
+   titled with the tag. The notes are `scripts/release-notes.sh` for `VERSION` (the CHANGELOG.md entries under that
+   version's heading, which the bump filled) with the list of files, the checksums and the closing line
+   `Next release: when ready` added. The job fails if a release for the tag exists already.
 7. Check the draft: the notes, the assets (three archives, their `.sha256` files, `SHA256SUMS`), and a download checked
    with `sha256sum -c SHA256SUMS`. A bad draft is deleted before it is published; then re-run the workflow for the same
    tag, or, if the tagged commit is wrong, bump to the next version.
@@ -81,7 +86,9 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 ## Before the first tag: the dry run
 
 Run the release workflow by hand (Actions, release, Run workflow). A manual run builds the archives for `v0.0.0` and keeps
-them as a run artifact; it creates no release. Before the first tag, check that artifact by hand: the sizes, the checksums
+them, with `notes.md`, as a run artifact; it creates no release and has no write permission. The tag check is skipped (there
+is no tag), but `scripts/release-build.sh` still runs `scripts/check-release.sh`, and the notes are built the same way as on
+a tag, for the version in `VERSION`: what a tag at that commit would get. Before the first tag, check that artifact by hand: the sizes, the checksums
 against `SHA256SUMS`, and that the Linux archive unpacks in an empty directory and the server inside starts without Go or
 build tools. The Windows and arm64 archives are cross-built; say in the notes which ones were not run.
 
@@ -93,8 +100,9 @@ build tools. The Windows and arm64 archives are cross-built; say in the notes wh
 |---|---|
 | `VERSION`, `server/main.go`, the newest CHANGELOG.md version and the README span agree (`TestVersionAgrees`) | `go test ./...` in CI on pushes to `main` and pull requests; `scripts/check-release.sh`; `scripts/release-build.sh` |
 | The bump and notes scripts on a fixture tree (`TestBumpVersion`, `TestReleaseNotes`) | the same; skipped on Windows, where the scripts do not run |
-| The notes for the current version build from the real CHANGELOG.md | `scripts/check-release.sh` |
+| The notes for the current version build from the real CHANGELOG.md | `scripts/check-release.sh`; `release.yml` builds the notes with `scripts/release-notes.sh` |
 | Tag shape `vMAJOR.MINOR.PATCH` | `scripts/release-build.sh`, both release workflows |
+| The tag is `v` + `VERSION` at the tagged commit (`TestCheckReleaseTag` for the script) | `scripts/check-release.sh --tag`, first step of `release.yml` on a tag |
 | The deploy examples match the server's flags | `scripts/check-deploy.sh`, run by `scripts/release-build.sh` |
 | `SHA256SUMS` verifies | `scripts/release-build.sh`, `release.yml` (build and draft jobs), `release-check.yml` |
 | No release exists for the tag yet | `release.yml` |
@@ -102,9 +110,7 @@ build tools. The Windows and arm64 archives are cross-built; say in the notes wh
 
 ## Not checked yet
 
-- That the tag equals `v` + `VERSION` at the tagged commit. Nothing compares them yet.
-- The notes `release.yml` writes come from its own copy of the Unreleased section, which a bump leaves empty, and end with
-  a different closing line. Until the workflow uses `scripts/release-notes.sh`, read the draft's notes and fix them by hand
-  in the draft before publishing.
+- The release workflow itself: it has not run on Actions since the tag check and the notes script were added. The dry run
+  comes first.
 - That the Windows and arm64 binaries run; they are cross-built. The exe and `SHA256SUMS` are unsigned.
 - Sample log output in the README and `docs/running.md` (`version=0.1.0`) is an example and is not changed by the bump.
