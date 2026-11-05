@@ -12,7 +12,10 @@ tools/art/capture.sh; this script only draws them and never adds output), and Je
 from the tagged release of the official repository and pinned by SHA-256. The fonts are not committed, only the images.
 
 Outputs: docs/img/banner.png (1280x320: the name, a one-line description and the palette; an opaque panel with
-rounded, transparent corners, so it reads on light and dark pages) and one docs/img/term-*.png per transcript.
+rounded, transparent corners, so it reads on light and dark pages), docs/img/social.png and one docs/img/term-*.png per
+transcript. social.png (1280x640, larger type, fewer words, everything inside SOCIAL_SAFE because sites crop the edges)
+is for the repository's social preview. It is uploaded by hand in the repository settings (Settings, General, Social
+preview) and is not used by any page.
 Every image is palette-quantised and keeps its text and marks at least MARGIN px from the edge.
 tools/art/art.json lists the fonts (source and SHA-256), the inputs, the outputs, and the Pillow, FreeType and zlib
 versions. Deterministic: the same script, inputs, fonts and Pillow give the same bytes, which --check relies on.
@@ -53,11 +56,15 @@ FONT_FILES = {
 MODE = "dark"
 MARGIN = 40          # no text or mark closer than this to an image edge
 BANNER = (1280, 320)
+SOCIAL = (1280, 640)
+SOCIAL_SAFE = (96, 64)   # social.png keeps its content this far from the left/right and top/bottom edges
 SS = 2               # the banner is drawn at twice the size and scaled down once
 NAME = ("re-", "psn")
 TAGLINE = "Matchmaking rooms and leaderboards for recompiled PS3 games"
 TRAITS = ("self-hosted", "NAT traversal", "optional relay", "Go server", "C client")
 REPO = "github.com/undecuple/re-psn"
+SOCIAL_TAGLINE = ("Matchmaking rooms and leaderboards", "for recompiled PS3 games")   # TAGLINE on two lines
+SOCIAL_TRAITS = ("self-hosted", "NAT traversal", "optional relay")
 
 # transcript -> (image, title bar). The order is the order of the session.
 TERMS = {
@@ -242,6 +249,51 @@ def banner(fonts, pal):
     return quantise(out, BANNER_COLOURS), ink.box
 
 
+def social(fonts, pal):
+    """The social preview: a large name with a cursor, the description on two lines, three traits, the palette and repo."""
+    from PIL import Image, ImageDraw
+    w, h = SOCIAL
+    W, H = w * SS, h * SS
+    img = panel((W, H), pal, 18 * SS)
+    ink = Ink(ImageDraw.Draw(img), SS)
+    m = SOCIAL_SAFE[0] * SS
+    name = "".join(NAME)
+    f = fit(fonts, "bold", name + "_", W - 2 * m, 132 * SS)
+    x, y = m, 100 * SS
+    top = cap_top(f)
+    ink.text((x, y - top), NAME[0], f, pal["grey2"])
+    x += f.getlength(NAME[0])
+    ink.text((x, y - top), NAME[1], f, pal["fg1"])
+    x += f.getlength(NAME[1]) + 16 * SS
+    capb = f.getbbox("H")
+    ink.rect((x, y, x + f.getlength("_") * 0.8, y + capb[3] - capb[1]), pal["green"])
+    y += capb[3] - capb[1] + 62 * SS
+    ft = fonts.get("regular", 50 * SS)
+    for line in SOCIAL_TAGLINE:
+        ink.text((m, y - cap_top(ft)), line, ft, pal["fg0"])
+        y += 70 * SS
+    y += 4 * SS
+    fs = fonts.get("regular", 28 * SS)
+    x = m
+    for i, t in enumerate(SOCIAL_TRAITS):
+        if i:
+            ink.text((x, y - cap_top(fs)), "  ·  ", fs, pal["aqua"])
+            x += fs.getlength("  ·  ")
+        ink.text((x, y - cap_top(fs)), t, fs, pal["grey2"])
+        x += fs.getlength(t)
+    fr = fonts.get("regular", 22 * SS)
+    by = H - SOCIAL_SAFE[1] * SS - 24 * SS
+    capr = fr.getbbox("H")
+    ink.text((W - m - fr.getlength(REPO), by + 4 * SS - (capr[3] - capr[1]) // 2 - capr[1]), REPO, fr, pal["grey1"])
+    accents = ("red", "orange", "yellow", "green", "aqua", "blue", "purple")
+    sw, gap = 36 * SS, 8 * SS
+    for i, k in enumerate(accents):
+        x0 = m + i * (sw + gap)
+        ink.rect((x0, by, x0 + sw, by + 8 * SS), pal[k], radius=4 * SS)
+    out = img.resize((w, h), Image.Resampling.LANCZOS)
+    return quantise(out, BANNER_COLOURS), ink.box
+
+
 def spans(line, pal):
     """(text, colour, bold) runs for one transcript line. Colour only; the text is never changed."""
     if line.startswith("$ "):
@@ -304,6 +356,14 @@ def margin_problems(name, size, box):
     return []
 
 
+def safe_problems(name, size, box, safe):
+    """The stricter check for images that sites crop: content must stay inside `safe` (x, y) from the edges."""
+    x0, y0, x1, y1 = box
+    if x0 < safe[0] or y0 < safe[1] or x1 > size[0] - safe[0] or y1 > size[1] - safe[1]:
+        return [f"{name}: a mark at {tuple(round(v) for v in box)} is outside the central area ({safe[0]}, {safe[1]} px in)"]
+    return []
+
+
 def render(fonts, root=ROOT):
     """-> ({image name: PNG bytes}, problems). Nothing is written."""
     pal = load_palette(root)
@@ -311,6 +371,10 @@ def render(fonts, root=ROOT):
     img, box = banner(fonts, pal)
     files["banner.png"] = png_bytes(img)
     probs += margin_problems("banner.png", img.size, box)
+    img, box = social(fonts, pal)
+    files["social.png"] = png_bytes(img)
+    probs += margin_problems("social.png", img.size, box)
+    probs += safe_problems("social.png", img.size, box, SOCIAL_SAFE) if box else []
     for src, (name, title) in TERMS.items():
         text = (root / TRANSCRIPTS / src).read_text(encoding="utf-8")
         img, box = terminal(fonts, pal, text, title)
@@ -397,7 +461,7 @@ def main(argv=None):
         for p in probs:
             print("make_art: " + p, file=sys.stderr)
         if not probs:
-            print(f"make_art: OK: {len(TERMS) + 1} images and {MANIFEST} match a fresh render")
+            print(f"make_art: OK: {len(TERMS) + 2} images and {MANIFEST} match a fresh render")
         return 1 if probs else 0
     files, probs = render(fonts)
     if probs:

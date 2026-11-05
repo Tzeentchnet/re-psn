@@ -72,7 +72,7 @@ class RenderTest(unittest.TestCase):
         from PIL import Image
         f = fonts()
         files, probs = make_art.render(f)
-        self.assertEqual(set(files), {"banner.png"} | {img for img, _ in make_art.TERMS.values()})
+        self.assertEqual(set(files), {"banner.png", "social.png"} | {img for img, _ in make_art.TERMS.values()})
         if not f.stand_in:
             self.assertEqual(probs, [])
         for name, data in files.items():
@@ -80,6 +80,18 @@ class RenderTest(unittest.TestCase):
                 self.assertEqual(im.mode, "P", name)
         with Image.open(io.BytesIO(files["banner.png"])) as im:
             self.assertEqual(im.size, make_art.BANNER)
+        self.assertLess(len(files["social.png"]), 1_000_000)
+        with Image.open(io.BytesIO(files["social.png"])) as im:
+            self.assertEqual(im.size, (1280, 640))
+            self.assertEqual(im.mode, "P")
+
+    def test_safe_area_reported(self):
+        safe = make_art.SOCIAL_SAFE
+        self.assertEqual(make_art.safe_problems("x.png", (1280, 640), (safe[0], safe[1], 1280 - safe[0], 640 - safe[1]), safe), [])
+        self.assertTrue(make_art.safe_problems("x.png", (1280, 640), (safe[0] - 1, safe[1], 1000, 500), safe))
+        self.assertTrue(make_art.safe_problems("x.png", (1280, 640), (safe[0], safe[1], 1000, 640 - safe[1] + 1), safe))
+        self.assertGreaterEqual(safe[0], make_art.MARGIN)
+        self.assertGreaterEqual(safe[1], make_art.MARGIN)
 
     def test_margin_problem_reported(self):
         self.assertEqual(make_art.margin_problems("x.png", (200, 100), (40, 40, 160, 60)), [])
