@@ -24,6 +24,7 @@ docker compose up -d
 | Flag | Default | What it does |
 |---|---|---|
 | `-addr` | `:36100` | TCP and UDP address for game clients |
+| `-tcp-addr`, `-udp-addr` | `-addr` | Give TCP or UDP its own address (a different port, or one interface). Unset, each takes `-addr`. |
 | `-http` | `127.0.0.1:36101` | Status page and `/api/stats`. Set it to `""` to turn it off. |
 | `-http-token` | none | Require this token on the status page, as `Authorization: Bearer <token>` or `?token=<token>`. Set it whenever `-http` is not on localhost; the server logs a warning if it is not. |
 | `-max-rooms` | `1000` | Room limit across all titles |
@@ -32,6 +33,19 @@ docker compose up -d
 | `-log-format` | `text` | `text` or `json`, one line per event. |
 | `-log-file` | none | Also append the log to this file (created with mode 0600). |
 | `-v` | off | Same as `-log-level debug`. |
+
+## Environment variables
+
+Every flag can be set as `PSNR_<FLAG>`, upper case, dashes as underscores: `-max-rooms` is `PSNR_MAX_ROOMS`, `-tcp-addr`
+is `PSNR_TCP_ADDR`, `-v` is `PSNR_V`. A flag on the command line wins over the variable. A variable that is set but empty
+counts as set, so `PSNR_HTTP=` turns the status page off. A number or true/false that does not parse stops the server at
+start with a message naming the variable. Booleans take `true` or `false` (also `1`, `0`).
+
+The Docker image has no fixed flags: it is configured only by these variables. The status page is not reachable from the
+host until you set `PSNR_HTTP` (for example `0.0.0.0:36101` inside the container) and `PSNR_HTTP_TOKEN`; the compose file
+shows the lines. A token set this way is visible to `docker inspect` and to other users on the host (process list, for a
+native run), so treat the token as protecting a status page on a trusted machine, not as a secret that survives a shared host.
+If you change a port, change it in the compose `ports` list as well, and in your firewall rule.
 
 ## Logging
 

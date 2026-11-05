@@ -2,7 +2,14 @@ services:
   psnr:
     build: .
     restart: unless-stopped
+    environment:
+      # Any flag is PSNR_<FLAG>; see docs/running.md. Change a port here and in `ports`.
+      PSNR_ADDR: ":36100"
+      # The status page lists every online ID. To reach it from the host, bind it inside the
+      # container and set a token, then publish it below (kept on this machine):
+      #   PSNR_HTTP: "0.0.0.0:36101"
+      #   PSNR_HTTP_TOKEN: "<a long random string>"
     ports:
       - "36100:36100"             # game clients
       - "36100:36100/udp"         # their P2P sockets' address probes
-      - "127.0.0.1:36101:36101"   # status page: this machine only
+      # - "127.0.0.1:36101:36101" # status page: this machine only (needs PSNR_HTTP above)

@@ -17,19 +17,39 @@ import (
 var version = "0.1.0"
 
 func main() {
-	addr := flag.String("addr", ":36100", "TCP and UDP address for game clients")
-	httpAddr := flag.String("http", "127.0.0.1:36101", "HTTP status page and /api/stats (empty to disable)")
-	httpToken := flag.String("http-token", "", "require this token (Authorization: Bearer, or ?token=) on the status page; set it when -http is not on localhost")
-	maxRooms := flag.Int("max-rooms", 1000, "room limit across all titles")
-	playerRooms := flag.Int("max-player-rooms", 8, "rooms one player may be in at once (0 for no limit)")
-	perAddr := flag.Int("max-conns-per-addr", 32, "open connections per remote address (0 for no limit)")
-	reqRate := flag.Int("max-req-rate", 200, "requests per second per connection before it is closed (0 for no limit)")
-	verbose := flag.Bool("v", false, "same as -log-level debug")
-	logLevel := flag.String("log-level", "info", "log level: debug (room events), info, warn or error")
-	logFormat := flag.String("log-format", "text", "log format: text or json")
-	logFile := flag.String("log-file", "", "also append the log to this file (mode 0600)")
-	relay := flag.Bool("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
+	var bad error
+	num := func(name string, def int, usage string) *int {
+		n, err := envInt(name, def)
+		if err != nil {
+			bad = err
+		}
+		return flag.Int(name, n, usage)
+	}
+	toggle := func(name string, def bool, usage string) *bool {
+		v, err := envBool(name, def)
+		if err != nil {
+			bad = err
+		}
+		return flag.Bool(name, v, usage)
+	}
+	addr := flag.String("addr", envStr("addr", ":36100"), "TCP and UDP address for game clients")
+	tcpAddr := flag.String("tcp-addr", envStr("tcp-addr", ""), "TCP address for game clients (default: -addr)")
+	udpAddr := flag.String("udp-addr", envStr("udp-addr", ""), "UDP address for game clients (default: -addr)")
+	httpAddr := flag.String("http", envStr("http", "127.0.0.1:36101"), "HTTP status page and /api/stats (empty to disable)")
+	httpToken := flag.String("http-token", envStr("http-token", ""), "require this token (Authorization: Bearer, or ?token=) on the status page; set it when -http is not on localhost")
+	maxRooms := num("max-rooms", 1000, "room limit across all titles")
+	playerRooms := num("max-player-rooms", 8, "rooms one player may be in at once (0 for no limit)")
+	perAddr := num("max-conns-per-addr", 32, "open connections per remote address (0 for no limit)")
+	reqRate := num("max-req-rate", 200, "requests per second per connection before it is closed (0 for no limit)")
+	verbose := toggle("v", false, "same as -log-level debug")
+	logLevel := flag.String("log-level", envStr("log-level", "info"), "log level: debug (room events), info, warn or error")
+	logFormat := flag.String("log-format", envStr("log-format", "text"), "log format: text or json")
+	logFile := flag.String("log-file", envStr("log-file", ""), "also append the log to this file (mode 0600)")
+	relay := toggle("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
 	flag.Parse()
+	if bad != nil {
+		log.Fatal(bad)
+	}
 
 	level, format, err := parseLogFlags(*logLevel, *logFormat)
 	if err != nil {
@@ -56,16 +76,17 @@ func main() {
 	s.log = logger
 	s.relay = *relay
 	s.maxPlayerRooms, s.maxPerAddr, s.maxReqRate = *playerRooms, *perAddr, *reqRate
-	ln, err := net.Listen("tcp", *addr)
+	tcpA, udpA := listenAddrs(*addr, *tcpAddr, *udpAddr)
+	ln, err := net.Listen("tcp", tcpA)
 	if err != nil {
 		fatal(err)
 	}
-	pc, err := net.ListenPacket("udp", *addr)
+	pc, err := net.ListenPacket("udp", udpA)
 	if err != nil {
 		fatal(err)
 	}
 	go func() { fatal(s.ServeUDP(pc)) }()
-	logger.Info("started", "version", version, "clients", ln.Addr().String(), "relay", *relay)
+	logger.Info("started", "version", version, "clients", ln.Addr().String(), "udp", pc.LocalAddr().String(), "relay", *relay)
 	if *httpAddr != "" {
 		s.httpToken = *httpToken
 		logger.Info("status page", "addr", *httpAddr, "token", *httpToken != "")
