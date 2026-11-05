@@ -69,8 +69,13 @@ tcp:
         servers: [{address: "127.0.0.1:36100"}]
 ```
 
-with `PSNR_TRUSTED_PROXIES=127.0.0.1` and `PSNR_PROXY_PROTOCOL=true`. nginx (`proxy_protocol on;` in a `stream` block) and HAProxy
-(`send-proxy-v2` on the server line) work the same way but have not been run here.
+with `PSNR_TRUSTED_PROXIES=127.0.0.1` and `PSNR_PROXY_PROTOCOL=true`. nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
+(`send-proxy-v2` on the server line; a health check to psnr needs `check-send-proxy` as well) work the same way but have not been run here. psnr
+accepts v1 and v2. A v2 header must describe a TCP stream: a datagram or unassigned family or transport is refused and the connection closed.
+
+**Cloudflare:** the ordinary proxy carries only HTTP and HTTPS, so it can front the status page but not the game port. Cloudflare Spectrum can send
+PROXY protocol for TCP and UDP, but its documentation lists it as an Enterprise feature, so below that plan Cloudflare is not a way to get real
+player addresses on the game port (check Cloudflare's current plan page).
 
 ## Environment variables
 
