@@ -22,6 +22,9 @@ What this fork changes (see `docs/running.md` for the flags):
   connection that sends more than 200 requests a second is closed (`-max-player-rooms`, `-max-conns-per-addr`,
   `-max-req-rate`; 0 turns a limit off).
 - `-http-token` protects the status page and `/api/stats`.
+- A UDP probe or relayed datagram must come from the player's TCP address, so a stolen token or a forged source can't
+  point other players' traffic at a third party. It can't stop someone who sends from the player's own address, and it
+  refuses players whose UDP leaves from another address; `-udp-any-source` turns it off. See `docs/running.md`.
 
 To report a vulnerability, use "Report a vulnerability" under this repository's Security tab (a private advisory).
 Please don't use a public issue. A problem that is also in sp00nznet/psnr should be reported there as well.

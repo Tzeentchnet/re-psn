@@ -254,3 +254,38 @@ func TestRoutePushOnJoin(t *testing.T) {
 		t.Fatalf("route about %d flags %d", who, flags)
 	}
 }
+
+// A RELAY packet with the right token from an address other than the sender's
+// TCP address is dropped; the same packet from its own address goes through,
+// and with -udp-any-source the other address is accepted too.
+func TestUDPRelayFromOtherAddress(t *testing.T) {
+	other := otherLoopback(t)
+	for _, any := range []bool{false, true} {
+		_, addr := startTCPUDPWith(t, func(s *Server) { s.relay, s.udpAnySource = true, any })
+		srv, _ := net.ResolveUDPAddr("udp", addr)
+		a, b := join(t, addr, "alice"), join(t, addr, "bob")
+		meet(t, a, b)
+		ub := udpSock(t)
+		probeFrom(t, ub, addr, b)
+		elsewhere, err := net.ListenUDP("udp", other)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { elsewhere.Close() })
+
+		elsewhere.WriteTo(relayPkt(a, a.token, b.id, "from 127.0.0.2"), srv)
+		got := recvWithin(ub, 300*time.Millisecond)
+		if !any && got != nil {
+			t.Fatalf("relayed from another address: %q", got)
+		}
+		if any && (len(got) < 9 || string(got[9:]) != "from 127.0.0.2") {
+			t.Fatalf("-udp-any-source: relayed %q", got)
+		}
+
+		// Control: from the sender's own address.
+		udpSock(t).WriteTo(relayPkt(a, a.token, b.id, "from home"), srv)
+		if got := recvWithin(ub, time.Second); len(got) < 9 || string(got[9:]) != "from home" {
+			t.Fatalf("udp-any-source=%v: control relayed %q", any, got)
+		}
+	}
+}

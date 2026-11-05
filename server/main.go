@@ -48,6 +48,7 @@ func main() {
 	logFile := flag.String("log-file", envStr("log-file", ""), "also append the log to this file (mode 0600)")
 	trustedList := flag.String("trusted-proxies", envStr("trusted-proxies", ""), "comma-separated CIDRs or addresses of reverse proxies allowed to name the real client (empty: none)")
 	proxyProto := toggle("proxy-protocol", false, "require a PROXY protocol v1/v2 header on the game TCP port from a trusted proxy (needs -trusted-proxies)")
+	udpAny := toggle("udp-any-source", false, "accept UDP probes and relay packets from an address other than the player's TCP address (for players whose UDP leaves from another address, such as some multi-WAN or carrier NAT setups; weakens the check against spoofed or stolen-token probes)")
 	relay := toggle("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
 	flag.Parse()
 	if bad != nil {
@@ -91,6 +92,10 @@ func main() {
 		}
 	}
 	s.trustedProxies, s.proxyProto = trusted, *proxyProto
+	s.udpAnySource = *udpAny
+	if *udpAny {
+		logger.Warn("-udp-any-source: UDP probes and relay packets are accepted from any address that has the right token")
+	}
 	s.maxPlayerRooms, s.maxPerAddr, s.maxReqRate = *playerRooms, *perAddr, *reqRate
 	tcpA, udpA := listenAddrs(*addr, *tcpAddr, *udpAddr)
 	ln, err := net.Listen("tcp", tcpA)

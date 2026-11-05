@@ -208,8 +208,15 @@ with the four bytes `PSNR` and a type byte.
 - **PROBE.** Sent from the P2P socket after HELLO, repeated until a
   PROBE_REPLY arrives, and again now and then, because routers forget idle
   mappings. `user_id` and `token` come from HELLO_ACK; a probe with the wrong
-  token is ignored, so nobody can move another player's endpoint. `local_ip`
-  is the client's own address, given to players on the same network.
+  token is ignored, so nobody can move another player's endpoint. The probe
+  must also come from the same IP address as the player's TCP connection; one
+  from another address gets no PROBE_REPLY and changes nothing (the server's
+  `-udp-any-source` turns this off). A player whose UDP leaves from another
+  public address than its TCP, such as behind some multi-WAN routers or
+  carrier NAT, is refused unless the server sets that flag; its members are
+  then given the address TCP shows. `local_ip` is the client's own address,
+  given to players on the same network; the server keeps it only if it is
+  private, carrier-grade NAT, link-local or the probe's source address.
 - **PUNCH.** When a peer appears, a few of these sent to the address its
   member entry gives open this side's router for the peer's traffic. Both
   sides do it.
@@ -253,7 +260,9 @@ sends through the server's UDP port instead:
 | 0x03 RELAY | P2P socket → server | `from_user u32` `token u32` `to_user u32` then the datagram |
 | 0x03 RELAY | server → P2P socket | `from_user u32` then the datagram |
 
-The server sends it on from its UDP port to the target's probed endpoint. The
+The sender must use the address of its TCP connection, as for a probe
+(unless `-udp-any-source`). The server sends it on from its UDP port to the
+target's probed endpoint. The
 target's router already lets packets from there in, because the target's
 probes go there. Receivers unwrap it and hand the payload to the title as if
 it came from that member's address.

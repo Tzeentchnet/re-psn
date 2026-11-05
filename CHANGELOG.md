@@ -67,6 +67,13 @@ All notable changes to this project are documented here. The format follows
   - SET_ROOM_DATA `which` 2 sets the room's flags, which searchers see.
   - ROOM_MSG pushes say which member the message was sent to.
 
+### Security
+- UDP PROBE and RELAY packets are accepted only from the IP address of the player's TCP connection, so a stolen or guessed
+  token, or a forged source address, can no longer point a player's endpoint at a third party. A probe's `local_ip` is kept
+  only if it is private, carrier-grade NAT, link-local or the probe's own source. Players whose UDP leaves from another address
+  (some multi-WAN or carrier NAT setups) are refused; `-udp-any-source` (`PSNR_UDP_ANY_SOURCE`) turns the check off. See
+  `docs/running.md`.
+
 ## [0.1.0] - 2026-09-29
 
 ### Added
