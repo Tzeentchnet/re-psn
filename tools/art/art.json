@@ -4,7 +4,7 @@
  "generator_sha256": "dd2f90b5b7bc331fbe971e06cd0444f58c55a3f39b7dd29c0e075ec8cfdaca0c",
  "pillow": "12.3.0",
  "freetype": "2.14.3",
- "zlib": "1.3.2",
+ "zlib": "1.3",
  "fonts": {
   "release": {
    "name": "JetBrains Mono 2.304",
