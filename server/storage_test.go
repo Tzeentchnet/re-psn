@@ -73,7 +73,7 @@ func TestDBSetting(t *testing.T) {
 		{"flag wins", map[string]string{"RE_PSN_DB": dsns["mysql"]}, flags{db: "memory"}, nil},
 		{"both", map[string]string{"RE_PSN_DB": "memory", "RE_PSN_DB_FILE": "/nonexistent"}, flags{}, []string{"RE_PSN_DB and RE_PSN_DB_FILE are both set"}},
 		{"both flags", nil, flags{db: "memory", file: "/nonexistent"}, []string{"-db and -db-file are both set"}},
-		{"file missing", map[string]string{"RE_PSN_DB_FILE": "/nonexistent/re-psn-db"}, flags{}, []string{"RE_PSN_DB_FILE:", `could not read the file "/nonexistent/re-psn-db"`, "no such file"}},
+		{"file missing", map[string]string{"RE_PSN_DB_FILE": "/nonexistent/re-psn-db"}, flags{}, []string{"RE_PSN_DB_FILE:", `could not read the file "/nonexistent/re-psn-db"`}},
 		{"file alias missing", map[string]string{"PSNR_DB_FILE": "/nonexistent/x"}, flags{}, []string{"PSNR_DB_FILE:", "could not read"}},
 	}
 	for scheme, dsn := range dsns {
@@ -142,8 +142,11 @@ func TestDBFile(t *testing.T) {
 			t.Errorf("error %q holds the file's contents", err)
 		}
 	}
-	_, err := openStore(lookupSetting("db", "", false), lookupSetting("db-file", t.TempDir(), true))
-	if err == nil || !strings.Contains(err.Error(), "is a directory") {
+	// The OS words for a directory differ (Linux "is a directory", Windows "Incorrect function."),
+	// so only require an error that names the variable and the path.
+	dir := t.TempDir()
+	_, err := openStore(lookupSetting("db", "", false), lookupSetting("db-file", dir, true))
+	if err == nil || !strings.Contains(err.Error(), "RE_PSN_DB_FILE") && !strings.Contains(err.Error(), "-db-file") || !strings.Contains(err.Error(), "could not read the file") || !strings.Contains(err.Error(), dir) {
 		t.Errorf("a directory: %v", err)
 	}
 	clearDBEnv(t)
