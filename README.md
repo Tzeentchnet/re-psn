@@ -137,6 +137,7 @@ by the others.
   no threads, and why game traffic doesn't go through the server
 - [docs/api.md](docs/api.md): the protocol
 - [docs/running.md](docs/running.md): flags, ports, Docker, state
+- [docs/connecting.md](docs/connecting.md): ways players connect: LAN, port forwarding, a public server, Tailscale or ZeroTier
 - [docker/](docker/README.md): building and running the server in a container
 - [deploy/](deploy/README.md): the settings file, systemd unit and reverse proxy examples
 - [lab/](lab/README.md): players behind NATing routers, in Docker (`lab/run.sh`)

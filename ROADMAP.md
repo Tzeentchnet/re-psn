@@ -59,6 +59,7 @@ Merged into main. Most of it is not in a release yet.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
+- [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
 
 On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`

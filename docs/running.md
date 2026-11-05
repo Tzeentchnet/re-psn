@@ -164,6 +164,8 @@ the server's machine must accept TCP and UDP 36100, and each player must accept 
 other players' traffic on their P2P port. The server passes out addresses and
 relays nothing unless `-relay` is on.
 
+See also [connecting.md](connecting.md): the ways players can reach the server, with Tailscale and ZeroTier.
+
 ## Firewall
 
 **The server (TCP and UDP 36100).** On Windows, `Setup.cmd` offers to add the
