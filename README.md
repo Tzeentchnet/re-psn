@@ -5,8 +5,8 @@
 A reimplementation of PSN's matchmaking rooms and leaderboards for statically recompiled PS3 games, with NAT traversal and an
 optional relay.
 
-[![CI](https://github.com/undecuple/re-psn/actions/workflows/ci.yml/badge.svg)](https://github.com/undecuple/re-psn/actions/workflows/ci.yml)
-&nbsp;**Status:** pre-release <!-- version -->v0.1.0<!-- /version -->, unreleased (no tag yet) · Go server, C client · MIT
+[![CI](https://github.com/undecuple/re-psn/actions/workflows/ci.yml/badge.svg)](https://github.com/undecuple/re-psn/actions/workflows/ci.yml) <!-- version -->![version v0.1.0](https://img.shields.io/badge/pre--release-v0.1.0-d8a657?labelColor=45403d&style=flat-square)<!-- /version --> ![status: unreleased, no tag yet](https://img.shields.io/badge/status-unreleased-e78a4e?labelColor=45403d&style=flat-square)
+![Go server](https://img.shields.io/badge/server-Go-7daea3?labelColor=45403d&style=flat-square) ![C client](https://img.shields.io/badge/client-C-89b482?labelColor=45403d&style=flat-square) ![licence: MIT](https://img.shields.io/badge/licence-MIT-a9b665?labelColor=45403d&style=flat-square)
 
 [Quick start](#install) · [Features](#features) · [Configuration](#configuration) · [Docs](#documentation) ·
 [Roadmap](ROADMAP.md) · [Security](SECURITY.md)
@@ -151,7 +151,11 @@ $ curl -s http://127.0.0.1:36101/api/stats
 {"uptime":"6s","clients":0,"connections_total":4,"rooms":[],"unlisted_rooms":0,"boards":[{"title":"NPWR00001_00","board":1,"entries":1,"leader":"alice","best":100}]}
 ```
 
-http://127.0.0.1:36101/ shows the same as a page. Routers and the relay are tested in Docker by the [NAT lab](lab/README.md).
+http://127.0.0.1:36101/ shows the same as a page (below: alice hosting and waiting, with the score the test left). Routers and the relay are tested in Docker by the [NAT lab](lab/README.md).
+
+![The status page of a local server: one room, alice waiting alone, and a leaderboard with one entry](docs/status.png)
+
+A screenshot of that page from a real run; [tools/art/capture-status.sh](tools/art/capture-status.sh) takes it.
 
 ## Features
 
