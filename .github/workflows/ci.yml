@@ -52,7 +52,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python3 -m venv "$RUNNER_TEMP/art"
-          "$RUNNER_TEMP/art/bin/pip" install --quiet pillow==12.3.0
+          "$RUNNER_TEMP/art/bin/pip" install --quiet --only-binary=:all: pillow==12.3.0
           "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --fetch-fonts
           "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --check
           "$RUNNER_TEMP/art/bin/python" -m unittest -v tools.art.test_make_art
