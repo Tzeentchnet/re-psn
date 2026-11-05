@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 # Build the release archives into dist/: static server binaries (no cgo) for the three targets, a .sha256 file per
-# archive and one SHA256SUMS (LF, no BOM). Used by .github/workflows/release.yml and runnable locally.
-# usage: scripts/release-build.sh vX.Y.Z
+# archive and one SHA256SUMS (LF, no BOM). With --appimage-tools DIR it also builds re-psn-vX.Y.Z-x86_64.AppImage with
+# scripts/build-appimage.sh (DIR holds the pinned files from `scripts/build-appimage.sh fetch DIR`), and SHA256SUMS
+# lists it too. Used by .github/workflows/release.yml and runnable locally.
+# usage: scripts/release-build.sh vX.Y.Z [--appimage-tools DIR]
 set -euo pipefail
-tag="${1:?usage: scripts/release-build.sh vX.Y.Z}"
+usage="usage: scripts/release-build.sh vX.Y.Z [--appimage-tools DIR]"
+tag="${1:?$usage}"
+tools=''
+case "$#" in
+  1) ;;
+  3) [ "$2" = --appimage-tools ] && [ -n "$3" ] || { echo "$usage" >&2; exit 2; }
+     tools="$(cd "$3" && pwd)" ;;
+  *) echo "$usage" >&2; exit 2 ;;
+esac
 case "$tag" in v[0-9]*.[0-9]*.[0-9]*) ;; *) echo "tag '$tag' is not vMAJOR.MINOR.PATCH" >&2; exit 1 ;; esac
 case "$tag" in *[!0-9v.]*) echo "tag '$tag' has odd characters" >&2; exit 1 ;; esac
 version="${tag#v}"
@@ -35,4 +45,5 @@ done
 cd "$dist"
 for f in re-psn-*; do sha256sum "$f" > "$f.sha256"; done
 sha256sum re-psn-*.zip re-psn-*.tar.gz > SHA256SUMS
+[ -z "$tools" ] || "$root/scripts/build-appimage.sh" build "$tag" "$tools"
 sha256sum -c SHA256SUMS

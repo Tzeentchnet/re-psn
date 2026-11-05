@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A Linux x86_64 AppImage of the server in the release, `re-psn-vX.Y.Z-x86_64.AppImage`, beside the archives: the same binary and
+  examples as one runnable file, built by `scripts/build-appimage.sh` with appimagetool 1.9.1 and the type-2 runtime 20251108
+  (both downloaded by the release workflow and checked against pinned SHA-256 hashes), smoke-tested in the workflow, listed in
+  `SHA256SUMS`. Unsigned; needs FUSE or `--appimage-extract-and-run`. The workflow has not run with it yet. See `docs/releasing.md`.
 - `tools/art/make_art.py` draws the README banner and terminal images (`docs/img/`) in the gruvbox-material palette
   (`docs/art/palette.json`) with JetBrains Mono pinned by SHA-256. Terminal images come only from transcripts of real runs
   (`docs/art/transcripts/`, recorded by `tools/art/capture.sh`). CI renders them again and fails on any byte that differs.

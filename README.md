@@ -184,8 +184,8 @@ Available on `main` today; [docs/features.md](docs/features.md) has the evidence
 | `docs-connecting` | Ways to connect | LAN, port forwarding, a public server, Tailscale or ZeroTier; [docs/connecting.md](docs/connecting.md). |
 | `docs-readme` | README rewrite | This page. |
 
-Rows that are partial, not yet verified, planned or later (release archives, the nginx and HAProxy examples, storage backends, the
-desktop apps and more) are in [docs/features.md](docs/features.md) and [ROADMAP.md](ROADMAP.md).
+Rows that are partial, not yet verified, planned or later (release archives and the AppImage, the nginx and HAProxy examples,
+storage backends, the desktop apps and more) are in [docs/features.md](docs/features.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Install
 
@@ -199,6 +199,11 @@ Each release will carry `re-psn-vX.Y.Z-windows-amd64.zip`, `re-psn-vX.Y.Z-linux-
 (`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. Each archive has a `.sha256` file, and
 `SHA256SUMS` lists them all. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
 `Get-FileHash <archive>` with the line in `SHA256SUMS` on Windows.
+
+Linux x86_64 also gets `re-psn-vX.Y.Z-x86_64.AppImage`, the same binary as one runnable file (unsigned): check it with
+`sha256sum -c re-psn-vX.Y.Z-x86_64.AppImage.sha256`, then `chmod +x` it and run it like the binary. It needs FUSE to mount;
+without it, add `--appimage-extract-and-run` as the first argument. The tarball needs neither. See
+[docs/releasing.md](docs/releasing.md#the-appimage).
 
 ### Container
 

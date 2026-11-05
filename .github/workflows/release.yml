@@ -1,10 +1,14 @@
-# Release build for the fork. A pushed tag vMAJOR.MINOR.PATCH builds the archives and creates a DRAFT PRE-RELEASE for the
-# maintainer to publish; this workflow never publishes. A manual run (workflow_dispatch) only builds and keeps the archives
-# as a run artifact: the dry run. Permissions: read at the top; write only on the job that creates the draft.
+# Release build for the fork. A pushed tag vMAJOR.MINOR.PATCH builds the archives and the x86_64 AppImage and creates a
+# DRAFT PRE-RELEASE for the maintainer to publish; this workflow never publishes. A manual run (workflow_dispatch) only
+# builds and keeps the files as a run artifact: the dry run. Permissions: read at the top; write only on the job that
+# creates the draft.
 # Checks here: on a tag, that the tag is v + VERSION and the version checks pass (scripts/check-release.sh --tag), before
 # anything is built; vet and tests, the tag shape, SHA256SUMS verified, and that no release for the tag exists yet.
+# Network fetch: appimagetool and the type-2 AppImage runtime, from their GitHub releases at fixed tags, checked against
+# the SHA-256 pins below before use (scripts/build-appimage.sh checks the same pins again before running anything).
 # The notes are scripts/release-notes.sh for VERSION: the CHANGELOG.md entries under that version's heading.
-# Not checked here: that the binaries run on Windows or arm64 (they are cross-built), signing (the exe is unsigned).
+# Not checked here: that the binaries run on Windows or arm64 (they are cross-built), signing (the exe and the AppImage
+# are unsigned).
 name: release
 on:
   push:
@@ -36,14 +40,27 @@ jobs:
         run: |
           go vet ./...
           go test -race -count=1 ./...
-      - name: Build archives and checksums
-        run: scripts/release-build.sh "$TAG"
+      - name: Fetch appimagetool and the AppImage runtime (pinned by SHA-256)
+        env:
+          APPIMAGETOOL_URL: https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          APPIMAGETOOL_SHA256: ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
+          RUNTIME_URL: https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
+          RUNTIME_SHA256: 2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d
+        run: |
+          d="$RUNNER_TEMP/appimage-tools"; mkdir -p "$d"
+          curl -fsSL --proto '=https' --tlsv1.2 --retry 3 -o "$d/appimagetool-x86_64.AppImage" "$APPIMAGETOOL_URL"
+          curl -fsSL --proto '=https' --tlsv1.2 --retry 3 -o "$d/runtime-x86_64" "$RUNTIME_URL"
+          printf '%s  %s\n' "$APPIMAGETOOL_SHA256" "$d/appimagetool-x86_64.AppImage" "$RUNTIME_SHA256" "$d/runtime-x86_64" \
+            | sha256sum -c - || { echo "::error::a pinned AppImage tool does not match its SHA-256"; rm -rf "$d"; exit 1; }
+      - name: Build archives, the AppImage (with its smoke test) and checksums
+        run: scripts/release-build.sh "$TAG" --appimage-tools "$RUNNER_TEMP/appimage-tools"
       - name: Release notes
         run: |
           {
             echo "### Files"
             echo
             echo "Each archive holds one self-contained server binary (no installer, no runtime needed), LICENSE, NOTICE.md and an examples folder (settings file, systemd unit, proxy configs)."
+            echo "The x86_64 AppImage holds the same Linux binary and examples as one runnable file; it needs FUSE to mount, or run it with \`--appimage-extract-and-run\`. It is not signed."
             echo "Check a download with \`sha256sum -c SHA256SUMS\`."
             echo
             echo '```'
@@ -84,4 +101,8 @@ jobs:
           fi
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease \
             --title "$TAG" --notes-file dist/notes.md \
-            dist/re-psn-* dist/SHA256SUMS
+            dist/re-psn-"$TAG"-windows-amd64.zip dist/re-psn-"$TAG"-windows-amd64.zip.sha256 \
+            dist/re-psn-"$TAG"-linux-amd64.tar.gz dist/re-psn-"$TAG"-linux-amd64.tar.gz.sha256 \
+            dist/re-psn-"$TAG"-linux-arm64.tar.gz dist/re-psn-"$TAG"-linux-arm64.tar.gz.sha256 \
+            dist/re-psn-"$TAG"-x86_64.AppImage dist/re-psn-"$TAG"-x86_64.AppImage.sha256 \
+            dist/SHA256SUMS

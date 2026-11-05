@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -71,7 +72,7 @@ func newTree(t *testing.T, files map[string]string) string {
 	for rel, text := range files {
 		write(rel, []byte(text), 0o644)
 	}
-	for _, s := range []string{"bump-version.sh", "release-notes.sh", "check-release.sh"} {
+	for _, s := range []string{"bump-version.sh", "release-notes.sh", "check-release.sh", "build-appimage.sh"} {
 		b, err := os.ReadFile(filepath.Join("..", "scripts", s))
 		if err != nil {
 			t.Fatal(err)
@@ -288,5 +289,102 @@ func TestCheckReleaseTag(t *testing.T) {
 	}
 	if _, errout, _ := run(t, root, "sh", "scripts/check-release.sh", "--tag", "v0.3.1"); strings.Contains(errout, refused) {
 		t.Errorf("v0.3.1 against VERSION 0.3.1 was refused: %q", errout)
+	}
+}
+
+// build-appimage.sh refuses a bad tag, a missing tool and a tool whose SHA-256 is not the pinned one, before it runs
+// anything: the stand-in appimagetool writes a marker file when run, and the marker must never appear.
+func TestBuildAppImageRefuses(t *testing.T) {
+	needShell(t, "bash", "sha256sum", "cut")
+	root := newTree(t, fixtureTree) // VERSION 0.3.1
+	tools := t.TempDir()
+	marker := filepath.Join(t.TempDir(), "ran")
+	if err := os.WriteFile(filepath.Join(tools, "appimagetool-x86_64.AppImage"),
+		[]byte("#!/bin/sh\ntouch '"+marker+"'\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tools, "runtime-x86_64"), []byte("not the runtime\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	build := func(args ...string) string {
+		t.Helper()
+		_, errout, err := run(t, root, "bash", append([]string{"scripts/build-appimage.sh"}, args...)...)
+		if err == nil {
+			t.Errorf("%q: want a refusal, got success", args)
+		}
+		if _, err := os.Stat(marker); err == nil {
+			t.Fatalf("%q: the tool ran", args)
+		}
+		return errout
+	}
+	for tag, want := range map[string]string{
+		"0.3.1":      "is not vMAJOR.MINOR.PATCH",
+		"v0.3":       "is not vMAJOR.MINOR.PATCH",
+		"v0.3.1-rc1": "odd characters",
+		"v0.3.1;x":   "odd characters",
+		"v0.3.2":     "is not v + VERSION",
+		"v0.3.10":    "is not v + VERSION",
+	} {
+		if errout := build("build", tag, tools); !strings.Contains(errout, want) {
+			t.Errorf("%s: want %q, got %q", tag, want, errout)
+		}
+	}
+	for _, tag := range []string{"v0.3.1", "v0.0.0"} { // the right tag, and the dry run's
+		errout := build("build", tag, tools)
+		if !strings.Contains(errout, "SHA-256 mismatch") || !strings.Contains(errout, "refusing to run appimagetool") {
+			t.Errorf("%s with a wrong tool: want a hash refusal, got %q", tag, errout)
+		}
+	}
+	if errout := build("build", "v0.3.1", t.TempDir()); !strings.Contains(errout, "is missing") {
+		t.Errorf("empty tools directory: want a missing-file refusal, got %q", errout)
+	}
+	for _, args := range [][]string{{}, {"build"}, {"build", "v0.3.1"}, {"fetch"}, {"other", "x"}} {
+		if errout := build(args...); !strings.Contains(errout, "usage:") {
+			t.Errorf("%q: want a usage error, got %q", args, errout)
+		}
+	}
+}
+
+// The tool pins in scripts/build-appimage.sh and .github/workflows/release.yml are the same fixed releases, and
+// NOTICE.md and docs/releasing.md state the same hashes.
+func TestAppImagePinsAgree(t *testing.T) {
+	read := func(rel string) string {
+		b, err := os.ReadFile(filepath.Join("..", filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(b)
+	}
+	script, workflow := read("scripts/build-appimage.sh"), read(".github/workflows/release.yml")
+	notice, releasing := read("NOTICE.md"), read("docs/releasing.md")
+	hex64 := regexp.MustCompile(`^[0-9a-f]{64}$`)
+	for _, key := range []string{"APPIMAGETOOL_URL", "APPIMAGETOOL_SHA256", "RUNTIME_URL", "RUNTIME_SHA256"} {
+		re := regexp.MustCompile(`(?m)^\s*` + key + `[=:] ?(\S+)\s*$`)
+		s, w := re.FindAllStringSubmatch(script, -1), re.FindAllStringSubmatch(workflow, -1)
+		if len(s) != 1 || len(w) != 1 {
+			t.Fatalf("%s: want one pin in each file, got %d in the script and %d in the workflow", key, len(s), len(w))
+		}
+		if s[0][1] != w[0][1] {
+			t.Errorf("%s: script %q, workflow %q", key, s[0][1], w[0][1])
+		}
+		v := s[0][1]
+		switch {
+		case strings.HasSuffix(key, "_URL"):
+			if !strings.HasPrefix(v, "https://github.com/AppImage/") || !strings.Contains(v, "/releases/download/") ||
+				strings.Contains(v, "continuous") || strings.Contains(v, "latest") {
+				t.Errorf("%s %q is not a fixed AppImage GitHub release", key, v)
+			}
+		case !hex64.MatchString(v):
+			t.Errorf("%s %q is not a SHA-256", key, v)
+		case !strings.Contains(notice, v) || !strings.Contains(releasing, v):
+			t.Errorf("%s %s is not stated in NOTICE.md and docs/releasing.md", key, v)
+		}
+	}
+	for _, key := range []string{"APPIMAGETOOL", "RUNTIME"} {
+		ver := regexp.MustCompile(`(?m)^` + key + `_VERSION=(\S+)$`).FindStringSubmatch(script)
+		url := regexp.MustCompile(`(?m)^` + key + `_URL=(\S+)$`).FindStringSubmatch(script)
+		if ver == nil || url == nil || !strings.Contains(url[1], "/download/"+ver[1]+"/") {
+			t.Errorf("%s: the URL does not name the version %v", key, ver)
+		}
 	}
 }

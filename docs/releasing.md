@@ -12,6 +12,7 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 - [Versions and tags](#versions-and-tags)
 - [Cut a pre-release](#cut-a-pre-release)
 - [Before the first tag: the dry run](#before-the-first-tag-the-dry-run)
+- [The AppImage](#the-appimage)
 - [Checked automatically](#checked-automatically)
 - [Not checked yet](#not-checked-yet)
 
@@ -68,11 +69,12 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 6. The tag starts [`.github/workflows/release.yml`](../.github/workflows/release.yml). It first runs
    `scripts/check-release.sh --tag <tag>`, which fails unless the tag is `v` + `VERSION` at the tagged commit and the
    version checks pass; nothing is built after a failure. Then vet and tests, the archives for windows/amd64, linux/amd64
-   and linux/arm64 with a `.sha256` file each and `SHA256SUMS` (LF, no BOM), the notes, and a **draft** pre-release
+   and linux/arm64 and the x86_64 [AppImage](#the-appimage), with a `.sha256` file each and `SHA256SUMS` (LF, no BOM),
+   the notes, and a **draft** pre-release
    titled with the tag. The notes are `scripts/release-notes.sh` for `VERSION` (the CHANGELOG.md entries under that
    version's heading, which the bump filled) with the list of files, the checksums and the closing line
    `Next release: when ready` added. The job fails if a release for the tag exists already.
-7. Check the draft: the notes, the assets (three archives, their `.sha256` files, `SHA256SUMS`), and a download checked
+7. Check the draft: the notes, the assets (three archives, the AppImage, their `.sha256` files, `SHA256SUMS`), and a download checked
    with `sha256sum -c SHA256SUMS`. A bad draft is deleted before it is published; then re-run the workflow for the same
    tag, or, if the tagged commit is wrong, bump to the next version.
 8. Publishing is the maintainer's. Publishing starts
@@ -85,14 +87,67 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 
 ## Before the first tag: the dry run
 
-Run the release workflow by hand (Actions, release, Run workflow). A manual run builds the archives for `v0.0.0` and keeps
-them, with `notes.md`, as a run artifact; it creates no release and has no write permission. The tag check is skipped (there
+Run the release workflow by hand (Actions, release, Run workflow). A manual run builds the archives and the AppImage for
+`v0.0.0` and keeps them, with `notes.md`, as a run artifact; it creates no release and has no write permission. The tag check is skipped (there
 is no tag), but `scripts/release-build.sh` still runs `scripts/check-release.sh`, and the notes are built the same way as on
 a tag, for the version in `VERSION`: what a tag at that commit would get. Before the first tag, check that artifact by hand: the sizes, the checksums
 against `SHA256SUMS`, and that the Linux archive unpacks in an empty directory and the server inside starts without Go or
 build tools. The Windows and arm64 archives are cross-built; say in the notes which ones were not run.
 
-`scripts/release-build.sh v0.0.0` builds the same archives locally into `dist/` (ignored by git).
+`scripts/release-build.sh v0.0.0` builds the same archives locally into `dist/` (ignored by git). To build the AppImage too:
+
+```sh
+scripts/build-appimage.sh fetch /tmp/appimage-tools      # the only download; checked against the pins
+scripts/release-build.sh v0.0.0 --appimage-tools /tmp/appimage-tools
+```
+
+## The AppImage
+
+`re-psn-vX.Y.Z-x86_64.AppImage` is the linux/amd64 server as one runnable file, for people who would rather not unpack an
+archive. It is a command-line server: double-clicking it does nothing useful. `./re-psn-vX.Y.Z-x86_64.AppImage -h` works
+like `re-psn -h`, and any other arguments go to the server the same way.
+
+- **Contents:** the same `re-psn` binary as `re-psn-vX.Y.Z-linux-amd64.tar.gz`, byte for byte, the examples (`deploy/`,
+  in `usr/share/re-psn/examples`), `LICENSE` and `NOTICE.md`, and from [`scripts/appimage/`](../scripts/appimage) an
+  `AppRun` that runs the binary with the arguments given, a `.desktop` file and an icon (a small SVG in the colours of
+  [`docs/art/palette.json`](art/palette.json); the art in `docs/img/` has no square image). `--appimage-extract` unpacks
+  it into `squashfs-root/`, which is how to get at the examples.
+- **Running it:** `chmod +x` it first. Mounting needs FUSE on the host (the kernel module and `fusermount3` or
+  `fusermount`; the runtime carries its own libfuse, so no libfuse2 package is needed). Without FUSE, for example in
+  most containers, run it with `--appimage-extract-and-run` as the first argument: it unpacks to a temporary directory,
+  runs, and cleans up afterwards. The tarball needs neither.
+- **x86_64 only.** The arm64 binary is cross-built, and an aarch64 AppImage could not be run once on the x86_64 runner
+  before it ships; arm64 hosts take the tarball.
+- **Unsigned,** like the rest of the release (signing is planned later, with Windows signing; see
+  [ROADMAP.md](../ROADMAP.md)). Check a download against `SHA256SUMS` or its own `.sha256` file:
+
+  ```sh
+  sha256sum -c re-psn-vX.Y.Z-x86_64.AppImage.sha256
+  ```
+
+How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), run by `scripts/release-build.sh` with
+`--appimage-tools`):
+
+1. `release.yml` downloads two files, each from a fixed GitHub release and checked against its SHA-256 before anything
+   else happens (a mismatch stops the job):
+
+   | File | Version and source | SHA-256 | Licence |
+   |---|---|---|---|
+   | `appimagetool-x86_64.AppImage` | [appimagetool 1.9.1](https://github.com/AppImage/appimagetool/releases/tag/1.9.1) | `ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0` | MIT |
+   | `runtime-x86_64` | [type-2 runtime 20251108](https://github.com/AppImage/type2-runtime/releases/tag/20251108) | `2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d` | MIT |
+
+   Both are x86_64 programs and run on the x86_64 `ubuntu-latest` runner. Nothing is committed; [NOTICE.md](../NOTICE.md)
+   records them. To move to a newer version, change the URL and hash in both `scripts/build-appimage.sh` and
+   `release.yml` (`TestAppImagePinsAgree` fails when they differ), here and in NOTICE.md.
+2. The script checks both hashes again, on its own copies, and refuses to run anything on a mismatch. It refuses a tag
+   that is not `vMAJOR.MINOR.PATCH`, or not `v` + `VERSION` (except the dry run's `v0.0.0`).
+3. It builds the AppDir from the linux/amd64 archive in `dist/`, with fixed modes and every mtime set to
+   `SOURCE_DATE_EPOCH` (default 0), and packs it with appimagetool and `--runtime-file`, so appimagetool fetches
+   nothing. Two builds of the same commit with the same Go give the same file.
+4. Smoke test: the files in the AppImage equal the AppDir, its binary equals the archive's, `--appimage-extract-and-run -h`
+   prints what the binary's `-h` prints (apart from the program path on the first line), and the server it starts on
+   loopback reports the tag's version.
+5. It writes the `.sha256` file, adds the AppImage to `SHA256SUMS`, and `sha256sum -c SHA256SUMS` runs on the lot.
 
 ## Checked automatically
 
@@ -105,12 +160,16 @@ build tools. The Windows and arm64 archives are cross-built; say in the notes wh
 | The tag is `v` + `VERSION` at the tagged commit (`TestCheckReleaseTag` for the script) | `scripts/check-release.sh --tag`, first step of `release.yml` on a tag |
 | The deploy examples match the server's flags | `scripts/check-deploy.sh`, run by `scripts/release-build.sh` |
 | `SHA256SUMS` verifies | `scripts/release-build.sh`, `release.yml` (build and draft jobs), `release-check.yml` |
+| appimagetool and the runtime match their SHA-256 pins; the script and the workflow pin the same files (`TestAppImagePinsAgree`); a wrong hash or tag is refused before anything runs (`TestBuildAppImageRefuses`) | `release.yml`, `scripts/build-appimage.sh`; the tests in `go test ./...` |
+| The AppImage holds the archive's binary, and its `-h` and version match | `scripts/build-appimage.sh` (smoke test), in `release.yml` |
 | No release exists for the tag yet | `release.yml` |
 | Published, titled with the tag, pre-release while 0.x, exactly the expected assets, checksums | `release-check.yml` |
 
 ## Not checked yet
 
-- The release workflow itself: it has not run on Actions since the tag check and the notes script were added. The dry run
-  comes first.
-- That the Windows and arm64 binaries run; they are cross-built. The exe and `SHA256SUMS` are unsigned.
+- The release workflow itself: it has not run on Actions since the tag check and the notes script were added, nor with
+  the AppImage steps. The dry run comes first.
+- That the Windows and arm64 binaries run; they are cross-built. The exe, the AppImage and `SHA256SUMS` are unsigned.
+- The AppImage on other distributions: it was built and run (with FUSE and with `--appimage-extract-and-run`) on one
+  x86_64 Linux machine only.
 - Sample log output in the README and `docs/running.md` (`version=0.1.0`) is an example and is not changed by the bump.

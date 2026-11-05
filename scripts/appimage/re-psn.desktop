@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=re-psn
+Comment=Matchmaking and leaderboard server for recompiled PS3 games (command line)
+Exec=re-psn
+Icon=re-psn
+Terminal=true
+Categories=Network;
