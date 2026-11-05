@@ -1,10 +1,20 @@
-# psnr
+# re-psn
 
-A stand-in for PSN's matchmaking rooms and leaderboards, for PS3 titles
+A reimplementation of PSN's matchmaking rooms and leaderboards, for PS3 titles
 statically recompiled with [ps3recomp](https://github.com/sp00nznet/ps3recomp).
 It is the PS3 counterpart of [xlive](https://github.com/sp00nznet/xlive). The
 server hands out rooms and each peer's address; the players' game traffic then
 goes directly between them.
+
+## Credits and naming
+
+re-psn is a fork of [psnr](https://github.com/sp00nznet/psnr) by sp00nz (sp00nznet on GitHub), who wrote the original server, the C client and the
+protocol. The MIT licence and copyright line are kept in [LICENSE](LICENSE), and the upstream work stays credited in [NOTICE.md](NOTICE.md). This
+fork adds hardened CI, community files, logging, invite-only rooms, reverse proxy support, settings from environment variables, release archives and
+a Docker folder; its changes are in [CHANGELOG.md](CHANGELOG.md).
+
+The project is called re-psn. The program, its C client files and its settings keep the name psnr (the `psnr` server, `client/psnr.c`,
+`PSNR_*` variables), so existing setups keep working and the code stays easy to compare with upstream.
 
 ## Status
 
@@ -141,7 +151,7 @@ are in [SECURITY.md](SECURITY.md).
 
 MIT. See [LICENSE](LICENSE).
 
-psnr is an independent project. It is not affiliated with or endorsed by Sony
+re-psn is an independent project. It is not affiliated with or endorsed by Sony
 Interactive Entertainment; PlayStation and PSN are its trademarks. It contains
 no Sony code or game content, and implements its own protocol. You need your
 own legally obtained copies of the games.

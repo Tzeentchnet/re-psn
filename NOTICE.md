@@ -1,7 +1,8 @@
 # Third-party components and credits
 
-This is a fork of [sp00nznet/psnr](https://github.com/sp00nznet/psnr) (MIT). The upstream licence and copyright line are in
-[LICENSE](LICENSE) and stay in this fork.
+re-psn is a fork of [sp00nznet/psnr](https://github.com/sp00nznet/psnr) (MIT), written by sp00nz. The upstream licence and copyright line are in
+[LICENSE](LICENSE) and stay in this fork; the server, the C client and the protocol are upstream's work, and this fork's changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
 
 | Component | Use | Licence |
 |---|---|---|
