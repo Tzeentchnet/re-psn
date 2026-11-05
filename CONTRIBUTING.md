@@ -19,7 +19,7 @@ reporting there too.
 - A change to the wire format bumps the protocol version and updates [docs/api.md](docs/api.md) in the same commit.
 - Commits: a plain subject line, then a short body saying what and why.
 - The [pull request template](.github/pull_request_template.md) asks for Why, Change, Tests, Evidence and Overlap.
-- Using an AI coding agent is fine; you remain responsible for what it submits, and the pull request should say so.
+- Using an AI coding agent is fine; you remain responsible for what it submits, and the pull request should say so. [AGENTS.md](AGENTS.md) has the commands and rules for agents.
 
 ## Testing
 

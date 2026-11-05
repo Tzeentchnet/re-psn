@@ -1,0 +1,58 @@
+# Instructions for AI coding agents
+
+This file is for AI coding agents working in this repository. People can read it too: it is the short version of
+[CONTRIBUTING.md](CONTRIBUTING.md) with the commands and layout an agent needs. If the two disagree, CONTRIBUTING.md wins.
+
+re-psn is a fork of [sp00nznet/psnr](https://github.com/sp00nznet/psnr): a Go server for matchmaking rooms and leaderboards, and a
+C client, for statically recompiled PS3 games.
+
+## Layout
+
+| Path | What is there |
+|---|---|
+| `server/` | The Go server (`package main`); `server/store/` holds storage backends and the contract tests they share |
+| `client/` | The C client (`psnr.c`, `psnr.h`) and its test |
+| `docs/` | Markdown docs; `features.tsv` is the source of `features.md` |
+| `deploy/`, `docker/` | Settings example, systemd unit, proxy examples; container files |
+| `lab/` | The NAT lab (Docker) |
+| `scripts/`, `tools/` | Release and check scripts; the features generator |
+| `VERSION` | The one version number; see [docs/releasing.md](docs/releasing.md) |
+
+## Names that stay
+
+The project is called re-psn, but some names match upstream on purpose, so changes can still go back to it. Do not rename:
+the Go module path `github.com/sp00nznet/psnr`, the `psnr_*` C functions and `client/psnr.c`, the UDP magic `PSNR` and the
+wire format. Settings are `RE_PSN_<FLAG>`; `PSNR_<FLAG>` is a deprecated alias that still works.
+
+## Before you commit
+
+```sh
+gofmt -l server                  # prints nothing when formatted
+go vet ./...
+go test -race ./...
+python3 tools/features.py --check && python3 -m unittest
+sh scripts/check-deploy.sh       # when deploy/ or the flags changed
+```
+
+`nix develop` gives a shell with Go and gcc. The NAT lab (`sh lab/run.sh`) needs Docker.
+
+## Rules
+
+- **Wire format:** a change bumps the protocol version and updates [docs/api.md](docs/api.md) in the same commit.
+- **Dependencies:** the server has none outside the standard library. Adding one is its own change, with a stated reason.
+- **Settings:** a new flag also gets a `RE_PSN_` variable, a line in `deploy/re-psn.env.example`, and a row in
+  [docs/running.md](docs/running.md). Never log a setting's value, only its name.
+- **Features list:** edit `docs/features.tsv` and `ROADMAP.md`, then run `python3 tools/features.py` to regenerate
+  `docs/features.md`. Do not edit the generated file by hand.
+- **Docs:** Markdown, one layout, diagrams in Mermaid. Update them in the same change as the behaviour.
+- **Tests:** add them in the same commit. Say in the pull request what you ran and what you did not run.
+- **Never add:** game files or links to them, keys or credentials, saves, private logs, local paths or user names.
+- **Security problems** go through [SECURITY.md](SECURITY.md), not an issue or a pull request.
+
+## Commits and pull requests
+
+- A plain subject line, then a short body saying what and why. Do not add trailer lines naming a tool.
+- One focused change per pull request, using the [template](.github/pull_request_template.md).
+- End the pull request description with the line: `Developed with AI agent assistance.`
+- Do not force-push a branch that has a pull request open; add a follow-up commit.
+- Do not merge your own pull request or tag a release; a maintainer does both.
