@@ -50,10 +50,16 @@ func main() {
 	proxyProto := toggle("proxy-protocol", false, "require a PROXY protocol v1/v2 header on the game TCP port from a trusted proxy (needs -trusted-proxies)")
 	udpAny := toggle("udp-any-source", false, "accept UDP probes and relay packets from an address other than the player's TCP address (for players whose UDP leaves from another address, such as some multi-WAN or carrier NAT setups; weakens the check against spoofed or stolen-token probes)")
 	relay := toggle("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
+	db := flag.String("db", "off", "score storage: off or memory (both keep scores in memory; no database backend is built yet)")
+	dbFile := flag.String("db-file", "", "read the -db setting from this file instead (it may hold a password)")
 	flag.Parse()
 	if bad != nil {
 		log.Fatal(bad)
 	}
+	onCmdLine := map[string]bool{}
+	flag.Visit(func(f *flag.Flag) { onCmdLine[f.Name] = true })
+	dbSet := lookupSetting("db", *db, onCmdLine["db"])
+	dbFileSet := lookupSetting("db-file", *dbFile, onCmdLine["db-file"])
 
 	level, format, err := parseLogFlags(*logLevel, *logFormat)
 	if err != nil {
@@ -77,8 +83,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	scores, err := openStore(dbSet, dbFileSet)
+	if err != nil {
+		fatal(err)
+	}
+	logger.Info("storage", "backend", scores.Name())
+
 	s := NewServer(*maxRooms, *verbose)
 	s.log = logger
+	s.scores = scores
 	s.relay = *relay
 	trusted, err := parseTrusted(*trustedList)
 	if err != nil {

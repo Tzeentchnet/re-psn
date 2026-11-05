@@ -41,7 +41,33 @@ type statsJSON struct {
 	Boards      []boardJSON `json:"boards"`
 }
 
+// boardStats lists the leaderboards, sorted by title and board. A store
+// error is logged and gives an empty list, so the page still shows rooms.
+func (s *Server) boardStats() []boardJSON {
+	ctx, cancel := storeCtx()
+	defer cancel()
+	out := []boardJSON{}
+	boards, err := s.scores.Boards(ctx)
+	if err != nil {
+		s.log.Warn("status page", "reason", "score store", "err", err)
+		return out
+	}
+	for _, b := range boards {
+		bj := boardJSON{Title: b.Key.Title, Board: b.Key.Board, Entries: b.Entries}
+		if b.Entries > 0 {
+			bj.Leader, bj.Best = b.Leader.OnlineID, b.Leader.Score
+		}
+		out = append(out, bj)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		a, b := out[i], out[j]
+		return a.Title < b.Title || a.Title == b.Title && a.Board < b.Board
+	})
+	return out
+}
+
 func (s *Server) snapshot() statsJSON {
+	boards := s.boardStats() // outside s.mu: the store has its own lock
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	st := statsJSON{
@@ -49,7 +75,7 @@ func (s *Server) snapshot() statsJSON {
 		Clients:     len(s.clients),
 		Connections: s.conns,
 		Rooms:       []roomJSON{},
-		Boards:      []boardJSON{},
+		Boards:      boards,
 	}
 	for _, r := range s.rooms {
 		if r.code != "" { // invite-only rooms are counted, not listed
@@ -63,18 +89,7 @@ func (s *Server) snapshot() statsJSON {
 		}
 		st.Rooms = append(st.Rooms, rj)
 	}
-	for k, b := range s.boards {
-		bj := boardJSON{Title: k.commID, Board: k.id, Entries: len(b.entries)}
-		if r := b.ranked(); len(r) > 0 {
-			bj.Leader, bj.Best = r[0].onlineID, r[0].score
-		}
-		st.Boards = append(st.Boards, bj)
-	}
 	sort.Slice(st.Rooms, func(i, j int) bool { return st.Rooms[i].ID < st.Rooms[j].ID })
-	sort.Slice(st.Boards, func(i, j int) bool {
-		a, b := st.Boards[i], st.Boards[j]
-		return a.Title < b.Title || a.Title == b.Title && a.Board < b.Board
-	})
 	return st
 }
 

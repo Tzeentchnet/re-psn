@@ -47,4 +47,7 @@ fi
 if grep -rEin '(token|secret|password)=[^ ]' "$root/deploy"; then
   echo "deploy/ holds a value for a token or secret" >&2; exit 1
 fi
+if grep -rEin '[a-z]+://[^ /@]*:[^ /@]+@' "$root/deploy"; then
+  echo "deploy/ holds a connection string with a password" >&2; exit 1
+fi
 echo "deploy examples ok: $(echo "$want" | wc -l) settings, $(echo "$old" | wc -l) deprecated names"

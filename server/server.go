@@ -1,9 +1,9 @@
 package main
 
-// One goroutine per client connection, one mutex over all room and score
-// state. Handlers run under the lock and return the pushes they owe other
-// clients; those are written after the lock drops, so a slow peer socket
-// never stalls anyone else's request.
+// One goroutine per client connection, one mutex over all room state (the
+// score store has its own lock; scores.go). Room handlers run under the lock
+// and return the pushes they owe other clients; those are written after the
+// lock drops, so a slow peer socket never stalls anyone else's request.
 
 import (
 	crand "crypto/rand"
@@ -17,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/sp00nznet/psnr/server/store"
 )
 
 const clientTimeout = 90 * time.Second // HELLO/HEARTBEAT keep a client alive
@@ -33,12 +35,13 @@ type Server struct {
 	clients  map[uint32]*client
 	rooms    map[uint64]*room
 	byCode   map[string]*room // invite-only rooms by their code (rooms.go)
-	boards   map[boardKey]*board
 	nextID   uint32
 	nextRoom uint64
 	maxRooms int
 	started  time.Time
 	conns    uint64
+
+	scores store.Store // leaderboards (scores.go); memory unless -db says otherwise
 
 	maxPlayerRooms int            // rooms one player may be in at once
 	maxPerAddr     int            // open connections per remote address
@@ -85,7 +88,7 @@ func NewServer(maxRooms int, verbose bool) *Server {
 		clients:  map[uint32]*client{},
 		rooms:    map[uint64]*room{},
 		byCode:   map[string]*room{},
-		boards:   map[boardKey]*board{},
+		scores:   store.NewMemory(),
 		streams:  map[uint32]*stream{},
 		maxRooms: maxRooms,
 		started:  time.Now(),
@@ -213,6 +216,15 @@ func (s *Server) handle(c *client, t byte, p []byte) {
 		return
 	}
 
+	switch t {
+	case msgRecordScore, msgGetRanking, msgGetRankingID:
+		s.mu.Lock()
+		who := scorer{c.commID, c.onlineID}
+		s.mu.Unlock()
+		c.send(s.scoreRequest(c, who, t, req, r))
+		return
+	}
+
 	s.mu.Lock()
 	var reply []byte
 	var rt byte
@@ -243,12 +255,6 @@ func (s *Server) handle(c *client, t byte, p []byte) {
 		rt, reply, out = s.getRoomAccess(c, req, r)
 	case msgJoinByCode:
 		rt, reply, out = s.joinByCode(c, req, r)
-	case msgRecordScore:
-		rt, reply = s.recordScore(c, req, r)
-	case msgGetRanking:
-		rt, reply = s.getRanking(c, req, r)
-	case msgGetRankingID:
-		rt, reply = s.getRankingByID(c, req, r)
 	default:
 		s.log.Warn("unknown request type", "client", c.id, "online_id", c.onlineID, "type", t)
 		rt, reply = msgError, errReply(req, errBadRequest)

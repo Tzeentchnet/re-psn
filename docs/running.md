@@ -47,6 +47,8 @@ docker compose -f docker/docker-compose.yml up -d
 | `-max-rooms` | `1000` | Room limit across all titles |
 | `-udp-any-source` | off | Accept UDP probes and relay packets from an address other than the player's TCP address. By default they must match; turn this on only for players whose UDP leaves from another public address (some multi-WAN or carrier NAT setups). It weakens the check, and the server warns at start. See [UDP source address](#udp-source-address). |
 | `-relay` | off | Carry traffic between players who can't reach each other directly: streams into a player behind a router, and datagrams when a router won't let punched traffic through. Uses this server's bandwidth. |
+| `-db` | `off` | Score storage: `off` or `memory`, which both keep scores in memory. See [Storage](#storage). |
+| `-db-file` | none | Read the `-db` setting from this file instead. Set `-db` or `-db-file`, not both. |
 | `-log-level` | `info` | `debug` (room and relay events), `info` (connects, hellos, disconnects), `warn` (every refusal) or `error`. |
 | `-log-format` | `text` | `text` or `json`, one line per event. |
 | `-log-file` | none | Also append the log to this file (created with mode 0600). |
@@ -139,12 +141,12 @@ If you change a port, change it in the compose `ports` list as well, and in your
 ## Logging
 
 The log goes to standard error, and to `-log-file` if set. It holds online IDs and client addresses, because a refusal
-is about them; it never holds the status page token, the UDP probe token or a request query string. What is logged:
+is about them; it never holds the status page token, the UDP probe token, the `-db` setting or a request query string. What is logged:
 
 | Level | Events |
 |---|---|
-| info | server start, each HELLO (client, title, online ID, address), a reconnect that replaces a connection, each disconnect, a failed read |
-| warn | a connection refused (too many from one address), a UDP probe from another address than the player's TCP connection (once per player), a connection closed for its request rate, a HELLO refused (name taken), a room request refused (room limit, blob over limit), an unknown request type, a status page request refused (path only) |
+| info | server start (and the storage backend), each HELLO (client, title, online ID, address), a reconnect that replaces a connection, each disconnect, a failed read |
+| warn | a connection refused (too many from one address), a UDP probe from another address than the player's TCP connection (once per player), a connection closed for its request rate, a HELLO refused (name taken), a room request refused (room limit, blob over limit), an unknown request type, a status page request refused (path only), a score request or status page that the score store failed |
 | debug | connects, requests before HELLO, room created, joined and closed, relay streams, UDP probe results |
 
 Rotate the file with logrotate or your service manager (`copytruncate`, or restart after moving it); the server does not rotate it.
@@ -191,6 +193,16 @@ On Linux: `sudo ufw allow 3658` (both protocols).
 
 > [!TIP]
 > A tailnet needs neither rule for players on it.
+
+## Storage
+
+Scores are kept by a storage backend that `-db` (or `RE_PSN_DB`) picks. Only `off` (the default) and `memory` exist
+today, and they are the same thing: scores live in memory and a restart empties every board. A setting that starts
+with `sqlite:`, `postgres://`, `postgresql://` or `mysql://` stops the server at start with a message saying that
+backend is not built yet; anything else stops it as a bad setting. Because a connection string can hold a password,
+`-db-file` (or `RE_PSN_DB_FILE`) reads the setting from a file instead, and the server never prints the setting or the
+file's contents: errors name the variable, the scheme and the file's path only. If the score store fails, a score
+request gets ERROR 6 and the failure is logged at warn level.
 
 ## State, backup, upgrade
 
