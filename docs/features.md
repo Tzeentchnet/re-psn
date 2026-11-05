@@ -6,11 +6,11 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | Status | Meaning | Features |
 |---|---|---|
-| available | merged, with a test or a recorded run | 22 |
+| available | merged, with a test or a recorded run | 23 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
 | partial | merged in part, or with known gaps | 1 |
 | in progress | an open pull request or branch | 0 |
-| planned | wanted and intended, not started | 20 |
+| planned | wanted and intended, not started | 19 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
 | all | | 53 |
@@ -149,7 +149,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 | `docs-diagrams` | **Mermaid diagrams**: The architecture, reverse proxy, relay and NAT lab diagrams are Mermaid, which GitHub renders. | available | main | [`docs/architecture.md`](architecture.md), [`lab/README.md`](../lab/README.md), [#13](https://github.com/undecuple/re-psn/pull/13) | No generated images to keep in step. |
 | `docs-markdown` | **Docs in Markdown**: Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams. | available | main | [`deploy/README.md`](../deploy/README.md), [`docker/README.md`](../docker/README.md), [`docs/running.md`](running.md), [#20](https://github.com/undecuple/re-psn/pull/20) | Links were checked once with a throwaway script; a CI link check is planned (repo-check). |
 | `docs-connecting` | **Ways to connect**: A page on how players reach a server: same LAN, port forwarding, a public server with `-relay`, a VPN overlay (Tailscale, ZeroTier) or a reverse proxy, with what each needs, its limits, diagrams and links to the overlays' official documentation. | available | main | [`docs/connecting.md`](connecting.md) | Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only. |
-| `docs-readme` | **README rewrite**: A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream. | planned |  |  | Not started. |
+| `docs-readme` | **README rewrite**: A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream. | available | main | [`README.md`](../README.md) | Example output comes from real local runs; the settings table was checked against the server flags. No banner or images yet (docs-art). |
 | `docs-art` | **Art generator**: A generator for the README banner and terminal images in one palette, with pinned fonts and reproducible output. Terminal images only from real runs. | planned |  |  | Not started. |
 | `repo-check` | **Repository layout check**: A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist. | planned |  |  | Not started. After docs-markdown. |
 
