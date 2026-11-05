@@ -7,7 +7,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
-- Release archives include an `examples/` folder: `psnr.env` with every setting, a systemd unit, and Traefik, nginx and HAProxy
+- Release archives include an `examples/` folder: `psnr.env.example` with every setting, a systemd unit, and Traefik, nginx and HAProxy
   configs that pass the real client address. `scripts/check-deploy.sh` checks the env file against the server's flags and runs in
   `scripts/release-build.sh`. Only the Traefik config has been run.
 - Reverse proxy support: `-trusted-proxies` and `-proxy-protocol` (PROXY protocol v1/v2 on the game TCP port), and forwarded

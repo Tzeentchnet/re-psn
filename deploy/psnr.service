@@ -1,5 +1,5 @@
 # systemd unit for psnr. Copy the binary to /usr/local/bin/psnr and this file to /etc/systemd/system/psnr.service,
-# put your settings in /etc/psnr/psnr.env (start from psnr.env next to this file), then:
+# put your settings in /etc/psnr/psnr.env (start from psnr.env.example next to this file), then:
 #   systemctl daemon-reload && systemctl enable --now psnr
 # If you change a port, change it in your firewall too.
 [Unit]

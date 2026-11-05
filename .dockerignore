@@ -1,0 +1,14 @@
+# The image build needs only go.mod and server/. Keep everything else, and any real settings file, out of the build context.
+.git
+.github
+dist
+docs
+deploy
+lab
+client
+scripts
+*.md
+*.log
+.env
+psnr.env
+*.env.local
