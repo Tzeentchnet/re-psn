@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Check [ROADMAP.md](https://github.com/undecuple/psnr/blob/main/ROADMAP.md) first.
+        Check [ROADMAP.md](https://github.com/undecuple/re-psn/blob/main/ROADMAP.md) first.
         Do not attach game files, keys or private logs.
   - type: textarea
     id: what
