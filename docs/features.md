@@ -6,11 +6,11 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | Status | Meaning | Features |
 |---|---|---|
-| available | merged, with a test or a recorded run | 22 |
+| available | merged, with a test or a recorded run | 24 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
 | partial | merged in part, or with known gaps | 1 |
 | in progress | an open pull request or branch | 0 |
-| planned | wanted and intended, not started | 20 |
+| planned | wanted and intended, not started | 18 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
 | all | | 53 |
@@ -88,7 +88,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | ID | Feature | Status | Since | Evidence | Note |
 |---|---|---|---|---|---|
-| `store-interface` | **Storage interface**: A storage layer with an in-memory backend, the leaderboards wired through it, and a `-db` (`RE_PSN_DB`) setting. Off by default, so nothing changes unless a host turns it on. | planned |  |  | Not started. The first step of opt-in storage. |
+| `store-interface` | **Storage interface**: A storage layer with an in-memory backend, the leaderboards wired through it, and a `-db` (`RE_PSN_DB`) setting. Off by default, so nothing changes unless a host turns it on. | available | main | [`server/store/store.go`](../server/store/store.go), [`server/store/storetest/storetest.go`](../server/store/storetest/storetest.go), [`TestMemoryContract`](../server/store/store_test.go), [`TestDBSetting`](../server/storage_test.go), [`TestDBNotLogged`](../server/storage_test.go), [`TestScoreStoreFailure`](../server/storage_test.go), [`TestScoresOutsideRoomLock`](../server/storage_test.go), [#22](https://github.com/undecuple/re-psn/pull/22) | Only `off` and `memory` exist, so scores are still kept in memory and lost on restart; other schemes stop the start. First step of opt-in storage (store-sqlite is next). |
 | `store-sqlite` | **SQLite storage (opt-in)**: An SQLite backend with a pure-Go driver, so the release archives stay static, and migrations built into the binary. With it on, scores survive a restart. The connection string is never logged. | planned |  |  | Not started. The server's first third-party Go module. Player names and bans would follow with accounts. |
 | `store-backup` | **Backup and restore**: Documented backup and restore for each database: a backup command or a copy procedure for SQLite; a dump command with timer and cron examples for PostgreSQL and MariaDB. How long backups are kept is up to the host. | planned |  |  | Not started. Comes with store-sqlite. |
 | `store-postgres` | **PostgreSQL storage**: A PostgreSQL backend for hosts who bring their own database; the server does not run or manage it. | later |  |  | After store-sqlite. |
@@ -149,7 +149,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 | `docs-diagrams` | **Mermaid diagrams**: The architecture, reverse proxy, relay and NAT lab diagrams are Mermaid, which GitHub renders. | available | main | [`docs/architecture.md`](architecture.md), [`lab/README.md`](../lab/README.md), [#13](https://github.com/undecuple/re-psn/pull/13) | No generated images to keep in step. |
 | `docs-markdown` | **Docs in Markdown**: Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams. | available | main | [`deploy/README.md`](../deploy/README.md), [`docker/README.md`](../docker/README.md), [`docs/running.md`](running.md), [#20](https://github.com/undecuple/re-psn/pull/20) | Links were checked once with a throwaway script; a CI link check is planned (repo-check). |
 | `docs-connecting` | **Ways to connect**: A page on how players reach a server: same LAN, port forwarding, a public server with `-relay`, a VPN overlay (Tailscale, ZeroTier) or a reverse proxy, with what each needs, its limits, diagrams and links to the overlays' official documentation. | available | main | [`docs/connecting.md`](connecting.md) | Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only. |
-| `docs-readme` | **README rewrite**: A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream. | planned |  |  | Not started. |
+| `docs-readme` | **README rewrite**: A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream. | available | main | [`README.md`](../README.md) | Example output comes from real local runs; the settings table was checked against the server flags. No banner or images yet (docs-art). |
 | `docs-art` | **Art generator**: A generator for the README banner and terminal images in one palette, with pinned fonts and reproducible output. Terminal images only from real runs. | planned |  |  | Not started. |
 | `repo-check` | **Repository layout check**: A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist. | planned |  |  | Not started. After docs-markdown. |
 

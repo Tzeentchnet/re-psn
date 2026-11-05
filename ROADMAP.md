@@ -32,6 +32,7 @@ Merged into main. Most of it is not in a release yet.
 
 [Leaderboards](docs/features.md#leaderboards) and [players](docs/features.md#players)
 - [scores-boards] Leaderboards with a best score per player, kept in memory.
+- [store-interface] A storage layer with an in-memory backend and a `-db` setting, changing nothing by default.
 - [players-names] One player per name on a server; a second player cannot take a name in use.
 
 [Limits](docs/features.md#limits), [logging](docs/features.md#logging) and the [status page](docs/features.md#status-page)
@@ -60,6 +61,7 @@ Merged into main. Most of it is not in a release yet.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
 - [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
+- [docs-readme] A rewritten README with an example from real runs, the features, the settings and credit to upstream.
 
 On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`
@@ -81,11 +83,9 @@ In about this order.
 ### Releases and docs
 - [release-process] Written release steps and a dry run, then frequent pre-releases with no fixed release day.
 - [docs-art] A generator for the README banner and terminal images, in one palette.
-- [docs-readme] A rewritten README with a quick start, the features and credit to upstream.
 - [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
 
 ### Storage, off unless a host turns it on
-- [store-interface] A storage layer with an in-memory backend and a `-db` setting, changing nothing by default.
 - [store-sqlite] SQLite storage, so leaderboards survive a restart.
 - [store-backup] Backup and restore steps for each database.
 

@@ -67,6 +67,8 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
+- `README.md` is rewritten: a fork notice crediting sp00nz, an overview with a session diagram, an example from real local runs,
+  the available features, install, a settings table checked against the flags, and the `PSNR_*` migration note.
 - `ROADMAP.md` is rewritten around the feature ids (Done, Now, Next, Later, Not planned), keeping upstream's scope section; the
   features list gains planned and later rows for storage, high availability, metrics, the apps' themes and the docs, and
   `tools/features.py --check` also fails when a roadmap item sits under a section that does not match its status.
