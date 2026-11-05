@@ -18,6 +18,35 @@ docker compose -f docker/docker-compose.yml up -d      # the same, with the port
 The build context is the repository root, not this folder: the Dockerfile copies `go.mod` and `server/` from there. Podman works the same
 way (`podman build -f docker/Dockerfile .`).
 
+## Podman
+
+The same Dockerfile builds and runs with Podman, rootless included (ports above 1024 need no root):
+
+```
+podman build -f docker/Dockerfile -t psnr .
+
+podman run -d --name psnr --restart=on-failure \
+  -p 36100:36100/tcp -p 36100:36100/udp \
+  psnr
+```
+
+Add `-e PSNR_<FLAG>=value` for any setting, or `--env-file psnr.env` (copy `deploy/psnr.env.example` from the release archive's `examples/`, or from
+this repository, and keep `psnr.env` private). Status page, from this machine only:
+
+```
+-e PSNR_HTTP=0.0.0.0:36101 -e PSNR_HTTP_TOKEN=<a long random string> -p 127.0.0.1:36101:36101
+```
+
+`podman logs psnr` shows the log; `podman rm -f psnr` stops and removes it. Tested with Podman 6.1 on Linux: the image builds, a TCP connection to the
+published port is accepted, the status page answers 401 without the token and 200 with it, and the restart policy is set. Not tested: UDP through the
+published port, compose (`podman compose` needs a compose provider), a systemd unit for the container (Quadlet), and Windows or macOS Podman machines.
+
+**Check the address psnr sees.** Rootless Podman forwards published ports itself, and in the test a connection from 127.0.0.1 was logged inside the
+container as the machine's own LAN address. psnr uses the player's address for `-max-conns-per-addr`, the same-name reconnect rule and the address it
+tells other players. Connect from another machine, look at the `hello` line in `podman logs psnr`, and make sure it shows that machine's address and not
+the host's; if every player shows the host's address, those features lump everyone together. Running with `--network=host` (not tested here) avoids the
+forwarding.
+
 ## Settings
 
 The image has no fixed flags. Every flag is a `PSNR_<FLAG>` environment variable (`docs/running.md`, "Environment variables"); the compose
