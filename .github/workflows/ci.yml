@@ -1,7 +1,7 @@
 # CI for the fork. It checks formatting, vet, the Go tests with the race detector (on Linux this includes the C client
 # against the server), known vulnerabilities in the Go module and its standard library, secrets in the full history,
-# the NAT lab in Docker, and that docs/features.md matches docs/features.tsv. It does not check Windows beyond the tests,
-# or the C client outside Linux.
+# the NAT lab in Docker, that docs/features.md matches docs/features.tsv, and that the README art in docs/img/ matches a
+# fresh render. It does not check Windows beyond the tests, or the C client outside Linux.
 name: CI
 on:
   push:
@@ -46,6 +46,16 @@ jobs:
         run: |
           python3 tools/features.py --check
           python3 -m unittest -v
+      # The README art: with the pinned Pillow and the fonts checked against their pinned SHA-256, a fresh render must
+      # equal docs/img/*.png and tools/art/art.json byte for byte (tools/art/make_art.py).
+      - name: art
+        if: runner.os == 'Linux'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/art"
+          "$RUNNER_TEMP/art/bin/pip" install --quiet --only-binary=:all: pillow==12.3.0
+          "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --fetch-fonts
+          "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --check
+          "$RUNNER_TEMP/art/bin/python" -m unittest -v tools.art.test_make_art
 
   # Known vulnerabilities (Go vulnerability database) in the code that is built and in the standard library it is
   # built with. Runs on a current Go so a fixed standard library is the one that is checked.

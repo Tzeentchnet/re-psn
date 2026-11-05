@@ -1,0 +1,28 @@
+$ ./re-psn -v
+time=2026-11-05T23:05:00.331Z level=INFO msg=storage backend=memory
+time=2026-11-05T23:05:00.331Z level=INFO msg=started version=0.1.0 clients=[::]:36100 udp=[::]:36100 relay=false
+time=2026-11-05T23:05:00.331Z level=INFO msg="status page" addr=127.0.0.1:36101 token=false
+time=2026-11-05T23:05:01.335Z level=DEBUG msg=connected client=1 addr=127.0.0.1
+time=2026-11-05T23:05:01.335Z level=INFO msg=hello client=1 comm_id=NPWR00001_00 online_id=alice addr=127.0.0.1 p2p_port=3658
+time=2026-11-05T23:05:01.335Z level=DEBUG msg="P2P socket seen" client=1 addr=127.0.0.1:3658 local=127.0.0.1
+time=2026-11-05T23:05:01.355Z level=DEBUG msg="P2P socket seen" client=1 addr=127.0.0.1:3658 local=127.0.0.1
+time=2026-11-05T23:05:01.356Z level=DEBUG msg="room created" room=1 online_id=alice comm_id=NPWR00001_00 max=2
+time=2026-11-05T23:05:02.383Z level=DEBUG msg=connected client=2 addr=127.0.0.1
+time=2026-11-05T23:05:02.383Z level=INFO msg=hello client=2 comm_id=NPWR00001_00 online_id=bob addr=127.0.0.1 p2p_port=3659
+time=2026-11-05T23:05:02.384Z level=DEBUG msg="P2P socket seen" client=2 addr=127.0.0.1:3659 local=127.0.0.1
+time=2026-11-05T23:05:02.404Z level=DEBUG msg="P2P socket seen" client=2 addr=127.0.0.1:3659 local=127.0.0.1
+time=2026-11-05T23:05:02.604Z level=DEBUG msg="room joined" room=1 online_id=bob member=2
+time=2026-11-05T23:05:05.002Z level=INFO msg=disconnected client=1 online_id=alice
+time=2026-11-05T23:05:05.502Z level=INFO msg="read failed" client=2 err="read tcp 127.0.0.1:36100->127.0.0.1:58642: read: connection reset by peer"
+time=2026-11-05T23:05:05.502Z level=DEBUG msg="room closed" room=1
+time=2026-11-05T23:05:05.502Z level=INFO msg=disconnected client=2 online_id=bob
+time=2026-11-05T23:05:05.512Z level=DEBUG msg=connected client=3 addr=127.0.0.1
+time=2026-11-05T23:05:05.512Z level=INFO msg=hello client=3 comm_id=NPWR00001_00 online_id=alice addr=127.0.0.1 p2p_port=3658
+time=2026-11-05T23:05:05.512Z level=DEBUG msg=connected client=4 addr=127.0.0.1
+time=2026-11-05T23:05:05.512Z level=INFO msg=hello client=4 comm_id=NPWR00001_00 online_id=bob addr=127.0.0.1 p2p_port=3659
+time=2026-11-05T23:05:05.512Z level=DEBUG msg="P2P socket seen" client=3 addr=127.0.0.1:58687 local=127.0.0.1
+time=2026-11-05T23:05:05.523Z level=DEBUG msg="room created" room=2 online_id=alice comm_id=NPWR00001_00 max=4
+time=2026-11-05T23:05:05.523Z level=DEBUG msg="room joined" room=2 online_id=bob member=2
+time=2026-11-05T23:05:05.528Z level=INFO msg=disconnected client=4 online_id=bob
+time=2026-11-05T23:05:05.534Z level=DEBUG msg="room closed" room=2
+time=2026-11-05T23:05:05.534Z level=INFO msg=disconnected client=3 online_id=alice

@@ -62,6 +62,7 @@ Merged into main. Most of it is not in a release yet.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
 - [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
 - [docs-readme] A rewritten README with an example from real runs, the features, the settings and credit to upstream.
+- [docs-art] A generator for the README banner and terminal images from real runs, in one palette, checked in CI.
 
 On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`
@@ -82,7 +83,6 @@ In about this order.
 
 ### Releases and docs
 - [release-process] Written release steps and a dry run, then frequent pre-releases with no fixed release day.
-- [docs-art] A generator for the README banner and terminal images, in one palette.
 - [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
 
 ### Storage, off unless a host turns it on

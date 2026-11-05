@@ -30,3 +30,6 @@ setup.log
 re-psn.env
 psnr.env
 *.env.local
+
+# Fonts and other downloads for tools/art/make_art.py (never committed)
+/work/

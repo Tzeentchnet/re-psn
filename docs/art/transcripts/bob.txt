@@ -1,0 +1,7 @@
+$ curl -s http://127.0.0.1:36101/api/stats
+{"uptime":"2s","clients":1,"connections_total":1,"rooms":[{"id":1,"title":"NPWR00001_00","members":["alice"],"max":2,"age":"1s"}],"unlisted_rooms":0,"boards":[]}
+$ ./natcheck 127.0.0.1 bob join 3659
+bob: P2P socket seen at 127.0.0.1:3659
+bob: the other player is at 127.0.0.1:3658
+PASS bob: "PONG alice" direct
+PASS bob: stream direct, got "SETUP from alice"

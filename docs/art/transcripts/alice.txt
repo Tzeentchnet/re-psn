@@ -1,0 +1,5 @@
+$ ./natcheck 127.0.0.1 alice host 3658
+alice: P2P socket seen at 127.0.0.1:3658
+alice: the other player is at 127.0.0.1:3659
+PASS alice: "PONG bob" direct
+PASS alice: stream direct, got "ACK from bob"

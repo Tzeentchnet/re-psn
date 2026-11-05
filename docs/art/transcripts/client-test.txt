@@ -1,0 +1,4 @@
+$ ./test_psnr 127.0.0.1 36100
+test_psnr: all passed
+$ curl -s http://127.0.0.1:36101/api/stats
+{"uptime":"5s","clients":0,"connections_total":4,"rooms":[],"unlisted_rooms":0,"boards":[{"title":"NPWR00001_00","board":1,"entries":1,"leader":"alice","best":100}]}

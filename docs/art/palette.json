@@ -1,0 +1,60 @@
+{
+ "name": "gruvbox-material",
+ "variant": "medium background, material foreground",
+ "source": "https://github.com/sainnhe/gruvbox-material",
+ "source_file": "autoload/gruvbox_material.vim",
+ "source_commit": "11d779b26a9ab2b3db8c22c6ac9fb6e8ed4fea79",
+ "license": "MIT, Copyright (c) 2020 sainnhe",
+ "slots": {
+  "background": "bg0",
+  "surface": "bg1",
+  "text": "fg0",
+  "muted": "grey1",
+  "accent": "aqua",
+  "good": "green",
+  "warn": "yellow",
+  "bad": "red"
+ },
+ "modes": {
+  "dark": {
+   "bg0": "#282828",
+   "bg1": "#32302f",
+   "bg2": "#32302f",
+   "bg3": "#45403d",
+   "bg4": "#45403d",
+   "bg5": "#5a524c",
+   "fg0": "#d4be98",
+   "fg1": "#ddc7a1",
+   "grey0": "#7c6f64",
+   "grey1": "#928374",
+   "grey2": "#a89984",
+   "red": "#ea6962",
+   "orange": "#e78a4e",
+   "yellow": "#d8a657",
+   "green": "#a9b665",
+   "aqua": "#89b482",
+   "blue": "#7daea3",
+   "purple": "#d3869b"
+  },
+  "light": {
+   "bg0": "#fbf1c7",
+   "bg1": "#f4e8be",
+   "bg2": "#f2e5bc",
+   "bg3": "#eee0b7",
+   "bg4": "#e5d5ad",
+   "bg5": "#ddccab",
+   "fg0": "#654735",
+   "fg1": "#4f3829",
+   "grey0": "#a89984",
+   "grey1": "#928374",
+   "grey2": "#7c6f64",
+   "red": "#c14a4a",
+   "orange": "#c35e0a",
+   "yellow": "#b47109",
+   "green": "#6c782e",
+   "aqua": "#4c7a5d",
+   "blue": "#45707a",
+   "purple": "#945e80"
+  }
+ }
+}
