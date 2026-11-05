@@ -11,5 +11,6 @@ scripts
 *.md
 *.log
 .env
+re-psn.env
 psnr.env
 *.env.local

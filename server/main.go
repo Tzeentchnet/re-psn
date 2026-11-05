@@ -71,6 +71,7 @@ func main() {
 		out = io.MultiWriter(os.Stderr, f)
 	}
 	logger := newLogger(out, level, format)
+	logEnvNotices(logger)
 	fatal := func(err error) {
 		logger.Error("fatal", "err", err)
 		os.Exit(1)

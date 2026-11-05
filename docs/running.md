@@ -58,7 +58,7 @@ on the same network, who send UDP to it.
 
 ## Behind a reverse proxy
 
-The release archives carry an `examples/` folder: `psnr.env.example` (every setting, commented, with its default; copy it to `psnr.env`), `psnr.service` (a systemd
+The release archives carry an `examples/` folder: `re-psn.env.example` (every setting, commented, with its default; copy it to `re-psn.env`), `psnr.service` (a systemd
 unit) and configs for Traefik, nginx and HAProxy. Only the Traefik one has been run (see below).
 
 Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
@@ -73,7 +73,7 @@ Without a proxy nothing changes. With one, the server must learn the real player
   proxies, is the address in the log. The token check does not change.
 - **The list is trust.** Put only your own proxies in it. A list that includes `0.0.0.0/0` lets any client claim any address; the
   server logs a warning at start if it sees one. Cloudflare's address ranges change, so they are not built in: copy
-  Cloudflare's published list into `PSNR_TRUSTED_PROXIES` yourself and keep it current.
+  Cloudflare's published list into `RE_PSN_TRUSTED_PROXIES` yourself and keep it current.
 
 Traefik, with a TCP router sending PROXY protocol v2 to psnr (tested with Traefik 3.1 under Podman: the HELLO reply and the log
 showed the client's own address, and a forged `X-Forwarded-For` on the status page was not believed):
@@ -89,7 +89,7 @@ tcp:
         servers: [{address: "127.0.0.1:36100"}]
 ```
 
-with `PSNR_TRUSTED_PROXIES=127.0.0.1` and `PSNR_PROXY_PROTOCOL=true`. nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
+with `RE_PSN_TRUSTED_PROXIES=127.0.0.1` and `RE_PSN_PROXY_PROTOCOL=true`. nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
 (`send-proxy-v2` on the server line; a health check to psnr needs `check-send-proxy` as well) work the same way but have not been run here. psnr
 accepts v1 and v2. A v2 header must describe a TCP stream: a datagram or unassigned family or transport is refused and the connection closed.
 
@@ -99,13 +99,19 @@ player addresses on the game port (check Cloudflare's current plan page).
 
 ## Environment variables
 
-Every flag can be set as `PSNR_<FLAG>`, upper case, dashes as underscores: `-max-rooms` is `PSNR_MAX_ROOMS`, `-tcp-addr`
-is `PSNR_TCP_ADDR`, `-v` is `PSNR_V`. A flag on the command line wins over the variable. A variable that is set but empty
-counts as set, so `PSNR_HTTP=` turns the status page off. A number or true/false that does not parse stops the server at
-start with a message naming the variable. Booleans take `true` or `false` (also `1`, `0`).
+Every flag can be set as `RE_PSN_<FLAG>`, upper case, dashes as underscores: `-max-rooms` is `RE_PSN_MAX_ROOMS`, `-tcp-addr`
+is `RE_PSN_TCP_ADDR`, `-v` is `RE_PSN_V`. A variable that is set but empty counts as set, so `RE_PSN_HTTP=` turns the status
+page off. A number or true/false that does not parse stops the server at start with a message naming the variable it read.
+Booleans take `true` or `false` (also `1`, `0`).
+
+The old names, `PSNR_<FLAG>`, still work. The order is: the flag on the command line, then `RE_PSN_<FLAG>`, then
+`PSNR_<FLAG>`, then the default; set-but-empty counts as set for both names. When the server reads an old name it logs a
+warning at start naming the old and the new variable, once per variable. When both are set with different values it uses
+`RE_PSN_<FLAG>` and logs a warning saying so. These warnings name variables only, never their values. Rename the old
+variables when convenient; nothing else changes.
 
 The Docker image has no fixed flags: it is configured only by these variables. The status page is not reachable from the
-host until you set `PSNR_HTTP` (for example `0.0.0.0:36101` inside the container) and `PSNR_HTTP_TOKEN`; the compose file
+host until you set `RE_PSN_HTTP` (for example `0.0.0.0:36101` inside the container) and `RE_PSN_HTTP_TOKEN`; the compose file
 shows the lines. A token set this way is visible to `docker inspect` and to other users on the host (process list, for a
 native run), so treat the token as protecting a status page on a trusted machine, not as a secret that survives a shared host.
 If you change a port, change it in the compose `ports` list as well, and in your firewall rule.
