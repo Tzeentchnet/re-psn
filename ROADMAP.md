@@ -58,6 +58,7 @@ Merged into main. Most of it is not in a release yet.
 - [release-archives] Release archives with checksums, built by a workflow; partial, as nothing has been released yet.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
+- [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
 
 On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`
@@ -70,7 +71,7 @@ On the ps3recomp side (upstream's work):
 
 ## Now
 
-- [docs-markdown] Every doc in Markdown with one layout, diagrams for deploy and Docker, and a link check.
+Nothing is in progress at the moment; the items under Next come first.
 
 ## Next
 

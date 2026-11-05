@@ -6,10 +6,10 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | Status | Meaning | Features |
 |---|---|---|
-| available | merged, with a test or a recorded run | 20 |
+| available | merged, with a test or a recorded run | 21 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
 | partial | merged in part, or with known gaps | 1 |
-| in progress | an open pull request or branch | 1 |
+| in progress | an open pull request or branch | 0 |
 | planned | wanted and intended, not started | 20 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
@@ -147,7 +147,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 |---|---|---|---|---|---|
 | `docs-features` | **Features list**: `docs/features.tsv` holds one row per feature with its status and evidence, and `tools/features.py` generates this page. CI fails when the page is stale, a row is malformed, or evidence is missing. | available | main | [`docs/features.tsv`](features.tsv), [`tools/features.py`](../tools/features.py), [`tools/test_features.py`](../tools/test_features.py), [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), [#19](https://github.com/undecuple/re-psn/pull/19) |  |
 | `docs-diagrams` | **Mermaid diagrams**: The architecture, reverse proxy, relay and NAT lab diagrams are Mermaid, which GitHub renders. | available | main | [`docs/architecture.md`](architecture.md), [`lab/README.md`](../lab/README.md), [#13](https://github.com/undecuple/re-psn/pull/13) | No generated images to keep in step. |
-| `docs-markdown` | **Docs in Markdown**: Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams, and a link check. | in progress |  | [#20](https://github.com/undecuple/re-psn/pull/20) | Open pull request. |
+| `docs-markdown` | **Docs in Markdown**: Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams. | available | main | [`deploy/README.md`](../deploy/README.md), [`docker/README.md`](../docker/README.md), [`docs/running.md`](running.md), [#20](https://github.com/undecuple/re-psn/pull/20) | Links were checked once with a throwaway script; a CI link check is planned (repo-check). |
 | `docs-readme` | **README rewrite**: A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream. | planned |  |  | Not started. |
 | `docs-art` | **Art generator**: A generator for the README banner and terminal images in one palette, with pinned fonts and reproducible output. Terminal images only from real runs. | planned |  |  | Not started. |
 | `repo-check` | **Repository layout check**: A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist. | planned |  |  | Not started. After docs-markdown. |
