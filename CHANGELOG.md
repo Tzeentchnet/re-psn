@@ -56,6 +56,9 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
+- PROXY protocol v2 headers are now checked for family and transport: unassigned values, and a datagram or unspecified transport on the
+  TCP game port, close the connection (a LOCAL header still carries no client and is consumed to its declared length). The nginx example
+  is labelled v1 (`proxy_protocol on;` sends v1), and `docs/running.md` says Cloudflare Spectrum's PROXY protocol is an Enterprise feature.
 - The Dockerfile, compose file and `Dockerfile.dockerignore` moved into `docker/`, with a README. Build from the repository root with
   `docker build -f docker/Dockerfile .`, or run `docker compose -f docker/docker-compose.yml up -d`. `lab/run.sh` and Dependabot follow.
 - The Docker image no longer forces `-http 0.0.0.0:36101` without a token: the status page stays on localhost inside the

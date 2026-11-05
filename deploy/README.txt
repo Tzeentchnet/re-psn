@@ -3,7 +3,7 @@ psnr deployment examples (text files; nothing here runs by itself)
 psnr.env.example    every setting, commented, with its default. Copy it to psnr.env and edit; keep psnr.env private.
 psnr.service        a systemd unit (Linux).
 traefik/            Traefik, TCP router with PROXY protocol v2. Tested with Traefik 3.1 under Podman.
-nginx/psnr.conf     nginx stream with PROXY protocol. Not run.
+nginx/psnr.conf     nginx stream with PROXY protocol v1. Not run.
 haproxy/haproxy.cfg HAProxy with send-proxy-v2. Not run.
 
 Behind a proxy you need, on psnr: PSNR_TRUSTED_PROXIES (only your own proxies; 0.0.0.0/0 trusts everyone) and

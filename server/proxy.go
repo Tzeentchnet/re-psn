@@ -70,9 +70,8 @@ func connAddr(conn net.Conn) netip.Addr {
 }
 
 // readProxyHeader reads one PROXY protocol v1 or v2 header from r, no further
-// than its end. ok is false for a valid header that carries no client (a v2
-// LOCAL command, as health checks send, v1 UNKNOWN, or a family we do not
-// carry). admit then keeps the proxy's own address for that connection; it is
+// than its end (always 16 bytes plus the declared length for v2, TLVs skipped). ok is false for a valid header that
+// carries no client (a v2 LOCAL command, as health checks send, v1 UNKNOWN, an UNSPEC or UNIX family). admit then keeps the proxy's own address for that connection; it is
 // only an error to send no valid header at all.
 func readProxyHeader(r io.Reader) (addr netip.Addr, ok bool, err error) {
 	head := make([]byte, 16)
@@ -97,22 +96,31 @@ func readProxyHeader(r io.Reader) (addr netip.Addr, ok bool, err error) {
 	if _, err = io.ReadFull(r, body); err != nil {
 		return
 	}
-	if cmd == 0 { // LOCAL
+	if cmd == 0 { // LOCAL: the sender's own check; the family and transport bytes are to be ignored, the length is not
 		return addr, false, nil
 	}
-	switch head[13] >> 4 {
+	fam, transport := head[13]>>4, head[13]&0x0f
+	if fam > 3 || transport > 2 { // unassigned values
+		return addr, false, errors.New("bad PROXY v2 family or transport")
+	}
+	if fam == 0 || fam == 3 { // UNSPEC, or UNIX: no client address to take
+		return addr, false, nil
+	}
+	if transport != 1 { // this is the TCP game port: only a stream is meaningful (a datagram or unspecified transport is not)
+		return addr, false, errors.New("PROXY v2 transport is not a stream")
+	}
+	switch fam {
 	case 1: // IPv4: src dst sport dport
 		if n < 12 {
 			return addr, false, errors.New("short PROXY v2 address block")
 		}
 		return netip.AddrFrom4([4]byte(body[:4])), true, nil
-	case 2: // IPv6
+	default: // 2: IPv6
 		if n < 36 {
 			return addr, false, errors.New("short PROXY v2 address block")
 		}
 		return netip.AddrFrom16([16]byte(body[:16])).Unmap(), true, nil
 	}
-	return addr, false, nil // UNSPEC, or a family we do not carry
 }
 
 // readProxyV1 reads the rest of "PROXY <proto> <src> <dst> <sport> <dport>\r\n"
