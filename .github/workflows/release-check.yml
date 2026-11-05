@@ -1,0 +1,50 @@
+# Read-only check of a published release: fails when the release and its files disagree. Triggers: a published release, and a
+# manual run (input: tag). Nothing is written. Checks: tag shape, published as a pre-release while the version is 0.x,
+# title equals the tag, the assets are exactly the three archives, their .sha256 files and SHA256SUMS, and that
+# sha256sum -c passes on the downloaded files.
+name: release-check
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to check (vX.Y.Z)"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release-check-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Tag shape
+        run: |
+          case "$TAG" in v[0-9]*.[0-9]*.[0-9]*) ;; *) echo "::error::tag '$TAG' is not vMAJOR.MINOR.PATCH"; exit 1 ;; esac
+          case "$TAG" in *[!0-9v.]*) echo "::error::tag '$TAG' has odd characters"; exit 1 ;; esac
+      - name: Release metadata
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > "$RUNNER_TEMP/release.json"
+          jq -e --arg tag "$TAG" '
+            (.draft | not) and .name == $tag and ((.prerelease) or (.tag_name | startswith("v0") | not))' \
+            "$RUNNER_TEMP/release.json" >/dev/null \
+            || { echo "::error::release must be published, titled $TAG, and a pre-release while 0.x"; exit 1; }
+          want="psnr-$TAG-linux-amd64.tar.gz psnr-$TAG-linux-amd64.tar.gz.sha256 psnr-$TAG-linux-arm64.tar.gz psnr-$TAG-linux-arm64.tar.gz.sha256 psnr-$TAG-windows-amd64.zip psnr-$TAG-windows-amd64.zip.sha256 SHA256SUMS"
+          got="$(jq -r '.assets[].name' "$RUNNER_TEMP/release.json" | sort | tr '\n' ' ' | sed 's/ $//')"
+          want="$(printf '%s\n' $want | sort | tr '\n' ' ' | sed 's/ $//')"
+          [ "$got" = "$want" ] || { echo "::error::assets differ"; echo "want: $want"; echo "got:  $got"; exit 1; }
+      - name: Download and verify
+        run: |
+          mkdir -p "$RUNNER_TEMP/assets"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/assets"
+          cd "$RUNNER_TEMP/assets"
+          sha256sum -c SHA256SUMS
+          for f in psnr-*.sha256; do sha256sum -c "$f"; done
