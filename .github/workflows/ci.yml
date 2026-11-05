@@ -1,9 +1,17 @@
+# CI for the fork. It checks formatting, vet, the Go tests with the race detector (on Linux this includes the C client
+# against the server), known vulnerabilities in the Go module and its standard library, secrets in the full history,
+# and the NAT lab in Docker. It does not check Windows beyond the tests, or the C client outside Linux.
 name: CI
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -11,9 +19,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
           go-version: '1.22'
       - name: gofmt
@@ -23,13 +32,51 @@ jobs:
         run: go vet ./...
       # On Linux this also builds client/test_psnr.c and runs it against the
       # server (TestCClient); it skips where no C compiler is on PATH.
+      # -race needs cgo, which the Windows runner has no C compiler for.
       - name: test
+        if: runner.os == 'Linux'
+        run: go test -race -v ./...
+      - name: test (Windows)
+        if: runner.os == 'Windows'
         run: go test -v ./...
+
+  # Known vulnerabilities (Go vulnerability database) in the code that is built and in the standard library it is
+  # built with. Runs on a current Go so a fixed standard library is the one that is checked.
+  govulncheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version: stable
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # Secrets in the whole history. The scanner is a pinned release whose checksum is verified before it runs.
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full history)
+        env:
+          VERSION: 8.30.1
+          SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          echo "${SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks git --config .gitleaks.toml --redact --exit-code 1 --verbose .
 
   # Players behind NATing routers, in Docker: lab/README.md.
   nat-lab:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: lab/run.sh
         run: sh lab/run.sh
