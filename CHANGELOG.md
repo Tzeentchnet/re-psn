@@ -58,6 +58,8 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 - The architecture and NAT lab diagrams are Mermaid (GitHub renders them), and `docs/architecture.md` gains a diagram of the optional
   reverse proxy path.
+- The Dockerfile, compose file and `Dockerfile.dockerignore` moved into `docker/`, with a README. Build from the repository root with
+  `docker build -f docker/Dockerfile .`, or run `docker compose -f docker/docker-compose.yml up -d`. `lab/run.sh` and Dependabot follow.
 - The Docker image no longer forces `-http 0.0.0.0:36101` without a token: the status page stays on localhost inside the
   container until `PSNR_HTTP` and `PSNR_HTTP_TOKEN` are set (the compose file shows how).
 - Protocol additions that Simpsons Arcade's Matching2 use needs. Clients

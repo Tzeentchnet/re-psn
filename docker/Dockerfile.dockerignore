@@ -1,4 +1,4 @@
-# Read by BuildKit and Podman for builds that use the root Dockerfile only (not lab/Dockerfile, which needs client/ and lab/).
+# Read by BuildKit and Podman only for builds that use docker/Dockerfile, the file next to this one (lab/Dockerfile needs client/ and lab/, so it is unaffected).
 # The image build needs only go.mod and server/. Keep everything else, and any real settings file, out of that build context.
 .git
 .github
