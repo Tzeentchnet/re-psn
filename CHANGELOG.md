@@ -109,6 +109,8 @@ All notable changes to this project are documented here. The format follows
   - SET_ROOM_DATA `which` 2 sets the room's flags, which searchers see.
   - ROOM_MSG pushes say which member the message was sent to.
 - `docker/docker-compose.host.yml`: an opt-in compose file for host networking on Linux, for runtimes that rewrite source addresses. `docker/docker-compose.yml` keeps its ports and defaults and gains a commented `RE_PSN_RELAY` example; `docker/README.md` says what relay is and when to use host networking.
+- The README status line is now a row of badges in the gruvbox-material colours, and `docs/status.png` is a new screenshot of the real
+  status page (`tools/art/capture-status.sh`; it is not part of `tools/art/make_art.py --check`, a browser screenshot is not reproducible).
 
 ### Security
 - UDP PROBE and RELAY packets are accepted only from the IP address of the player's TCP connection, so a stolen or guessed
