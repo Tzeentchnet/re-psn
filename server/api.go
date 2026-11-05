@@ -37,6 +37,7 @@ type statsJSON struct {
 	Clients     int         `json:"clients"`
 	Connections uint64      `json:"connections_total"`
 	Rooms       []roomJSON  `json:"rooms"`
+	Unlisted    int         `json:"unlisted_rooms"`
 	Boards      []boardJSON `json:"boards"`
 }
 
@@ -51,6 +52,10 @@ func (s *Server) snapshot() statsJSON {
 		Boards:      []boardJSON{},
 	}
 	for _, r := range s.rooms {
+		if r.code != "" { // invite-only rooms are counted, not listed
+			st.Unlisted++
+			continue
+		}
 		rj := roomJSON{ID: r.id, Title: r.commID, Max: r.max,
 			Age: time.Since(r.created).Round(time.Second).String()}
 		for _, m := range r.members {
@@ -78,7 +83,7 @@ var page = template.Must(template.New("p").Parse(`<!doctype html>
 <meta http-equiv="refresh" content="5"><title>psnr</title>
 <style>body{font:14px system-ui;margin:16px;max-width:900px}table{border-collapse:collapse;width:100%;margin-bottom:24px}
 td,th{text-align:left;padding:4px 8px;border-bottom:1px solid #8884}</style>
-<h1>psnr</h1><p>up {{.Uptime}} · {{.Clients}} connected · {{.Connections}} connections total</p>
+<h1>psnr</h1><p>up {{.Uptime}} · {{.Clients}} connected · {{.Connections}} connections total{{if .Unlisted}} · {{.Unlisted}} unlisted rooms{{end}}</p>
 <h2>Rooms</h2><table><tr><th>ID<th>Title<th>Members<th>Age</tr>
 {{range .Rooms}}<tr><td>{{.ID}}<td>{{.Title}}<td>{{len .Members}}/{{.Max}} {{range .Members}}{{.}} {{end}}<td>{{.Age}}</tr>{{else}}<tr><td colspan=4>none</tr>{{end}}</table>
 <h2>Leaderboards</h2><table><tr><th>Title<th>Board<th>Entries<th>Leader</tr>

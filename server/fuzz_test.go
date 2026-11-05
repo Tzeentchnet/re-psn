@@ -39,6 +39,15 @@ func FuzzHandle(f *testing.F) {
 	score.u8(0)
 	score.u64(100)
 	score.blob([]byte("c"))
+	access := &writer{}
+	access.u64(1)
+	access.u8(accessCode)
+	bycode := &writer{}
+	bycode.str("ABCD1234", codeLen)
+	bycode.blob(nil)
+	f.Add(byte(msgSetRoomAccess), body(access))
+	f.Add(byte(msgGetRoomAccess), body(&writer{}))
+	f.Add(byte(msgJoinByCode), body(bycode))
 	f.Add(byte(msgCreateRoom), body(create))
 	f.Add(byte(msgJoinRoom), body(join))
 	f.Add(byte(msgRecordScore), body(score))

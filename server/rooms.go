@@ -8,6 +8,8 @@ package main
 // connects to. The server never carries game traffic.
 
 import (
+	crand "crypto/rand"
+	"crypto/subtle"
 	"encoding/binary"
 	"time"
 )
@@ -34,6 +36,7 @@ type room struct {
 	external   []byte // visible to searchers (Matching2 "external" bin attrs)
 	internal   []byte // visible to members only
 	owner      uint16
+	code       string // invite-only: the 8-character room code; "" for a public room
 	members    []*member
 	nextMember uint16
 	created    time.Time
@@ -91,6 +94,90 @@ func (r *room) joinedReply(req uint32, me *member) []byte {
 	return w.b
 }
 
+// Room access (docs/room-codes.md). A public room is listed in search; an invite-only room carries a code,
+// is listed nowhere (search, the status page) and is joined with JOIN_BY_CODE. The code is a bearer secret:
+// it is never logged.
+const (
+	accessPublic = 0
+	accessCode   = 1
+
+	codeLen        = 8
+	codeAlphabet   = "0123456789ABCDEFGHJKMNPQRSTVWXYZ" // 32 symbols, no I L O U: 5 bits each, 40 bits a code
+	maxCodeMisses  = 5                                  // wrong codes a connection may send per window
+	codeMissWindow = time.Minute
+)
+
+// newCode returns an unused code from crypto/rand, or an error if the system's random source fails.
+func (s *Server) newCode() (string, error) {
+	for {
+		var b [codeLen]byte
+		if _, err := crand.Read(b[:]); err != nil {
+			return "", err
+		}
+		for i := range b {
+			b[i] = codeAlphabet[b[i]&31]
+		}
+		if code := string(b[:]); s.byCode[code] == nil {
+			return code, nil
+		}
+	}
+}
+
+// normalizeCode accepts a typed code: case-insensitive, with O read as 0 and I or L as 1.
+func normalizeCode(in string) (string, bool) {
+	if len(in) != codeLen {
+		return "", false
+	}
+	b := []byte(in)
+	for i, c := range b {
+		switch {
+		case c >= 'a' && c <= 'z':
+			c -= 'a' - 'A'
+		}
+		switch c {
+		case 'O':
+			c = '0'
+		case 'I', 'L':
+			c = '1'
+		}
+		ok := false
+		for j := 0; j < len(codeAlphabet); j++ {
+			if codeAlphabet[j] == c {
+				ok = true
+			}
+		}
+		if !ok {
+			return "", false
+		}
+		b[i] = c
+	}
+	return string(b), true
+}
+
+// roomByCode compares the code with every code in use and does not stop at a match.
+func (s *Server) roomByCode(code string) *room {
+	var found *room
+	for k, r := range s.byCode {
+		if subtle.ConstantTimeCompare([]byte(k), []byte(code)) == 1 {
+			found = r
+		}
+	}
+	return found
+}
+
+// codeMiss counts a wrong or malformed code against the connection; too many in a window close it.
+func (s *Server) codeMiss(c *client) {
+	if now := time.Now(); now.Sub(c.codeWindow) > codeMissWindow {
+		c.codeWindow, c.codeMisses = now, 0
+	}
+	if c.codeMisses++; c.codeMisses >= maxCodeMisses {
+		s.log.Warn("connection closed", "client", c.id, "online_id", c.onlineID, "reason", "wrong room codes", "limit", maxCodeMisses)
+		c.conn.Close()
+		return
+	}
+	s.log.Warn("room code refused", "client", c.id, "online_id", c.onlineID)
+}
+
 func (s *Server) addMember(r *room, c *client, data []byte) *member {
 	r.nextMember++
 	m := &member{id: r.nextMember, c: c, data: data}
@@ -130,7 +217,7 @@ func (s *Server) searchRooms(c *client, req uint32, rd *reader) (byte, []byte) {
 	}
 	var open []*room
 	for _, r := range s.sortedRooms(c.commID) {
-		if len(r.members) < int(r.max) {
+		if len(r.members) < int(r.max) && r.code == "" {
 			open = append(open, r)
 		}
 	}
@@ -169,6 +256,15 @@ func (s *Server) joinRoom(c *client, req uint32, rd *reader) (byte, []byte, []pu
 		return msgError, errReply(req, errBadRequest), nil
 	case !ok || r.commID != c.commID:
 		return msgError, errReply(req, errNotFound), nil
+	case r.code != "" && r.memberOf(c) == nil:
+		return msgError, errReply(req, errNotFound), nil // invite-only: not joinable by room ID
+	}
+	return s.joinMember(c, req, r, mine)
+}
+
+// joinMember adds c to r, or says why not. The caller has checked the room exists, is c's title and may be joined.
+func (s *Server) joinMember(c *client, req uint32, r *room, mine []byte) (byte, []byte, []push) {
+	switch {
 	case r.memberOf(c) != nil:
 		return msgRoomJoined, r.joinedReply(req, r.memberOf(c)), nil
 	case len(r.members) >= int(r.max):
@@ -224,6 +320,9 @@ func (s *Server) leave(r *room, c *client) []push {
 	}
 	if len(r.members) == 0 {
 		delete(s.rooms, r.id)
+		if r.code != "" {
+			delete(s.byCode, r.code)
+		}
 		s.log.Debug("room closed", "room", r.id)
 		return nil
 	}
@@ -334,4 +433,84 @@ func (s *Server) kick(c *client, req uint32, rd *reader) (byte, []byte, []push) 
 		}
 	}
 	return msgError, errReply(req, errNotFound), nil
+}
+
+// accessReply is ROOM_ACCESS: req | mode u8 | code [8] (zeros unless invite-only).
+func accessReply(req uint32, r *room) []byte {
+	w := &writer{}
+	w.u32(req)
+	if r.code == "" {
+		w.u8(accessPublic)
+		w.bytes(make([]byte, codeLen))
+	} else {
+		w.u8(accessCode)
+		w.str(r.code, codeLen)
+	}
+	return w.b
+}
+
+// SET_ROOM_ACCESS: room_id u64 | mode u8 (0 public, 1 invite-only). Owner only. Mode 1 gives the room a code (the same one if
+// it already has it) and takes it out of search; mode 0 lists it again and the code stops working.
+func (s *Server) setRoomAccess(c *client, req uint32, rd *reader) (byte, []byte, []push) {
+	r, ok := s.rooms[rd.u64()]
+	mode := rd.u8()
+	switch {
+	case rd.err != nil || mode > accessCode:
+		return msgError, errReply(req, errBadRequest), nil
+	case !ok || r.memberOf(c) == nil:
+		return msgError, errReply(req, errNotInRoom), nil
+	case r.memberOf(c).id != r.owner:
+		return msgError, errReply(req, errNotOwner), nil
+	}
+	switch {
+	case mode == accessCode && r.code == "":
+		code, err := s.newCode()
+		if err != nil {
+			s.log.Error("room code: random source failed", "err", err)
+			return msgError, errReply(req, errLimitReached), nil
+		}
+		r.code = code
+		s.byCode[r.code] = r
+	case mode == accessPublic && r.code != "":
+		delete(s.byCode, r.code)
+		r.code = ""
+	}
+	s.log.Debug("room access", "room", r.id, "mode", mode)
+	return msgRoomAccess, accessReply(req, r), nil
+}
+
+// GET_ROOM_ACCESS: room_id u64. Any member may ask, so anyone in the room can invite.
+func (s *Server) getRoomAccess(c *client, req uint32, rd *reader) (byte, []byte, []push) {
+	r, ok := s.rooms[rd.u64()]
+	switch {
+	case rd.err != nil:
+		return msgError, errReply(req, errBadRequest), nil
+	case !ok || r.memberOf(c) == nil:
+		return msgError, errReply(req, errNotInRoom), nil
+	}
+	return msgRoomAccess, accessReply(req, r), nil
+}
+
+// JOIN_BY_CODE: code [8] | member_data blob -> ROOM_JOINED. A wrong, malformed, expired or other-title code all
+// answer "not found" (malformed: bad request) and count as a miss on the connection.
+func (s *Server) joinByCode(c *client, req uint32, rd *reader) (byte, []byte, []push) {
+	raw, mine := rd.str(codeLen), rd.blob()
+	if rd.err != nil || tooBig(mine) {
+		if rd.err == nil {
+			s.refused(c, "join by code", "blob over limit")
+		}
+		return msgError, errReply(req, errBadRequest), nil
+	}
+	code, ok := normalizeCode(raw)
+	if !ok {
+		s.codeMiss(c)
+		return msgError, errReply(req, errBadRequest), nil
+	}
+	r := s.roomByCode(code)
+	if r == nil || r.commID != c.commID {
+		s.codeMiss(c)
+		return msgError, errReply(req, errNotFound), nil
+	}
+	c.codeMisses = 0
+	return s.joinMember(c, req, r, mine)
 }
