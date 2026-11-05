@@ -1,3 +1,4 @@
+# Build from the repository root: docker build -f docker/Dockerfile .  (docker/README.md)
 FROM golang:1.22-alpine AS build
 WORKDIR /src
 COPY go.mod .

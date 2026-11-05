@@ -13,10 +13,10 @@ go build -o psnr .        # psnr.exe on Windows
 2026/09/29 02:17:35 status page on http://127.0.0.1:36101/
 ```
 
-With Docker:
+With Docker (see `docker/README.md`):
 
 ```
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 ## Flags

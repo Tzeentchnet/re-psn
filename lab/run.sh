@@ -21,7 +21,7 @@
 cd "$(dirname "$0")" || exit 1
 compose() { docker compose --profile samelan "$@"; }
 
-docker build -q -t psnr-lab-server .. >/dev/null &&
+docker build -q -t psnr-lab-server -f ../docker/Dockerfile .. >/dev/null &&
   docker build -q -t psnr-lab-node -f Dockerfile .. >/dev/null || { echo "image build failed"; exit 1; }
 
 bad=0

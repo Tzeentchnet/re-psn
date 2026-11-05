@@ -1,6 +1,8 @@
 services:
   psnr:
-    build: .
+    build:
+      context: ..                 # the repository root; the Dockerfile copies go.mod and server/
+      dockerfile: docker/Dockerfile
     restart: unless-stopped
     environment:
       # Any flag is PSNR_<FLAG>; see docs/running.md. Change a port here and in `ports`.
