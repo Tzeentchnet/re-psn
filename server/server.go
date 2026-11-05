@@ -11,6 +11,7 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"net/netip"
 	"os"
 	"sort"
 	"strings"
@@ -43,6 +44,9 @@ type Server struct {
 	maxPerAddr     int            // open connections per remote address
 	maxReqRate     int            // requests per second per connection
 	addrConns      map[string]int // open connections by remote host
+
+	trustedProxies []netip.Prefix // peers allowed to name the real client (proxy.go)
+	proxyProto     bool           // require a PROXY header from a trusted peer
 
 	streams    map[uint32]*stream // relay streams waiting for their target to accept
 	nextStream uint32
@@ -97,33 +101,53 @@ func (s *Server) Serve(ln net.Listener) error {
 		if err != nil {
 			return err
 		}
-		host, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
-		s.mu.Lock()
-		if s.maxPerAddr > 0 && s.addrConns[host] >= s.maxPerAddr {
-			s.mu.Unlock()
-			s.log.Warn("connection refused", "addr", host, "reason", "too many connections", "limit", s.maxPerAddr)
-			conn.Close()
-			continue
-		}
-		s.addrConns[host]++
-		s.nextID++
-		s.conns++
-		c := &client{id: s.nextID, conn: conn, rooms: map[uint64]*room{}}
-		s.log.Debug("connected", "client", c.id, "addr", host)
-		if a, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
-			copy(c.ip[:], a.IP.To4())
-		}
-		s.clients[c.id] = c
-		s.mu.Unlock()
-		go func() {
-			s.run(c)
-			s.mu.Lock()
-			if s.addrConns[host]--; s.addrConns[host] <= 0 {
-				delete(s.addrConns, host)
-			}
-			s.mu.Unlock()
-		}()
+		go s.admit(conn)
 	}
+}
+
+// admit works out who the client is, applies the per-address limit and runs
+// the connection. It is a goroutine of its own because a PROXY header has to
+// be read first, and a slow proxy must not stall Accept.
+func (s *Server) admit(conn net.Conn) {
+	peer := connAddr(conn)
+	real := peer
+	if s.proxyProto && s.trusted(peer) {
+		conn.SetReadDeadline(time.Now().Add(proxyHeaderTimeout))
+		a, ok, err := readProxyHeader(conn)
+		if err != nil {
+			// a trusted peer that sends none is a misconfigured proxy: close, never fall back to its address
+			s.log.Warn("connection refused", "addr", peer.String(), "reason", "no valid PROXY header from a trusted proxy")
+			conn.Close()
+			return
+		}
+		if ok {
+			real = a
+		} // else a valid header with no client (health check): this connection stays under the proxy's address
+	}
+	host := real.String()
+	s.mu.Lock()
+	if s.maxPerAddr > 0 && s.addrConns[host] >= s.maxPerAddr {
+		s.mu.Unlock()
+		s.log.Warn("connection refused", "addr", host, "reason", "too many connections", "limit", s.maxPerAddr)
+		conn.Close()
+		return
+	}
+	s.addrConns[host]++
+	s.nextID++
+	s.conns++
+	c := &client{id: s.nextID, conn: conn, rooms: map[uint64]*room{}}
+	s.log.Debug("connected", "client", c.id, "addr", host)
+	if real.Is4() {
+		c.ip = real.As4()
+	}
+	s.clients[c.id] = c
+	s.mu.Unlock()
+	s.run(c)
+	s.mu.Lock()
+	if s.addrConns[host]--; s.addrConns[host] <= 0 {
+		delete(s.addrConns, host)
+	}
+	s.mu.Unlock()
 }
 
 func (s *Server) run(c *client) {

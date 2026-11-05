@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Reverse proxy support: `-trusted-proxies` and `-proxy-protocol` (PROXY protocol v1/v2 on the game TCP port), and forwarded
+  headers for the status page log, both off by default. The real client address then counts for `-max-conns-per-addr`, the
+  name take-over rule, `public_ip` and the log. UDP is not proxied. See `docs/running.md`.
 - Every flag can be set as a `PSNR_<FLAG>` environment variable (a flag wins), and `-tcp-addr` / `-udp-addr` give the two
   game sockets their own addresses or ports. A bad value stops the server at start. See `docs/running.md`.
 - Invite-only rooms (protocol 0.4): `SET_ROOM_ACCESS`, `JOIN_BY_CODE` and `GET_ROOM_ACCESS` give a room an 8-character code and take it

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"io"
 	"log"
@@ -45,6 +46,8 @@ func main() {
 	logLevel := flag.String("log-level", envStr("log-level", "info"), "log level: debug (room events), info, warn or error")
 	logFormat := flag.String("log-format", envStr("log-format", "text"), "log format: text or json")
 	logFile := flag.String("log-file", envStr("log-file", ""), "also append the log to this file (mode 0600)")
+	trustedList := flag.String("trusted-proxies", envStr("trusted-proxies", ""), "comma-separated CIDRs or addresses of reverse proxies allowed to name the real client (empty: none)")
+	proxyProto := toggle("proxy-protocol", false, "require a PROXY protocol v1/v2 header on the game TCP port from a trusted proxy (needs -trusted-proxies)")
 	relay := toggle("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
 	flag.Parse()
 	if bad != nil {
@@ -75,6 +78,19 @@ func main() {
 	s := NewServer(*maxRooms, *verbose)
 	s.log = logger
 	s.relay = *relay
+	trusted, err := parseTrusted(*trustedList)
+	if err != nil {
+		fatal(err)
+	}
+	if *proxyProto && len(trusted) == 0 {
+		fatal(errors.New("-proxy-protocol needs -trusted-proxies: a header is only believed from a listed proxy"))
+	}
+	for _, p := range trusted {
+		if p.Bits() == 0 {
+			logger.Warn("trusted proxies include every address; any client can claim to be anyone", "prefix", p.String())
+		}
+	}
+	s.trustedProxies, s.proxyProto = trusted, *proxyProto
 	s.maxPlayerRooms, s.maxPerAddr, s.maxReqRate = *playerRooms, *perAddr, *reqRate
 	tcpA, udpA := listenAddrs(*addr, *tcpAddr, *udpAddr)
 	ln, err := net.Listen("tcp", tcpA)
