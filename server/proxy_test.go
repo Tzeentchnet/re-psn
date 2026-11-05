@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/netip"
 	"testing"
+	"testing/iotest"
 	"time"
 )
 
@@ -38,6 +39,16 @@ func TestReadProxyHeader(t *testing.T) {
 		{"v2 tcp4", v2tcp4([4]byte{198, 51, 100, 4}), "198.51.100.4", true, false},
 		{"v2 tcp6", v2(1, 0x21, v6), "2001:db8::7", true, false},
 		{"v2 local", v2(0, 0, nil), "", false, false},
+		{"v2 local with address bytes", v2(0, 0x11, make([]byte, 12)), "", false, false},
+		{"v2 local ignores family and transport", v2(0, 0x7f, []byte{1, 2, 3}), "", false, false},
+		{"v2 tcp4 with TLVs", v2(1, 0x11, append(append([]byte{198, 51, 100, 4, 10, 0, 0, 1, 0, 1, 0, 2}, 0x04, 0x00, 0x03), 'a', 'b', 'c')), "198.51.100.4", true, false},
+		{"v2 inet datagram", v2(1, 0x12, make([]byte, 12)), "", false, true},
+		{"v2 inet6 datagram", v2(1, 0x22, make([]byte, 36)), "", false, true},
+		{"v2 inet unspecified transport", v2(1, 0x10, make([]byte, 12)), "", false, true},
+		{"v2 unassigned family", v2(1, 0x41, make([]byte, 12)), "", false, true},
+		{"v2 unassigned transport", v2(1, 0x13, make([]byte, 12)), "", false, true},
+		{"v2 unix stream", v2(1, 0x31, make([]byte, 216)), "", false, false},
+		{"v2 unspec with a body", v2(1, 0x00, []byte{9, 9, 9}), "", false, false},
 		{"v2 unspec", v2(1, 0, nil), "", false, false},
 		{"v2 short block", v2(1, 0x11, []byte{1, 2, 3}), "", false, true},
 		{"v2 too big", append(v2(1, 0x11, nil)[:14], 0x10, 0x00), "", false, true},
@@ -60,6 +71,24 @@ func TestReadProxyHeaderStopsAtEnd(t *testing.T) {
 	r = bytes.NewReader([]byte("PROXY TCP4 1.2.3.4 5.6.7.8 1 2\r\nrest"))
 	if _, ok, err := readProxyHeader(r); !ok || err != nil || r.Len() != 4 {
 		t.Fatalf("v1 left %d bytes, ok %v err %v", r.Len(), ok, err)
+	}
+}
+
+// The header arrives in pieces over TCP: reading it one byte at a time gives the same result.
+func TestReadProxyHeaderFragmented(t *testing.T) {
+	for _, in := range [][]byte{v2tcp4([4]byte{1, 2, 3, 4}), []byte("PROXY TCP4 1.2.3.4 5.6.7.8 1 2\r\n")} {
+		a, ok, err := readProxyHeader(iotest.OneByteReader(bytes.NewReader(in)))
+		if err != nil || !ok || a.String() != "1.2.3.4" {
+			t.Fatalf("got %v %v %v", a, ok, err)
+		}
+	}
+}
+
+// A LOCAL header with address bytes is consumed to its declared end: what follows is the first frame.
+func TestReadProxyHeaderLocalConsumesLength(t *testing.T) {
+	r := bytes.NewReader(append(v2(0, 0x11, make([]byte, 12)), 0xAA, 0xBB))
+	if _, ok, err := readProxyHeader(r); ok || err != nil || r.Len() != 2 {
+		t.Fatalf("left %d bytes, ok %v err %v", r.Len(), ok, err)
 	}
 }
 
