@@ -28,7 +28,23 @@ docker compose up -d
 | `-http-token` | none | Require this token on the status page, as `Authorization: Bearer <token>` or `?token=<token>`. Set it whenever `-http` is not on localhost; the server logs a warning if it is not. |
 | `-max-rooms` | `1000` | Room limit across all titles |
 | `-relay` | off | Carry traffic between players who can't reach each other directly: streams into a player behind a router, and datagrams when a router won't let punched traffic through. Uses this server's bandwidth. |
-| `-v` | off | Log every room event, not just connections |
+| `-log-level` | `info` | `debug` (room and relay events), `info` (connects, hellos, disconnects), `warn` (every refusal) or `error`. |
+| `-log-format` | `text` | `text` or `json`, one line per event. |
+| `-log-file` | none | Also append the log to this file (created with mode 0600). |
+| `-v` | off | Same as `-log-level debug`. |
+
+## Logging
+
+The log goes to standard error, and to `-log-file` if set. It holds online IDs and client addresses, because a refusal
+is about them; it never holds the status page token, the UDP probe token or a request query string. What is logged:
+
+| Level | Events |
+|---|---|
+| info | server start, each HELLO (client, title, online ID, address), a reconnect that replaces a connection, each disconnect, a failed read |
+| warn | a connection refused (too many from one address), a connection closed for its request rate, a HELLO refused (name taken), a room request refused (room limit, blob over limit), an unknown request type, a status page request refused (path only) |
+| debug | connects, requests before HELLO, room created, joined and closed, relay streams, UDP probe results |
+
+Rotate the file with logrotate or your service manager (`copytruncate`, or restart after moving it); the server does not rotate it.
 
 ## Ports
 

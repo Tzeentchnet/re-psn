@@ -58,8 +58,7 @@ func (s *Server) ServeUDP(pc net.PacketConn) error {
 		if !ok {
 			continue
 		}
-		s.logf("client %d: P2P socket seen at %s, local %d.%d.%d.%d",
-			id, ua, buf[13], buf[14], buf[15], buf[16])
+		s.log.Debug("P2P socket seen", "client", id, "addr", ua.String(), "local", ipString([4]byte(buf[13:17])))
 
 		reply := append([]byte(udpMagic), udpProbeReply)
 		reply = append(reply, ip...)

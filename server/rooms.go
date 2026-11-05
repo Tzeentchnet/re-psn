@@ -102,9 +102,13 @@ func (s *Server) addMember(r *room, c *client, data []byte) *member {
 func (s *Server) createRoom(c *client, req uint32, rd *reader) (byte, []byte) {
 	max, flags, ext, in, mine := rd.u8(), rd.u32(), rd.blob(), rd.blob(), rd.blob()
 	if rd.err != nil || max == 0 || tooBig(ext, in, mine) {
+		if tooBig(ext, in, mine) {
+			s.refused(c, "create room", "blob over limit")
+		}
 		return msgError, errReply(req, errBadRequest)
 	}
 	if len(s.rooms) >= s.maxRooms || s.maxPlayerRooms > 0 && len(c.rooms) >= s.maxPlayerRooms {
+		s.refused(c, "create room", "room limit")
 		return msgError, errReply(req, errLimitReached)
 	}
 	s.nextRoom++
@@ -113,7 +117,7 @@ func (s *Server) createRoom(c *client, req uint32, rd *reader) (byte, []byte) {
 	s.rooms[r.id] = r
 	me := s.addMember(r, c, mine)
 	r.owner = me.id
-	s.logf("room %d created by %s (%s, max %d)", r.id, c.onlineID, c.commID, max)
+	s.log.Debug("room created", "room", r.id, "online_id", c.onlineID, "comm_id", c.commID, "max", max)
 	return msgRoomJoined, r.joinedReply(req, me)
 }
 
@@ -157,6 +161,9 @@ func (s *Server) searchRooms(c *client, req uint32, rd *reader) (byte, []byte) {
 func (s *Server) joinRoom(c *client, req uint32, rd *reader) (byte, []byte, []push) {
 	id, mine := rd.u64(), rd.blob()
 	r, ok := s.rooms[id]
+	if tooBig(mine) {
+		s.refused(c, "join room", "blob over limit")
+	}
 	switch {
 	case rd.err != nil || tooBig(mine):
 		return msgError, errReply(req, errBadRequest), nil
@@ -167,6 +174,7 @@ func (s *Server) joinRoom(c *client, req uint32, rd *reader) (byte, []byte, []pu
 	case len(r.members) >= int(r.max):
 		return msgError, errReply(req, errRoomFull), nil
 	case s.maxPlayerRooms > 0 && len(c.rooms) >= s.maxPlayerRooms:
+		s.refused(c, "join room", "room limit")
 		return msgError, errReply(req, errLimitReached), nil
 	}
 	me := s.addMember(r, c, mine)
@@ -187,7 +195,7 @@ func (s *Server) joinRoom(c *client, req uint32, rd *reader) (byte, []byte, []pu
 			}
 		}
 	}
-	s.logf("room %d: %s joined as member %d", r.id, c.onlineID, me.id)
+	s.log.Debug("room joined", "room", r.id, "online_id", c.onlineID, "member", me.id)
 	return msgRoomJoined, r.joinedReply(req, me), out
 }
 
@@ -216,7 +224,7 @@ func (s *Server) leave(r *room, c *client) []push {
 	}
 	if len(r.members) == 0 {
 		delete(s.rooms, r.id)
-		s.logf("room %d closed", r.id)
+		s.log.Debug("room closed", "room", r.id)
 		return nil
 	}
 	if r.owner == gone.id {
@@ -242,6 +250,9 @@ func (s *Server) leave(r *room, c *client) []push {
 func (s *Server) setRoomData(c *client, req uint32, rd *reader) (byte, []byte, []push) {
 	r, ok := s.rooms[rd.u64()]
 	which, data := rd.u8(), rd.blob()
+	if tooBig(data) {
+		s.refused(c, "set room data", "blob over limit")
+	}
 	switch {
 	case rd.err != nil || which > 2 || which == 2 && len(data) != 4 || tooBig(data):
 		return msgError, errReply(req, errBadRequest), nil
@@ -276,6 +287,9 @@ func (s *Server) setRoomData(c *client, req uint32, rd *reader) (byte, []byte, [
 func (s *Server) roomMessage(c *client, req uint32, rd *reader) (byte, []byte, []push) {
 	r, ok := s.rooms[rd.u64()]
 	to, data := rd.u16(), rd.blob()
+	if tooBig(data) {
+		s.refused(c, "room message", "blob over limit")
+	}
 	if rd.err != nil || tooBig(data) {
 		return msgError, errReply(req, errBadRequest), nil
 	}

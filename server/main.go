@@ -6,9 +6,12 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 )
 
 var version = "0.1.0"
@@ -21,30 +24,55 @@ func main() {
 	playerRooms := flag.Int("max-player-rooms", 8, "rooms one player may be in at once (0 for no limit)")
 	perAddr := flag.Int("max-conns-per-addr", 32, "open connections per remote address (0 for no limit)")
 	reqRate := flag.Int("max-req-rate", 200, "requests per second per connection before it is closed (0 for no limit)")
-	verbose := flag.Bool("v", false, "log every room event")
+	verbose := flag.Bool("v", false, "same as -log-level debug")
+	logLevel := flag.String("log-level", "info", "log level: debug (room events), info, warn or error")
+	logFormat := flag.String("log-format", "text", "log format: text or json")
+	logFile := flag.String("log-file", "", "also append the log to this file (mode 0600)")
 	relay := flag.Bool("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
 	flag.Parse()
 
+	level, format, err := parseLogFlags(*logLevel, *logFormat)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if *verbose {
+		level = slog.LevelDebug
+	}
+	var out io.Writer = os.Stderr
+	if *logFile != "" {
+		f, err := os.OpenFile(*logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			log.Fatal(err)
+		}
+		out = io.MultiWriter(os.Stderr, f)
+	}
+	logger := newLogger(out, level, format)
+	fatal := func(err error) {
+		logger.Error("fatal", "err", err)
+		os.Exit(1)
+	}
+
 	s := NewServer(*maxRooms, *verbose)
+	s.log = logger
 	s.relay = *relay
 	s.maxPlayerRooms, s.maxPerAddr, s.maxReqRate = *playerRooms, *perAddr, *reqRate
 	ln, err := net.Listen("tcp", *addr)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 	pc, err := net.ListenPacket("udp", *addr)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
-	go func() { log.Fatal(s.ServeUDP(pc)) }()
-	log.Printf("psnr %s: clients on %s (TCP and UDP)", version, ln.Addr())
+	go func() { fatal(s.ServeUDP(pc)) }()
+	logger.Info("started", "version", version, "clients", ln.Addr().String(), "relay", *relay)
 	if *httpAddr != "" {
 		s.httpToken = *httpToken
-		log.Printf("status page on http://%s/", *httpAddr)
+		logger.Info("status page", "addr", *httpAddr, "token", *httpToken != "")
 		if reachable(*httpAddr) && *httpToken == "" {
-			log.Printf("warning: the status page lists every online ID and has no token; set -http-token or bind -http to localhost")
+			logger.Warn("the status page lists every online ID and has no token; set -http-token or bind -http to localhost")
 		}
-		go func() { log.Fatal(http.ListenAndServe(*httpAddr, s.HTTP())) }()
+		go func() { fatal(http.ListenAndServe(*httpAddr, s.HTTP())) }()
 	}
-	log.Fatal(s.Serve(ln))
+	fatal(s.Serve(ln))
 }

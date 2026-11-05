@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Logging with levels: `-log-level` (debug, info, warn, error), `-log-format` (text or json) and `-log-file`. Every refusal
+  (connection or request limit, name taken, status page token) is now logged at warn level; `-v` is the same as
+  `-log-level debug`. Tokens and query strings are never logged. See `docs/running.md`.
 - One player per name on a server, compared case-insensitively. A HELLO with a
   name someone else holds gets ERROR 8 (name taken); from the same IP address
   it is the same player reconnecting, and the old connection is closed. The C

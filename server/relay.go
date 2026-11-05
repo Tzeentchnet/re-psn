@@ -135,7 +135,7 @@ func (s *Server) streamLeg(conn net.Conn, t byte, p []byte) (handedOff bool) {
 	w.u32(from.id)
 	w.u16(vport)
 	s.flush([]push{{to, msgStreamOffer, w.b}})
-	s.logf("stream %d: %s -> %s (vport %d) via the relay", st.id, from.onlineID, to.onlineID, vport)
+	s.log.Debug("relay stream", "stream", st.id, "from", from.onlineID, "to", to.onlineID, "vport", vport)
 
 	var other net.Conn
 	select {
