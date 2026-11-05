@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A features list: `docs/features.tsv` holds one row per feature with its status and evidence, and `tools/features.py` generates
+  `docs/features.md` from it. CI runs `python3 tools/features.py --check`, which fails on a stale page, a malformed row, or
+  evidence that does not exist.
 - Release archives include an `examples/` folder: `re-psn.env.example` with every setting, a systemd unit, and Traefik, nginx and HAProxy
   configs that pass the real client address. `scripts/check-deploy.sh` checks the env file against the server's flags and runs in
   `scripts/release-build.sh`. Only the Traefik config has been run.
