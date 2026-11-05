@@ -1,0 +1,32 @@
+name: Feature request
+description: An improvement or a new feature
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [ROADMAP.md](https://github.com/undecuple/psnr/blob/main/ROADMAP.md) first.
+        Do not attach game files, keys or private logs.
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like, and why?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Server
+        - C client
+        - Security or privacy
+        - Operations (Docker, CI, releases)
+        - Docs
+        - Other
+  - type: checkboxes
+    id: wire
+    attributes:
+      label: Protocol
+      options:
+        - label: This would change the wire format (it then bumps the protocol version and `docs/api.md`)
