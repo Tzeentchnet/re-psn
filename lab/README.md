@@ -1,9 +1,9 @@
 # NAT lab
 
 Players in different homes sit behind routers that translate addresses (NAT).
-This lab reproduces that in Docker, on one machine: a psnr server on a pretend
+This lab reproduces that in Docker, on one machine: a re-psn server on a pretend
 internet, and headless players on home networks behind NATing routers. It
-tests the part of psnr that gets players through those routers, with the real
+tests the part of re-psn that gets players through those routers, with the real
 C client and real UDP sockets.
 
 ```mermaid
@@ -29,17 +29,18 @@ flowchart TB
 
 Run it:
 
-```
+```sh
 lab/run.sh                 # all scenarios
 lab/run.sh cone samelan    # some
 ```
 
-It needs Docker with compose (Docker Desktop on Windows and macOS). The exit
-status is non-zero if any scenario doesn't do what it's expected to.
+> [!NOTE]
+> It needs Docker with compose (Docker Desktop on Windows and macOS). The exit
+> status is non-zero if any scenario doesn't do what it's expected to.
 
 ## What a player does
 
-`natcheck` does what the runtime does for a title, minus the title:
+`natcheck` ([natcheck.c](natcheck.c)) does what the runtime does for a title, minus the title:
 
 1. HELLO over TCP, which returns a token.
 2. From its P2P socket, a UDP PROBE to the server carrying that token. The

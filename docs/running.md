@@ -1,21 +1,36 @@
 # Running the server
 
+How to build and run the re-psn server, its flags and environment variables, the UDP source address check, running it
+behind a reverse proxy, logging, ports, firewall rules, and what state it keeps.
+
+## Contents
+
+- [Run it](#run-it)
+- [Flags](#flags)
+- [UDP source address](#udp-source-address)
+- [Behind a reverse proxy](#behind-a-reverse-proxy)
+- [Environment variables](#environment-variables)
+- [Logging](#logging)
+- [Ports](#ports)
+- [Firewall](#firewall)
+- [State, backup, upgrade](#state-backup-upgrade)
+
 ## Run it
 
-```
+```sh
 cd server
 go build -o re-psn .      # re-psn.exe on Windows
 ./re-psn
 ```
 
-```
-2026/09/29 02:17:35 psnr 0.1.0: clients on [::]:36100
-2026/09/29 02:17:35 status page on http://127.0.0.1:36101/
+```text
+time=2026-09-29T02:17:35.000+00:00 level=INFO msg=started version=0.1.0 clients=[::]:36100 udp=[::]:36100 relay=false
+time=2026-09-29T02:17:35.000+00:00 level=INFO msg="status page" addr=127.0.0.1:36101 token=false
 ```
 
-With Docker (see `docker/README.md`):
+With Docker (see [docker/README.md](../docker/README.md)):
 
-```
+```sh
 docker compose -f docker/docker-compose.yml up -d
 ```
 
@@ -48,7 +63,7 @@ address (the same household or carrier NAT). It also refuses players whose UDP l
 than their TCP (multi-WAN routers that balance per connection, some carrier NAT): their probes go unanswered, so other
 players on other networks get the address TCP shows instead of the router's mapping. The first refused probe per player is
 logged at warn level (`UDP probe refused`, with both addresses and the flag that turns the check off). If you see it for real players, `-udp-any-source` turns the
-check off. The same check means UDP must reach psnr with the player's own address: published straight to the host (see
+check off. The same check means UDP must reach re-psn with the player's own address: published straight to the host (see
 the next section), not through a proxy or port forwarder that rewrites the source. A TCP proxy without `-trusted-proxies`
 makes every player look like the proxy, so every probe is refused.
 
@@ -58,13 +73,14 @@ on the same network, who send UDP to it.
 
 ## Behind a reverse proxy
 
-The release archives carry an `examples/` folder: `re-psn.env.example` (every setting, commented, with its default; copy it to `re-psn.env`), `re-psn.service` (a systemd
-unit, reading `/etc/psnr/psnr.env` then `/etc/re-psn/re-psn.env`) and configs for Traefik, nginx and HAProxy. Only the Traefik one has been run (see below).
+The release archives carry an `examples/` folder (in this repository, [deploy/](../deploy/README.md)): `re-psn.env.example` (every setting, commented, with its
+default; copy it to `re-psn.env`), `re-psn.service` (a systemd unit, reading `/etc/psnr/psnr.env` then `/etc/re-psn/re-psn.env`) and configs for Traefik, nginx
+and HAProxy. Only the Traefik one has been run (see below).
 
 Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
 (`-max-conns-per-addr` trips for everyone, and the address other players receive is wrong).
 
-- **Game TCP port:** have the proxy send a PROXY protocol v2 (or v1) header and start psnr with `-trusted-proxies <proxy address>
+- **Game TCP port:** have the proxy send a PROXY protocol v2 (or v1) header and start re-psn with `-trusted-proxies <proxy address>
   -proxy-protocol`. A peer in the list must send a header: one that sends none is closed, so a misconfigured proxy cannot make
   everyone look like one address. A header from a peer that is not in the list is not believed.
 - **UDP:** not proxied. Publish UDP straight to the host (the address probes need the player's own source address). A
@@ -75,7 +91,7 @@ Without a proxy nothing changes. With one, the server must learn the real player
   server logs a warning at start if it sees one. Cloudflare's address ranges change, so they are not built in: copy
   Cloudflare's published list into `RE_PSN_TRUSTED_PROXIES` yourself and keep it current.
 
-Traefik, with a TCP router sending PROXY protocol v2 to psnr (tested with Traefik 3.1 under Podman: the HELLO reply and the log
+Traefik, with a TCP router sending PROXY protocol v2 to re-psn (tested with Traefik 3.1 under Podman: the HELLO reply and the log
 showed the client's own address, and a forged `X-Forwarded-For` on the status page was not believed):
 
 ```yaml
@@ -89,13 +105,17 @@ tcp:
         servers: [{address: "127.0.0.1:36100"}]
 ```
 
-with `RE_PSN_TRUSTED_PROXIES=127.0.0.1` and `RE_PSN_PROXY_PROTOCOL=true`. nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
-(`send-proxy-v2` on the server line; a health check to psnr needs `check-send-proxy` as well) work the same way but have not been run here. psnr
+with `RE_PSN_TRUSTED_PROXIES=127.0.0.1` and `RE_PSN_PROXY_PROTOCOL=true`. The example in [deploy/traefik/dynamic.yml](../deploy/traefik/dynamic.yml) has
+re-psn listen behind Traefik on `127.0.0.1:36200` instead, so both fit on one host.
+
+nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
+(`send-proxy-v2` on the server line; a health check to re-psn needs `check-send-proxy` as well) work the same way but have not been run here. re-psn
 accepts v1 and v2. A v2 header must describe a TCP stream: a datagram or unassigned family or transport is refused and the connection closed.
 
-**Cloudflare:** the ordinary proxy carries only HTTP and HTTPS, so it can front the status page but not the game port. Cloudflare Spectrum can send
-PROXY protocol for TCP and UDP, but its documentation lists it as an Enterprise feature, so below that plan Cloudflare is not a way to get real
-player addresses on the game port (check Cloudflare's current plan page).
+> [!NOTE]
+> **Cloudflare:** the ordinary proxy carries only HTTP and HTTPS, so it can front the status page but not the game port. Cloudflare Spectrum can send
+> PROXY protocol for TCP and UDP, but its documentation lists it as an Enterprise feature, so below that plan Cloudflare is not a way to get real
+> player addresses on the game port (check Cloudflare's current plan page).
 
 ## Environment variables
 
@@ -134,27 +154,27 @@ Rotate the file with logrotate or your service manager (`copytruncate`, or resta
 | Port | Proto | Open to |
 |---|---|---|
 | 36100 | TCP and UDP | every player (the only port the server needs reachable). UDP carries the players' address probes. |
-| 36101 | TCP | you. It has no auth and lists every player's online ID. Keep it on localhost or a LAN, not the internet. |
+| 36101 | TCP | you. It lists every player's online ID and has no auth unless `-http-token` is set. Keep it on localhost or a LAN, not the internet. |
 | each player's P2P port (3658 unless `PS3_NET_P2P_PORT` says otherwise) | UDP and TCP | the other players. The game opens this port itself; titles use both (Simpsons Arcade sends its game setup over TCP). |
 
 Players on the same LAN or tailnet need nothing forwarded. Across the internet,
 the server's machine must accept TCP and UDP 36100, and each player must accept the
 other players' traffic on their P2P port. The server passes out addresses and
-relays nothing.
+relays nothing unless `-relay` is on.
 
 ## Firewall
 
 **The server (TCP and UDP 36100).** On Windows, `Setup.cmd` offers to add the
 rules. By hand, from an admin terminal:
 
-```
+```bat
 netsh advfirewall firewall add rule name=re-psn dir=in action=allow protocol=TCP localport=36100 program="C:\path\to\re-psn\server\re-psn.exe"
 netsh advfirewall firewall add rule name=re-psn dir=in action=allow protocol=UDP localport=36100 program="C:\path\to\re-psn\server\re-psn.exe"
 ```
 
 On Linux, `setup.sh` prints the commands if a firewall is on:
 
-```
+```sh
 sudo ufw allow 36100                                        # ufw: TCP and UDP
 sudo firewall-cmd --permanent --add-port=36100/tcp --add-port=36100/udp && sudo firewall-cmd --reload   # firewalld
 ```
@@ -163,13 +183,14 @@ sudo firewall-cmd --permanent --add-port=36100/tcp --add-port=36100/udp && sudo 
 game goes online Windows asks whether to allow it; allow it on the network
 type you play on (private, or public too). Or add the rule ahead of time:
 
-```
-netsh advfirewall firewall add rule name="psnr game" dir=in action=allow program="C:\path\to\game.exe"
+```bat
+netsh advfirewall firewall add rule name="re-psn game" dir=in action=allow program="C:\path\to\game.exe"
 ```
 
 On Linux: `sudo ufw allow 3658` (both protocols).
 
-A tailnet needs neither rule for players on it.
+> [!TIP]
+> A tailnet needs neither rule for players on it.
 
 ## State, backup, upgrade
 

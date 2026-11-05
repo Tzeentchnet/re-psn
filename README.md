@@ -80,8 +80,8 @@ window is needed after installing Go before `go` is on `PATH`.
    ```
    Expected output:
    ```
-   2026/09/29 02:17:35 psnr 0.1.0: clients on [::]:36100
-   2026/09/29 02:17:35 status page on http://127.0.0.1:36101/
+   time=2026-09-29T02:17:35.000+00:00 level=INFO msg=started version=0.1.0 clients=[::]:36100 udp=[::]:36100 relay=false
+   time=2026-09-29T02:17:35.000+00:00 level=INFO msg="status page" addr=127.0.0.1:36101 token=false
    ```
 3. Open http://127.0.0.1:36101/. It shows no rooms and no leaderboards until a
    client connects.
@@ -137,6 +137,8 @@ by the others.
   no threads, and why game traffic doesn't go through the server
 - [docs/api.md](docs/api.md): the protocol
 - [docs/running.md](docs/running.md): flags, ports, Docker, state
+- [docker/](docker/README.md): building and running the server in a container
+- [deploy/](deploy/README.md): the settings file, systemd unit and reverse proxy examples
 - [lab/](lab/README.md): players behind NATing routers, in Docker (`lab/run.sh`)
 
 ## Building from source

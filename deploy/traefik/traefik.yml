@@ -1,5 +1,5 @@
 # Traefik static configuration for psnr. Entry points: "game" for the game TCP port and "web" for the status page.
-# Tested with Traefik 3.1 under Podman (see README.txt). Change the ports here and in dynamic.yml together.
+# Tested with Traefik 3.1 under Podman (see README.md). Change the ports here and in dynamic.yml together.
 entryPoints:
   game:
     address: ":36100"
