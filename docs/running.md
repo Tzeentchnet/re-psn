@@ -4,8 +4,8 @@
 
 ```
 cd server
-go build -o psnr .        # psnr.exe on Windows
-./psnr
+go build -o re-psn .      # re-psn.exe on Windows
+./re-psn
 ```
 
 ```
@@ -58,8 +58,8 @@ on the same network, who send UDP to it.
 
 ## Behind a reverse proxy
 
-The release archives carry an `examples/` folder: `re-psn.env.example` (every setting, commented, with its default; copy it to `re-psn.env`), `psnr.service` (a systemd
-unit) and configs for Traefik, nginx and HAProxy. Only the Traefik one has been run (see below).
+The release archives carry an `examples/` folder: `re-psn.env.example` (every setting, commented, with its default; copy it to `re-psn.env`), `re-psn.service` (a systemd
+unit, reading `/etc/psnr/psnr.env` then `/etc/re-psn/re-psn.env`) and configs for Traefik, nginx and HAProxy. Only the Traefik one has been run (see below).
 
 Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
 (`-max-conns-per-addr` trips for everyone, and the address other players receive is wrong).
@@ -148,8 +148,8 @@ relays nothing.
 rules. By hand, from an admin terminal:
 
 ```
-netsh advfirewall firewall add rule name=psnr dir=in action=allow protocol=TCP localport=36100 program="C:\path\to\psnr\server\psnr.exe"
-netsh advfirewall firewall add rule name=psnr dir=in action=allow protocol=UDP localport=36100 program="C:\path\to\psnr\server\psnr.exe"
+netsh advfirewall firewall add rule name=re-psn dir=in action=allow protocol=TCP localport=36100 program="C:\path\to\re-psn\server\re-psn.exe"
+netsh advfirewall firewall add rule name=re-psn dir=in action=allow protocol=UDP localport=36100 program="C:\path\to\re-psn\server\re-psn.exe"
 ```
 
 On Linux, `setup.sh` prints the commands if a firewall is on:

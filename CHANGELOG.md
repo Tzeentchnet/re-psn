@@ -56,13 +56,19 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
-- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server and `client/psnr.c` keep their
-  names.
+- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. `client/psnr.c` keeps its name.
 - Settings are read from `RE_PSN_<FLAG>` variables. The old `PSNR_<FLAG>` names still work as aliases: a flag wins, then
   `RE_PSN_<FLAG>`, then `PSNR_<FLAG>`. An old name logs a warning at start naming the old and new variable (never the value), and
   if both are set and differ the new one is used, with a warning. `deploy/psnr.env.example` is now `deploy/re-psn.env.example`,
   with the old names in a comment block; `scripts/check-deploy.sh` checks both lists and refuses a live `deploy/re-psn.env` or
   `deploy/psnr.env`. The compose file, Docker README and proxy examples use the new names.
+- The server binary is `re-psn` (`re-psn.exe` on Windows): release archives are `re-psn-vX.Y.Z-<os>-<arch>` (.tar.gz, .zip) with
+  `re-psn-*.sha256` files and SHA256SUMS, and the release workflows look for those names. No `psnr` copy is shipped. The image, the
+  compose service and the `Setup.cmd` / `setup.sh` launchers (`Start re-psn.cmd`, `start-re-psn.sh`) and Windows firewall rule
+  (`re-psn`; the old `psnr` rule is removed) use the new name. `deploy/psnr.service` is now `deploy/re-psn.service`: it starts
+  `/usr/local/bin/re-psn` and reads `/etc/psnr/psnr.env`, then `/etc/re-psn/re-psn.env` (both optional, the later one wins); the
+  state directory stays `/var/lib/psnr`. `scripts/check-deploy.sh` checks the unit's binary and both env paths. The Go module path,
+  the C API, the UDP magic and the wire format are unchanged.
 - The architecture and NAT lab diagrams are Mermaid (GitHub renders them), and `docs/architecture.md` gains a diagram of the optional
   reverse proxy path and diagrams of a relayed connection (a VPS example) and of how a relayed stream is set up. The text there that said
   there is no hole punching and no relay is corrected.

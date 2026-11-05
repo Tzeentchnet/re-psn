@@ -13,13 +13,20 @@ protocol. The MIT licence and copyright line are kept in [LICENSE](LICENSE), and
 fork adds hardened CI, community files, logging, invite-only rooms, reverse proxy support, settings from environment variables, release archives and
 a Docker folder; its changes are in [CHANGELOG.md](CHANGELOG.md).
 
-The project is called re-psn. The program and its C client files keep the name psnr (the `psnr` server, `client/psnr.c`), so the code stays easy to
-compare with upstream. Settings are `RE_PSN_*` variables.
+The project is called re-psn, and so is the server program (`re-psn`, `re-psn.exe` on Windows). The C client files keep the name psnr
+(`client/psnr.c`), as do the Go module path and the protocol, so the code stays easy to compare with upstream. Settings are `RE_PSN_*` variables.
 
 **Coming from `PSNR_*` settings:** nothing breaks. The old `PSNR_<FLAG>` names are still read, and the server logs a warning
 at start naming each old variable and its `RE_PSN_<FLAG>` replacement (never the value). Rename them when convenient; if
 both names are set with different values, the `RE_PSN_` one wins. See [docs/running.md](docs/running.md), "Environment
 variables".
+
+**Coming from the `psnr` binary:** the server is now built as `re-psn` (`re-psn.exe`), and no `psnr` copy is shipped; `Setup.cmd` and
+`setup.sh` leave a `Start re-psn.cmd` / `start-re-psn.sh` launcher (an old launcher still starts the old build). Release archives are
+named `re-psn-vX.Y.Z-<os>-<arch>`. The systemd unit is `re-psn.service`: it starts `/usr/local/bin/re-psn` and reads the old
+`/etc/psnr/psnr.env`, then `/etc/re-psn/re-psn.env` (both optional; the new one wins), and keeps `/var/lib/psnr`; run
+`systemctl disable --now psnr` before enabling it. The image and the compose service are `re-psn` (start compose with
+`--remove-orphans` once to drop the old `psnr` container). Old settings keep working.
 
 ## Status
 
@@ -51,8 +58,8 @@ leaderboards:
 2. Double-click **`Setup.cmd`** (Windows) or run **`./setup.sh`** (Linux/macOS).
    - The script checks for Go and asks before installing it (winget, about
      70 MB).
-   - It then builds the server and leaves a **`Start psnr.cmd`** (or
-     `start-psnr.sh`) launcher in the folder.
+   - It then builds the server and leaves a **`Start re-psn.cmd`** (or
+     `start-re-psn.sh`) launcher in the folder.
 3. Run the launcher, then open http://127.0.0.1:36101/ in a browser.
 
 If setup fails, it prints one line saying what to do and where the full log is.
@@ -65,11 +72,11 @@ window is needed after installing Go before `go` is on `PATH`.
 1. Build:
    ```
    cd server
-   go build -o psnr.exe .     # "psnr" on Linux/macOS
+   go build -o re-psn.exe .   # "re-psn" on Linux/macOS
    ```
 2. Run:
    ```
-   psnr.exe
+   re-psn.exe
    ```
    Expected output:
    ```
@@ -85,7 +92,7 @@ Players connect to TCP 36100. Ports, flags and Docker are covered in
 ## Usage
 
 ```
-psnr -addr :36100 -http 127.0.0.1:36101 -v    # log every room event
+re-psn -addr :36100 -http 127.0.0.1:36101 -v  # log every room event
 docker compose -f docker/docker-compose.yml up -d   # same thing, in a container (docker/README.md)
 curl http://127.0.0.1:36101/api/stats         # rooms and boards as JSON
 ```

@@ -17,8 +17,8 @@ trap 'rm -rf "$stage"' EXIT
 
 for target in windows/amd64 linux/amd64 linux/arm64; do
   os="${target%/*}"; arch="${target#*/}"
-  exe=psnr; [ "$os" = windows ] && exe=psnr.exe
-  name="psnr-$tag-$os-$arch"
+  exe=re-psn; [ "$os" = windows ] && exe=re-psn.exe
+  name="re-psn-$tag-$os-$arch"
   d="$stage/$name"; mkdir -p "$d"
   (cd "$root" && CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
     go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$d/$exe" ./server)
@@ -32,6 +32,6 @@ for target in windows/amd64 linux/amd64 linux/arm64; do
 done
 
 cd "$dist"
-for f in psnr-*; do sha256sum "$f" > "$f.sha256"; done
-sha256sum psnr-*.zip psnr-*.tar.gz > SHA256SUMS
+for f in re-psn-*; do sha256sum "$f" > "$f.sha256"; done
+sha256sum re-psn-*.zip re-psn-*.tar.gz > SHA256SUMS
 sha256sum -c SHA256SUMS

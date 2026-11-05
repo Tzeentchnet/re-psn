@@ -37,7 +37,7 @@ jobs:
             (.draft | not) and .name == $tag and ((.prerelease) or (.tag_name | startswith("v0") | not))' \
             "$RUNNER_TEMP/release.json" >/dev/null \
             || { echo "::error::release must be published, titled $TAG, and a pre-release while 0.x"; exit 1; }
-          want="psnr-$TAG-linux-amd64.tar.gz psnr-$TAG-linux-amd64.tar.gz.sha256 psnr-$TAG-linux-arm64.tar.gz psnr-$TAG-linux-arm64.tar.gz.sha256 psnr-$TAG-windows-amd64.zip psnr-$TAG-windows-amd64.zip.sha256 SHA256SUMS"
+          want="re-psn-$TAG-linux-amd64.tar.gz re-psn-$TAG-linux-amd64.tar.gz.sha256 re-psn-$TAG-linux-arm64.tar.gz re-psn-$TAG-linux-arm64.tar.gz.sha256 re-psn-$TAG-windows-amd64.zip re-psn-$TAG-windows-amd64.zip.sha256 SHA256SUMS"
           got="$(jq -r '.assets[].name' "$RUNNER_TEMP/release.json" | sort | tr '\n' ' ' | sed 's/ $//')"
           want="$(printf '%s\n' $want | sort | tr '\n' ' ' | sed 's/ $//')"
           [ "$got" = "$want" ] || { echo "::error::assets differ"; echo "want: $want"; echo "got:  $got"; exit 1; }
@@ -47,4 +47,4 @@ jobs:
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/assets"
           cd "$RUNNER_TEMP/assets"
           sha256sum -c SHA256SUMS
-          for f in psnr-*.sha256; do sha256sum -c "$f"; done
+          for f in re-psn-*.sha256; do sha256sum -c "$f"; done

@@ -1,8 +1,12 @@
-# Build output
+# Build output (the psnr names are builds from before the rename)
+/server/re-psn
+/server/re-psn.exe
 /server/psnr
 /server/psnr.exe
 /server/server
 /server/server.exe
+/re-psn
+/re-psn.exe
 /psnr
 /psnr.exe
 *.o
@@ -17,6 +21,8 @@
 .env
 *.log
 setup.log
+/Start re-psn.cmd
+/start-re-psn.sh
 /Start psnr.cmd
 /start-psnr.sh
 /dist/
