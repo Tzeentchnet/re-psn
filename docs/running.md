@@ -27,12 +27,47 @@ docker compose up -d
 | `-tcp-addr`, `-udp-addr` | `-addr` | Give TCP or UDP its own address (a different port, or one interface). Unset, each takes `-addr`. |
 | `-http` | `127.0.0.1:36101` | Status page and `/api/stats`. Set it to `""` to turn it off. |
 | `-http-token` | none | Require this token on the status page, as `Authorization: Bearer <token>` or `?token=<token>`. Set it whenever `-http` is not on localhost; the server logs a warning if it is not. |
+| `-trusted-proxies` | none | Reverse proxies allowed to name the real client: CIDRs or addresses, comma-separated. See [Behind a reverse proxy](#behind-a-reverse-proxy). |
+| `-proxy-protocol` | off | Require a PROXY protocol v1 or v2 header on the game TCP port from a trusted proxy. Needs `-trusted-proxies`. |
 | `-max-rooms` | `1000` | Room limit across all titles |
 | `-relay` | off | Carry traffic between players who can't reach each other directly: streams into a player behind a router, and datagrams when a router won't let punched traffic through. Uses this server's bandwidth. |
 | `-log-level` | `info` | `debug` (room and relay events), `info` (connects, hellos, disconnects), `warn` (every refusal) or `error`. |
 | `-log-format` | `text` | `text` or `json`, one line per event. |
 | `-log-file` | none | Also append the log to this file (created with mode 0600). |
 | `-v` | off | Same as `-log-level debug`. |
+
+## Behind a reverse proxy
+
+Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
+(`-max-conns-per-addr` trips for everyone, and the address other players receive is wrong).
+
+- **Game TCP port:** have the proxy send a PROXY protocol v2 (or v1) header and start psnr with `-trusted-proxies <proxy address>
+  -proxy-protocol`. A peer in the list must send a header: one that sends none is closed, so a misconfigured proxy cannot make
+  everyone look like one address. A header from a peer that is not in the list is not believed.
+- **UDP:** not proxied. Publish UDP straight to the host (the address probes need the player's own source address). A
+  player behind your proxy still needs UDP reachable on its own.
+- **Status page:** from a listed proxy, `CF-Connecting-IP`, else `X-Forwarded-For` taken from the right past other listed
+  proxies, is the address in the log. The token check does not change.
+- **The list is trust.** Put only your own proxies in it. A list that includes `0.0.0.0/0` lets any client claim any address; the
+  server logs a warning at start if it sees one. Cloudflare's address ranges change, so they are not built in: copy
+  Cloudflare's published list into `PSNR_TRUSTED_PROXIES` yourself and keep it current.
+
+Traefik, with a TCP router sending PROXY protocol v2 to psnr (tested with Traefik 3.1 under Podman: the HELLO reply and the log
+showed the client's own address, and a forged `X-Forwarded-For` on the status page was not believed):
+
+```yaml
+tcp:
+  routers:
+    game: {entryPoints: [game], rule: "HostSNI(`*`)", service: psnr-tcp}
+  services:
+    psnr-tcp:
+      loadBalancer:
+        proxyProtocol: {version: 2}
+        servers: [{address: "127.0.0.1:36100"}]
+```
+
+with `PSNR_TRUSTED_PROXIES=127.0.0.1` and `PSNR_PROXY_PROTOCOL=true`. nginx (`proxy_protocol on;` in a `stream` block) and HAProxy
+(`send-proxy-v2` on the server line) work the same way but have not been run here.
 
 ## Environment variables
 

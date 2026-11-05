@@ -133,7 +133,7 @@ func (s *Server) HTTP() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !s.authorized(r) {
 			// the path only: the token may be in the query string
-			s.log.Warn("status page refused", "addr", r.RemoteAddr, "path", r.URL.Path, "reason", "token missing or wrong")
+			s.log.Warn("status page refused", "addr", s.clientAddr(r), "path", r.URL.Path, "reason", "token missing or wrong")
 			http.Error(w, "token required", http.StatusUnauthorized)
 			return
 		}
