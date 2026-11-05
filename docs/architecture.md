@@ -66,11 +66,54 @@ itself goes peer to peer.
 - The title's signaling layer connects to that address directly over
   `sys_net` sockets.
 
-A relay for game traffic would add a hop of latency to every packet. It would
-also need a server large enough to carry all of it.
+A relay for game traffic adds a hop of latency to every packet, and it needs a server large enough to carry all of it. So the server
+relays only when asked to (`-relay`) and only for players who cannot reach each other any other way.
 
-The cost is NAT. Peers behind NAT that can't reach each other need port
-forwarding or a shared VPN; Tailscale works. There is no hole punching.
+The cost is NAT. Players behind routers first try to reach each other directly: each sends UDP PROBEs to the server so it learns the router's public
+address and port, then both sides send PUNCH packets to open their routers (see "UDP" in [api.md](api.md)). A player behind a router that picks a new
+port for every destination (symmetric NAT) cannot be reached that way. With `-relay` the server then carries that player's traffic; without it
+the players need port forwarding or a shared VPN (Tailscale works).
+
+### A relayed connection
+
+The example: the host runs psnr with `-relay` on a VPS with a public address. Players A and B are in different homes, each behind a router, and B's
+router is a symmetric NAT. The control connection (rooms, leaderboards) always goes to the VPS. A direct path is tried first; when it fails, game
+datagrams and streams are carried by the VPS, which costs the VPS's bandwidth.
+
+```mermaid
+flowchart TB
+  srv[("VPS with a public address<br/>psnr -relay, TCP + UDP 36100")]
+  subgraph homeA["home A"]
+    a["player A<br/>title + client/psnr.c"] --- ra["router"]
+  end
+  subgraph homeB["home B"]
+    b["player B<br/>title + client/psnr.c"] --- rb["router<br/>(symmetric NAT)"]
+  end
+  ra <-- "TCP control + UDP probes" --> srv
+  rb <-- "TCP control + UDP probes" --> srv
+  ra -. "direct path: blocked" .- rb
+  ra == "game traffic relayed: UDP datagrams, TCP stream legs" ==> srv
+  srv == "carried on to B" ==> rb
+```
+
+How a relayed stream is set up (a player behind a router cannot accept an incoming connection, so both sides connect out to the VPS):
+
+```mermaid
+sequenceDiagram
+  participant A as player A
+  participant S as psnr -relay (VPS)
+  participant B as player B (behind NAT)
+  S->>A: ROUTE: streams to B go through the relay
+  A->>S: new TCP connection: STREAM_CONNECT (to B, vport)
+  S->>B: STREAM_OFFER (stream id) on B's control connection
+  B->>S: new TCP connection: STREAM_ACCEPT (stream id)
+  S-->>A: STREAM_READY
+  S-->>B: STREAM_READY
+  A->>S: stream bytes
+  S->>B: the same bytes, no framing, copied until either side closes
+```
+
+Both players must share a room, and B has 10 seconds to accept.
 
 ## Why rooms and leaderboards first
 
