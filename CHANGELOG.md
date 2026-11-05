@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `tools/art/make_art.py` draws the README banner and terminal images (`docs/img/`) in the gruvbox-material palette
+  (`docs/art/palette.json`) with JetBrains Mono pinned by SHA-256. Terminal images come only from transcripts of real runs
+  (`docs/art/transcripts/`, recorded by `tools/art/capture.sh`). CI renders them again and fails on any byte that differs.
 - `AGENTS.md`: the commands, layout and rules for AI coding agents working in the repository.
 - A `VERSION` file with a test that the code, this file and the README agree on it, `scripts/bump-version.sh` (one bump, every place,
   `--dry-run` shows the diff), `scripts/release-notes.sh` (notes from this file, not used by the workflow yet) and

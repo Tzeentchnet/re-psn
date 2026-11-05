@@ -1,5 +1,7 @@
 # re-psn
 
+![re-psn: matchmaking rooms and leaderboards for recompiled PS3 games; self-hosted, with NAT traversal and an optional relay](docs/img/banner.png)
+
 A reimplementation of PSN's matchmaking rooms and leaderboards for statically recompiled PS3 games, with NAT traversal and an
 optional relay.
 

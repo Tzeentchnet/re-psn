@@ -1,0 +1,128 @@
+"""Tests for tools/art/make_art.py: the palette values, deterministic output, and the font pins.
+
+    python3 -m unittest            # from the repository root; the rendering tests skip without Pillow
+
+The rendering tests use the fonts in work/art/fonts/ when they are there (after --fetch-fonts), else Pillow's built-in
+font, so they need no network.
+"""
+import io
+import json
+import pathlib
+import sys
+import unittest
+import zipfile
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import make_art  # noqa: E402
+
+try:
+    import PIL  # noqa: F401
+    HAVE_PIL = True
+except ImportError:
+    HAVE_PIL = False
+
+# gruvbox-material, dark, medium background, material foreground (autoload/gruvbox_material.vim).
+DARK = {
+    "bg0": "#282828", "bg1": "#32302f", "bg2": "#32302f", "bg3": "#45403d", "bg4": "#45403d", "bg5": "#5a524c",
+    "fg0": "#d4be98", "fg1": "#ddc7a1",
+    "grey0": "#7c6f64", "grey1": "#928374", "grey2": "#a89984",
+    "red": "#ea6962", "orange": "#e78a4e", "yellow": "#d8a657", "green": "#a9b665", "aqua": "#89b482",
+    "blue": "#7daea3", "purple": "#d3869b",
+}
+
+
+def fonts():
+    try:
+        return make_art.Fonts()
+    except (OSError, ValueError):
+        return make_art.Fonts(stand_in=True)
+
+
+class PaletteTest(unittest.TestCase):
+    def setUp(self):
+        self.data = json.loads((make_art.ROOT / make_art.PALETTE).read_text(encoding="utf-8"))
+
+    def test_dark_matches(self):
+        self.assertEqual(self.data["modes"]["dark"], DARK)
+
+    def test_light_has_the_same_names(self):
+        light = self.data["modes"]["light"]
+        self.assertEqual(set(light), set(DARK))
+        for k, v in light.items():
+            self.assertRegex(v, r"^#[0-9a-f]{6}$", k)
+
+    def test_slots_name_colours(self):
+        for slot, name in self.data["slots"].items():
+            self.assertIn(name, DARK, slot)
+
+
+@unittest.skipUnless(HAVE_PIL, "Pillow is not installed")
+class RenderTest(unittest.TestCase):
+    def test_two_runs_identical(self):
+        f = fonts()
+        a, pa = make_art.render(f)
+        b, pb = make_art.render(f)
+        self.assertEqual(sorted(a), sorted(b))
+        for name in a:
+            self.assertEqual(a[name], b[name], name)
+        self.assertEqual(make_art.manifest(a), make_art.manifest(b))
+        self.assertEqual(pa, pb)
+
+    def test_outputs_are_palette_pngs_within_margin(self):
+        from PIL import Image
+        f = fonts()
+        files, probs = make_art.render(f)
+        self.assertEqual(set(files), {"banner.png"} | {img for img, _ in make_art.TERMS.values()})
+        if not f.stand_in:
+            self.assertEqual(probs, [])
+        for name, data in files.items():
+            with Image.open(io.BytesIO(data)) as im:
+                self.assertEqual(im.mode, "P", name)
+        with Image.open(io.BytesIO(files["banner.png"])) as im:
+            self.assertEqual(im.size, make_art.BANNER)
+
+    def test_margin_problem_reported(self):
+        self.assertEqual(make_art.margin_problems("x.png", (200, 100), (40, 40, 160, 60)), [])
+        self.assertTrue(make_art.margin_problems("x.png", (200, 100), (39, 40, 160, 60)))
+        self.assertTrue(make_art.margin_problems("x.png", (200, 100), (40, 40, 161, 60)))
+
+
+class FetchTest(unittest.TestCase):
+    """The fetch refuses a download or a member whose SHA-256 is not the pinned one."""
+
+    def opener(self, payload):
+        class R(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+        return lambda url, timeout=0: R(payload)
+
+    def test_wrong_zip_refused(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaisesRegex(ValueError, "pinned"):
+                make_art.fetch_fonts(d, opener=self.opener(b"not the release"))
+            self.assertEqual(list(pathlib.Path(d).iterdir()), [])
+
+    def test_wrong_member_refused(self):
+        import tempfile
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            for member, _ in make_art.FONT_FILES.values():
+                z.writestr(member, b"changed")
+        data = buf.getvalue()
+        saved = dict(make_art.FONT_RELEASE)
+        make_art.FONT_RELEASE["sha256"] = make_art.sha256(data)
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                with self.assertRaisesRegex(ValueError, "pinned"):
+                    make_art.fetch_fonts(d, opener=self.opener(data))
+        finally:
+            make_art.FONT_RELEASE.clear()
+            make_art.FONT_RELEASE.update(saved)
+
+
+if __name__ == "__main__":
+    unittest.main()
