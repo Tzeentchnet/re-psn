@@ -12,17 +12,17 @@ if ! command -v go >/dev/null 2>&1; then
 fi
 
 echo "Building the server..."
-if ! (cd server && go build -o psnr . >> "$LOG" 2>&1); then
+if ! (cd server && go build -o re-psn . >> "$LOG" 2>&1); then
   echo "The build failed. Details are in $LOG"
   exit 1
 fi
 
-cat > start-psnr.sh <<'EOS'
+cat > start-re-psn.sh <<'EOS'
 #!/bin/sh
-cd "$(dirname "$0")/server" && exec ./psnr
+cd "$(dirname "$0")/server" && exec ./re-psn
 EOS
-chmod +x start-psnr.sh
-echo "Done. Run ./start-psnr.sh, then open http://127.0.0.1:36101/"
+chmod +x start-re-psn.sh
+echo "Done. Run ./start-re-psn.sh, then open http://127.0.0.1:36101/"
 
 # Other players connect on TCP 36100. Say how to open it if a firewall is on;
 # changing the firewall is left to the admin.

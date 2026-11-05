@@ -2,7 +2,8 @@ psnr deployment examples (text files; nothing here runs by itself)
 
 re-psn.env.example  every setting, commented, with its default, as RE_PSN_* variables (the old PSNR_* names
                     still work and are listed at the end). Copy it to re-psn.env and edit; keep it private.
-psnr.service        a systemd unit (Linux).
+re-psn.service      a systemd unit (Linux) for /usr/local/bin/re-psn. It reads /etc/psnr/psnr.env, then /etc/re-psn/re-psn.env
+                    (both optional; the second wins), and keeps the state directory /var/lib/psnr.
 traefik/            Traefik, TCP router with PROXY protocol v2. Tested with Traefik 3.1 under Podman.
 nginx/psnr.conf     nginx stream with PROXY protocol v1. Not run.
 haproxy/haproxy.cfg HAProxy with send-proxy-v2. Not run.

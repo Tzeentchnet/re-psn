@@ -2,7 +2,8 @@
 # Check that deploy/re-psn.env.example and the server's flags agree: every flag has a RE_PSN_<FLAG> line (commented is fine), every
 # line names a real flag, and the deprecated-names comment block lists the old PSNR_<FLAG> name of every flag and nothing else.
 # Also that no live deploy/re-psn.env or deploy/psnr.env is in the tree, and that the example files exist and name no real host
-# or secret. Run by release-build.sh and runnable on its own: scripts/check-deploy.sh
+# or secret, and that deploy/re-psn.service starts /usr/local/bin/re-psn and reads both env files (old first, new second).
+# Run by release-build.sh and runnable on its own: scripts/check-deploy.sh
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root/server"
@@ -31,9 +32,15 @@ fi
 for live in re-psn.env psnr.env; do
   [ ! -e "$root/deploy/$live" ] || { echo "deploy/$live is a live settings file: only re-psn.env.example ships" >&2; exit 1; }
 done
-for f in re-psn.env.example psnr.service README.txt traefik/traefik.yml traefik/dynamic.yml nginx/psnr.conf haproxy/haproxy.cfg; do
+for f in re-psn.env.example re-psn.service README.txt traefik/traefik.yml traefik/dynamic.yml nginx/psnr.conf haproxy/haproxy.cfg; do
   [ -s "$root/deploy/$f" ] || { echo "deploy/$f is missing or empty" >&2; exit 1; }
 done
+[ ! -e "$root/deploy/psnr.service" ] || { echo "deploy/psnr.service is the old unit name: the unit is deploy/re-psn.service" >&2; exit 1; }
+unit="$root/deploy/re-psn.service"
+grep -qx 'ExecStart=/usr/local/bin/re-psn' "$unit" || { echo "deploy/re-psn.service does not start /usr/local/bin/re-psn" >&2; exit 1; }
+envfiles="$(sed -n 's/^EnvironmentFile=//p' "$unit" | tr '\n' ' ')"
+[ "$envfiles" = "-/etc/psnr/psnr.env -/etc/re-psn/re-psn.env " ] || {
+  echo "deploy/re-psn.service must read -/etc/psnr/psnr.env then -/etc/re-psn/re-psn.env, got: $envfiles" >&2; exit 1; }
 if grep -rEn '([0-9]{1,3}\.){3}[0-9]{1,3}' "$root/deploy" | grep -Ev '127\.0\.0\.1|0\.0\.0\.0' ; then
   echo "deploy/ names an address other than localhost" >&2; exit 1
 fi

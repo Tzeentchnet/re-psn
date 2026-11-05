@@ -9,8 +9,8 @@ No image is published yet; you build it from this repository.
 From the repository root:
 
 ```
-docker build -f docker/Dockerfile -t psnr .
-docker run --rm -p 36100:36100 -p 36100:36100/udp psnr
+docker build -f docker/Dockerfile -t re-psn .
+docker run --rm -p 36100:36100 -p 36100:36100/udp re-psn
 
 docker compose -f docker/docker-compose.yml up -d      # the same, with the ports and a restart policy
 ```
@@ -23,11 +23,11 @@ way (`podman build -f docker/Dockerfile .`).
 The same Dockerfile builds and runs with Podman, rootless included (ports above 1024 need no root):
 
 ```
-podman build -f docker/Dockerfile -t psnr .
+podman build -f docker/Dockerfile -t re-psn .
 
-podman run -d --name psnr --restart=on-failure \
+podman run -d --name re-psn --restart=on-failure \
   -p 36100:36100/tcp -p 36100:36100/udp \
-  psnr
+  re-psn
 ```
 
 Add `-e RE_PSN_<FLAG>=value` for any setting, or `--env-file re-psn.env` (copy `deploy/re-psn.env.example` from the release archive's `examples/`, or from
@@ -37,12 +37,12 @@ this repository, and keep `re-psn.env` private; the old `PSNR_<FLAG>` names stil
 -e RE_PSN_HTTP=0.0.0.0:36101 -e RE_PSN_HTTP_TOKEN=<a long random string> -p 127.0.0.1:36101:36101
 ```
 
-`podman logs psnr` shows the log; `podman rm -f psnr` stops and removes it. Tested with Podman 6.1 on Linux: the image builds, a TCP connection to the
+`podman logs re-psn` shows the log; `podman rm -f re-psn` stops and removes it. Tested with Podman 6.1 on Linux: the image builds, a TCP connection to the
 published port is accepted, the status page answers 401 without the token and 200 with it, and the restart policy is set. Not tested: compose (`podman compose` needs a compose provider), a systemd unit for the container (Quadlet), and Windows or macOS Podman machines.
 
 **Check the address psnr sees.** Rootless Podman forwards published ports itself, and in the test a connection from 127.0.0.1 was logged inside the
 container as the machine's own LAN address. psnr uses the player's address for `-max-conns-per-addr`, the same-name reconnect rule and the address it
-tells other players. Connect from another machine, look at the `hello` line in `podman logs psnr`, and make sure it shows that machine's address and not
+tells other players. Connect from another machine, look at the `hello` line in `podman logs re-psn`, and make sure it shows that machine's address and not
 the host's; if every player shows the host's address, those features lump everyone together. Running with `--network=host` avoids the
 forwarding: there the addresses reach psnr unchanged.
 
