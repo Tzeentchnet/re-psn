@@ -71,7 +71,7 @@ Players connect to TCP 36100. Ports, flags and Docker are covered in
 
 ```
 psnr -addr :36100 -http 127.0.0.1:36101 -v    # log every room event
-docker compose up -d                          # same thing, in a container
+docker compose -f docker/docker-compose.yml up -d   # same thing, in a container (docker/README.md)
 curl http://127.0.0.1:36101/api/stats         # rooms and boards as JSON
 ```
 
