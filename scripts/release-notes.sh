@@ -2,7 +2,7 @@
 # Print the release notes for one version from CHANGELOG.md: a pre-release notice while the version is below 1.0.0, the
 # entries under that version's heading, the text of --extra FILE if given (for example the list of files), and the fixed
 # closing line "Next release: when ready". Output has LF line ends. Fails when the heading is missing or has no entries.
-# Writes nothing. Not called by the release workflow yet.
+# Writes nothing. release.yml builds the release notes with it, for the version in VERSION.
 # usage: scripts/release-notes.sh [--extra FILE] X.Y.Z
 #        scripts/release-notes.sh [--extra FILE] --unreleased   (the Unreleased entries; the notice follows VERSION)
 set -eu
