@@ -6,11 +6,11 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | Status | Meaning | Features |
 |---|---|---|
-| available | merged, with a test or a recorded run | 23 |
+| available | merged, with a test or a recorded run | 24 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
 | partial | merged in part, or with known gaps | 1 |
 | in progress | an open pull request or branch | 0 |
-| planned | wanted and intended, not started | 19 |
+| planned | wanted and intended, not started | 18 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
 | all | | 53 |
@@ -88,7 +88,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | ID | Feature | Status | Since | Evidence | Note |
 |---|---|---|---|---|---|
-| `store-interface` | **Storage interface**: A storage layer with an in-memory backend, the leaderboards wired through it, and a `-db` (`RE_PSN_DB`) setting. Off by default, so nothing changes unless a host turns it on. | planned |  |  | Not started. The first step of opt-in storage. |
+| `store-interface` | **Storage interface**: A storage layer with an in-memory backend, the leaderboards wired through it, and a `-db` (`RE_PSN_DB`) setting. Off by default, so nothing changes unless a host turns it on. | available | main | [`server/store/store.go`](../server/store/store.go), [`server/store/storetest/storetest.go`](../server/store/storetest/storetest.go), [`TestMemoryContract`](../server/store/store_test.go), [`TestDBSetting`](../server/storage_test.go), [`TestDBNotLogged`](../server/storage_test.go), [`TestScoreStoreFailure`](../server/storage_test.go), [`TestScoresOutsideRoomLock`](../server/storage_test.go), [#22](https://github.com/undecuple/re-psn/pull/22) | Only `off` and `memory` exist, so scores are still kept in memory and lost on restart; other schemes stop the start. First step of opt-in storage (store-sqlite is next). |
 | `store-sqlite` | **SQLite storage (opt-in)**: An SQLite backend with a pure-Go driver, so the release archives stay static, and migrations built into the binary. With it on, scores survive a restart. The connection string is never logged. | planned |  |  | Not started. The server's first third-party Go module. Player names and bans would follow with accounts. |
 | `store-backup` | **Backup and restore**: Documented backup and restore for each database: a backup command or a copy procedure for SQLite; a dump command with timer and cron examples for PostgreSQL and MariaDB. How long backups are kept is up to the host. | planned |  |  | Not started. Comes with store-sqlite. |
 | `store-postgres` | **PostgreSQL storage**: A PostgreSQL backend for hosts who bring their own database; the server does not run or manage it. | later |  |  | After store-sqlite. |

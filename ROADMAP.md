@@ -32,6 +32,7 @@ Merged into main. Most of it is not in a release yet.
 
 [Leaderboards](docs/features.md#leaderboards) and [players](docs/features.md#players)
 - [scores-boards] Leaderboards with a best score per player, kept in memory.
+- [store-interface] A storage layer with an in-memory backend and a `-db` setting, changing nothing by default.
 - [players-names] One player per name on a server; a second player cannot take a name in use.
 
 [Limits](docs/features.md#limits), [logging](docs/features.md#logging) and the [status page](docs/features.md#status-page)
@@ -85,7 +86,6 @@ In about this order.
 - [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
 
 ### Storage, off unless a host turns it on
-- [store-interface] A storage layer with an in-memory backend and a `-db` setting, changing nothing by default.
 - [store-sqlite] SQLite storage, so leaderboards survive a restart.
 - [store-backup] Backup and restore steps for each database.
 

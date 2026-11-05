@@ -162,6 +162,7 @@ Available on `main` today; [docs/features.md](docs/features.md) has the evidence
 | `rooms-codes` | Invite-only rooms | An 8-character code; the room leaves search and the status page. |
 | `scores-boards` | Leaderboards | Best score per player, higher- or lower-is-better, ranks by range or name. |
 | `players-names` | One player per name | A name in use from another address is refused; the same address takes over. |
+| `store-interface` | Storage interface | Scores go through a storage layer; only `off` and `memory` exist, so nothing is kept across a restart yet. |
 | `limits-requests` | Request and connection limits | Rooms, rooms per player, connections per address, request rate, data size. |
 | `logs-levels` | Log levels and formats | debug to error, text or JSON, an optional log file; tokens never logged. |
 | `status-page` | Status page and /api/stats | Read-only, on localhost by default, with an optional token. |
@@ -178,6 +179,7 @@ Available on `main` today; [docs/features.md](docs/features.md) has the evidence
 | `docs-features` | Features list | Generated from `docs/features.tsv` and checked in CI. |
 | `docs-diagrams` | Mermaid diagrams | Architecture, reverse proxy, relay and NAT lab. |
 | `docs-markdown` | Docs in Markdown | One layout for every doc. |
+| `docs-connecting` | Ways to connect | LAN, port forwarding, a public server, Tailscale or ZeroTier; [docs/connecting.md](docs/connecting.md). |
 | `docs-readme` | README rewrite | This page. |
 
 Rows that are partial, not yet verified, planned or later (release archives, the nginx and HAProxy examples, storage backends, the
