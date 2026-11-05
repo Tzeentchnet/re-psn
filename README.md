@@ -13,8 +13,13 @@ protocol. The MIT licence and copyright line are kept in [LICENSE](LICENSE), and
 fork adds hardened CI, community files, logging, invite-only rooms, reverse proxy support, settings from environment variables, release archives and
 a Docker folder; its changes are in [CHANGELOG.md](CHANGELOG.md).
 
-The project is called re-psn. The program, its C client files and its settings keep the name psnr (the `psnr` server, `client/psnr.c`,
-`PSNR_*` variables), so existing setups keep working and the code stays easy to compare with upstream.
+The project is called re-psn. The program and its C client files keep the name psnr (the `psnr` server, `client/psnr.c`), so the code stays easy to
+compare with upstream. Settings are `RE_PSN_*` variables.
+
+**Coming from `PSNR_*` settings:** nothing breaks. The old `PSNR_<FLAG>` names are still read, and the server logs a warning
+at start naming each old variable and its `RE_PSN_<FLAG>` replacement (never the value). Rename them when convenient; if
+both names are set with different values, the `RE_PSN_` one wins. See [docs/running.md](docs/running.md), "Environment
+variables".
 
 ## Status
 

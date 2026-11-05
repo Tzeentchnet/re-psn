@@ -30,11 +30,11 @@ podman run -d --name psnr --restart=on-failure \
   psnr
 ```
 
-Add `-e PSNR_<FLAG>=value` for any setting, or `--env-file psnr.env` (copy `deploy/psnr.env.example` from the release archive's `examples/`, or from
-this repository, and keep `psnr.env` private). Status page, from this machine only:
+Add `-e RE_PSN_<FLAG>=value` for any setting, or `--env-file re-psn.env` (copy `deploy/re-psn.env.example` from the release archive's `examples/`, or from
+this repository, and keep `re-psn.env` private; the old `PSNR_<FLAG>` names still work). Status page, from this machine only:
 
 ```
--e PSNR_HTTP=0.0.0.0:36101 -e PSNR_HTTP_TOKEN=<a long random string> -p 127.0.0.1:36101:36101
+-e RE_PSN_HTTP=0.0.0.0:36101 -e RE_PSN_HTTP_TOKEN=<a long random string> -p 127.0.0.1:36101:36101
 ```
 
 `podman logs psnr` shows the log; `podman rm -f psnr` stops and removes it. Tested with Podman 6.1 on Linux: the image builds, a TCP connection to the
@@ -53,15 +53,15 @@ address was accepted, a client sending them from two different addresses was ref
 
 ## Settings
 
-The image has no fixed flags. Every flag is a `PSNR_<FLAG>` environment variable (`docs/running.md`, "Environment variables"); the compose
-file shows `PSNR_ADDR`. If you change a port, change the published port and your firewall too.
+The image has no fixed flags. Every flag is a `RE_PSN_<FLAG>` environment variable, and the old `PSNR_<FLAG>` still works (`docs/running.md`, "Environment variables"); the compose
+file shows `RE_PSN_ADDR`. If you change a port, change the published port and your firewall too.
 
 The status page lists every online ID, so it is not reachable from the host by default. To reach it, bind it inside the container
 and set a token, then publish the port on this machine only (the lines are in the compose file, commented):
 
 ```
-PSNR_HTTP=0.0.0.0:36101
-PSNR_HTTP_TOKEN=<a long random string>
+RE_PSN_HTTP=0.0.0.0:36101
+RE_PSN_HTTP_TOKEN=<a long random string>
 ```
 
 Make the token with a random generator, not by hand. Any of these works (hex and base32 contain only characters that are safe in a `?token=` URL;
@@ -79,7 +79,7 @@ A token set through the environment is visible to `docker inspect` and to other 
 
 ## Behind a reverse proxy
 
-Set `PSNR_TRUSTED_PROXIES` to your proxy's address as the container sees it and `PSNR_PROXY_PROTOCOL=true`, and have the proxy send PROXY
+Set `RE_PSN_TRUSTED_PROXIES` to your proxy's address as the container sees it and `RE_PSN_PROXY_PROTOCOL=true`, and have the proxy send PROXY
 protocol on the game TCP port. Publish UDP straight to the host. The release archives carry proxy examples in `examples/`; see
 `docs/running.md`, "Behind a reverse proxy".
 

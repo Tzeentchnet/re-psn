@@ -7,7 +7,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
-- Release archives include an `examples/` folder: `psnr.env.example` with every setting, a systemd unit, and Traefik, nginx and HAProxy
+- Release archives include an `examples/` folder: `re-psn.env.example` with every setting, a systemd unit, and Traefik, nginx and HAProxy
   configs that pass the real client address. `scripts/check-deploy.sh` checks the env file against the server's flags and runs in
   `scripts/release-build.sh`. Only the Traefik config has been run.
 - Reverse proxy support: `-trusted-proxies` and `-proxy-protocol` (PROXY protocol v1/v2 on the game TCP port), and forwarded
@@ -56,8 +56,13 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
-- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server, `client/psnr.c` and the
-  `PSNR_*` settings keep their names.
+- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server and `client/psnr.c` keep their
+  names.
+- Settings are read from `RE_PSN_<FLAG>` variables. The old `PSNR_<FLAG>` names still work as aliases: a flag wins, then
+  `RE_PSN_<FLAG>`, then `PSNR_<FLAG>`. An old name logs a warning at start naming the old and new variable (never the value), and
+  if both are set and differ the new one is used, with a warning. `deploy/psnr.env.example` is now `deploy/re-psn.env.example`,
+  with the old names in a comment block; `scripts/check-deploy.sh` checks both lists and refuses a live `deploy/re-psn.env` or
+  `deploy/psnr.env`. The compose file, Docker README and proxy examples use the new names.
 - The architecture and NAT lab diagrams are Mermaid (GitHub renders them), and `docs/architecture.md` gains a diagram of the optional
   reverse proxy path and diagrams of a relayed connection (a VPS example) and of how a relayed stream is set up. The text there that said
   there is no hole punching and no relay is corrected.
