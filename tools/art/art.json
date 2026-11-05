@@ -1,7 +1,7 @@
 {
  "format": 1,
  "generator": "tools/art/make_art.py",
- "generator_sha256": "dd2f90b5b7bc331fbe971e06cd0444f58c55a3f39b7dd29c0e075ec8cfdaca0c",
+ "generator_sha256": "3044ea5340746e7ea77050bb55f4ad580ba444a43512abcd173efc5f12c2b154",
  "pillow": "12.3.0",
  "freetype": "2.14.3",
  "zlib": "1.3",
@@ -42,6 +42,14 @@
    ],
    "bytes": 12528,
    "sha256": "c6f63a82a9099109391067eeadc74f17b7397b7a7d4fd85ec0c355514341baeb"
+  },
+  "docs/img/social.png": {
+   "size": [
+    1280,
+    640
+   ],
+   "bytes": 19937,
+   "sha256": "0bc3fc26d80679ed51301dd337671d7113107ffba5431a1f4d2a94e109d13d58"
   },
   "docs/img/term-alice.png": {
    "size": [
