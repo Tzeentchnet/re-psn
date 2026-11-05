@@ -1,0 +1,6 @@
+#!/bin/sh
+# Entry point of the re-psn AppImage: runs the server with the arguments given. The examples are in
+# usr/share/re-psn/examples (see them with --appimage-extract).
+set -e
+here="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
+exec "$here/usr/bin/re-psn" "$@"

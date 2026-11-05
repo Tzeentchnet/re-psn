@@ -57,6 +57,7 @@ Merged into main. Most of it is not in a release yet.
 - [test-fuzz] Fuzz tests for the frame parser, the request handlers and the PROXY header.
 - [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning.
 - [release-archives] Release archives with checksums, built by a workflow; partial, as nothing has been released yet.
+- [release-appimage] A Linux x86_64 AppImage beside the archives; partial, as the release workflow has not run with it yet.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
