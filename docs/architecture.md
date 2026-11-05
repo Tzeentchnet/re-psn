@@ -1,18 +1,38 @@
 # Architecture
 
+```mermaid
+flowchart LR
+  subgraph A["recompiled title (host A)"]
+    direction TB
+    ga["guest code<br/>sceNpMatching2 / Score"] --> ha["ps3recomp HLE modules"]
+    ha --> ca["client/psnr.c"]
+    sa["sys_net (host sockets)"]
+  end
+  subgraph B["recompiled title (host B)"]
+    direction TB
+    gb["guest code<br/>sceNpMatching2 / Score"] --> hb["ps3recomp HLE modules"]
+    hb --> cb["client/psnr.c"]
+    sb["sys_net (host sockets)"]
+  end
+  srv[("psnr server (server/)<br/>rooms, leaderboards<br/>HTTP status :36101")]
+  ca -- "TCP 36100" --> srv
+  cb -- "TCP 36100" --> srv
+  sa <-. "UDP, peer to peer" .-> sb
 ```
- recompiled title (host A)                               recompiled title (host B)
- ┌───────────────────────────┐                           ┌───────────────────────────┐
- │ guest code                │                           │ guest code                │
- │   sceNpMatching2 / Score  │                           │   sceNpMatching2 / Score  │
- │ ps3recomp HLE modules     │                           │ ps3recomp HLE modules     │
- │   └─ client/psnr.c ───────┼──── TCP 36100 ───┐   ┌────┼── client/psnr.c           │
- │ sys_net (host sockets) ◄──┼───────────── UDP, peer to peer ──────────► sys_net    │
- └───────────────────────────┘                  │   │    └───────────────────────────┘
-                                          ┌─────▼───▼─────┐
-                                          │ psnr server   │  rooms, leaderboards
-                                          │ server/       │  HTTP status :36101
-                                          └───────────────┘
+
+Rooms, leaderboards and the address hand-out go through the server over TCP. Game traffic goes peer to peer over UDP, and through the
+server's relay only when two players cannot reach each other directly (`-relay`).
+
+Behind a reverse proxy (optional, off by default; see [running.md](running.md#behind-a-reverse-proxy)), the game's TCP connection passes through
+the proxy, which tells the server the player's real address with PROXY protocol. UDP is published straight to the server:
+
+```mermaid
+flowchart LR
+  player["player"] -- "TCP 36100" --> proxy["reverse proxy<br/>(Traefik, nginx, HAProxy)"]
+  proxy -- "TCP + PROXY protocol header<br/>(only from -trusted-proxies)" --> srv[("psnr server")]
+  player -. "UDP 36100, published directly" .-> srv
+  admin["status page client"] -- "HTTP" --> proxy
+  proxy -- "HTTP + X-Forwarded-For / CF-Connecting-IP" --> srv
 ```
 
 ## The parts

@@ -6,13 +6,25 @@ internet, and headless players on home networks behind NATing routers. It
 tests the part of psnr that gets players through those routers, with the real
 C client and real UDP sockets.
 
-```
-                 internet 10.99.0.0/24 (no way out)
-     ┌───────────────┬─────────────┴─────────────┐
- router_a .2     server .10                   router_b .3
-     │ NAT                                        │ NAT
- home_a 192.168.10.0/24                     home_b 192.168.20.0/24
-  alice .10 (hosts)  carol .11 (joins)        bob .10 (joins)
+```mermaid
+flowchart TB
+  subgraph ha["home_a 192.168.10.0/24"]
+    alice["alice .10 (hosts)"]
+    carol["carol .11 (joins)"]
+  end
+  subgraph hb["home_b 192.168.20.0/24"]
+    bob["bob .10 (joins)"]
+  end
+  ra["router_a<br/>.2 on the internet side"]
+  rb["router_b<br/>.3 on the internet side"]
+  subgraph net["internet 10.99.0.0/24 (no way out)"]
+    srv[("server .10")]
+  end
+  alice --- ra
+  carol --- ra
+  bob --- rb
+  ra -- "NAT" --- srv
+  rb -- "NAT" --- srv
 ```
 
 Run it:
