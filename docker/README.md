@@ -69,7 +69,7 @@ head -c 32 /dev/urandom | base32 | tr -d '='  # 52 base32 characters (256 bits),
 openssl rand -base64 32                       # 44 characters, if you send it only as a Bearer header
 ```
 
-The base32 line was run here; `openssl` is not installed on the machine this was written on, so the two `openssl` lines are not run.
+All three were run (OpenSSL 3.5.9 and GNU coreutils) and gave the lengths shown.
 
 A token set through the environment is visible to `docker inspect` and to other users on the host.
 
