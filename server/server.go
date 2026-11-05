@@ -122,7 +122,7 @@ func (s *Server) admit(conn net.Conn) {
 		}
 		if ok {
 			real = a
-		}
+		} // else a valid header with no client (health check): this connection stays under the proxy's address
 	}
 	host := real.String()
 	s.mu.Lock()

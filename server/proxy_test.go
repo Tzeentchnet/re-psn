@@ -30,6 +30,7 @@ func TestReadProxyHeader(t *testing.T) {
 	}{
 		{"v1 tcp4", []byte("PROXY TCP4 203.0.113.9 10.0.0.1 51000 36100\r\n"), "203.0.113.9", true, false},
 		{"v1 tcp6", []byte("PROXY TCP6 2001:db8::1 2001:db8::2 51000 36100\r\n"), "2001:db8::1", true, false},
+		{"v1 tcp6 mapped", []byte("PROXY TCP6 ::ffff:203.0.113.9 ::ffff:10.0.0.1 51000 36100\r\n"), "203.0.113.9", true, false},
 		{"v1 unknown", []byte("PROXY UNKNOWN\r\n"), "", false, false},
 		{"v1 family mismatch", []byte("PROXY TCP4 2001:db8::1 10.0.0.1 1 2\r\n"), "", false, true},
 		{"v1 no crlf", []byte("PROXY TCP4 1.2.3.4 10.0.0.1 1 2\n"), "", false, true},

@@ -70,8 +70,10 @@ func connAddr(conn net.Conn) netip.Addr {
 }
 
 // readProxyHeader reads one PROXY protocol v1 or v2 header from r, no further
-// than its end. ok is false for a header that carries no client (a v2 LOCAL
-// command, as health checks send, or v1 UNKNOWN).
+// than its end. ok is false for a valid header that carries no client (a v2
+// LOCAL command, as health checks send, v1 UNKNOWN, or a family we do not
+// carry). admit then keeps the proxy's own address for that connection; it is
+// only an error to send no valid header at all.
 func readProxyHeader(r io.Reader) (addr netip.Addr, ok bool, err error) {
 	head := make([]byte, 16)
 	if _, err = io.ReadFull(r, head[:5]); err != nil {
@@ -144,7 +146,7 @@ func readProxyV1(r io.Reader) (addr netip.Addr, ok bool, err error) {
 	if err != nil || (f[1] == "TCP4") != a.Is4() {
 		return netip.Addr{}, false, errors.New("bad PROXY v1 address")
 	}
-	return a, true, nil
+	return a.Unmap(), true, nil
 }
 
 // clientAddr is the address a status page request counts as coming from, for
