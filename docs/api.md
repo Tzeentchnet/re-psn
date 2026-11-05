@@ -102,7 +102,7 @@ client's `psnr_poll` sends a HEARTBEAT every 20 seconds.
 | 3 | room full |
 | 4 | not the room owner |
 | 5 | not in that room |
-| 6 | limit reached: the server's room limit, or the player is already in `-max-player-rooms` rooms |
+| 6 | limit reached: the server's room limit, or the player is already in `-max-player-rooms` rooms; for a score request, the server's score store failed |
 | 7 | no HELLO yet |
 | 8 | name taken (HELLO): another player on this server has it |
 | 9 | no relay (STREAM_*): the server runs without `-relay` |
