@@ -16,5 +16,12 @@ address, the same as on real PSN P2P.
   much there is and between whom, and it uses the host's bandwidth.
 - **Nothing is stored on disk.**
 
-To report a vulnerability, open a private security advisory on the repository,
-or email the maintainer. Please don't use a public issue.
+What this fork changes (see `docs/running.md` for the flags):
+
+- Room blobs are capped at 4096 bytes, a player can be in 8 rooms at once, one address can hold 32 connections, and a
+  connection that sends more than 200 requests a second is closed (`-max-player-rooms`, `-max-conns-per-addr`,
+  `-max-req-rate`; 0 turns a limit off).
+- `-http-token` protects the status page and `/api/stats`.
+
+To report a vulnerability, use "Report a vulnerability" under this repository's Security tab (a private advisory).
+Please don't use a public issue. A problem that is also in sp00nznet/psnr should be reported there as well.

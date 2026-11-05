@@ -1,0 +1,52 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Do not attach game files, keys, saves or private logs: only the server log lines and
+        the client output that show the problem. Remove user names and paths from anything you paste.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part
+      options:
+        - Server
+        - C client
+        - Status page
+        - Docker or the NAT lab
+        - Docs
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or version
+      description: The commit or the release you built or downloaded.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: OS and version, and Go version if you built it.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log lines
+      description: Server log (run with `-v`) or client output. Remove user names and paths first.
+      render: text
