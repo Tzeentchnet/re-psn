@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Every flag can be set as a `PSNR_<FLAG>` environment variable (a flag wins), and `-tcp-addr` / `-udp-addr` give the two
+  game sockets their own addresses or ports. A bad value stops the server at start. See `docs/running.md`.
 - Invite-only rooms (protocol 0.4): `SET_ROOM_ACCESS`, `JOIN_BY_CODE` and `GET_ROOM_ACCESS` give a room an 8-character code and take it
   out of search and the status page (which counts "unlisted rooms"). Wrong codes are rate-limited. HELLO_ACK flags bit 1 says the server
   has them. See `docs/api.md`.
@@ -48,6 +50,8 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
+- The Docker image no longer forces `-http 0.0.0.0:36101` without a token: the status page stays on localhost inside the
+  container until `PSNR_HTTP` and `PSNR_HTTP_TOKEN` are set (the compose file shows how).
 - Protocol additions that Simpsons Arcade's Matching2 use needs. Clients
   built against 0.1.0 no longer match.
   - CREATE_ROOM and JOIN_ROOM carry the member's own data, and every member
