@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format follows
 ### Added
 - Scores go through a storage interface, and `-db` / `-db-file` (`RE_PSN_DB`, `RE_PSN_DB_FILE`) pick the backend. Only `off` (the default)
   and `memory` exist, so scores are still kept in memory; database settings stop the server at start, and the setting is never printed.
+- `docs/connecting.md`: the ways players reach a server (LAN, port forwarding, a public server with `-relay`, Tailscale, ZeroTier, a
+  reverse proxy), with diagrams and links to the overlays' documentation. re-psn has not been run over Tailscale or ZeroTier.
 - A features list: `docs/features.tsv` holds one row per feature with its status and evidence, and `tools/features.py` generates
   `docs/features.md` from it. CI runs `python3 tools/features.py --check`, which fails on a stale page, a malformed row, or
   evidence that does not exist.
