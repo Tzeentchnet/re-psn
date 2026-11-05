@@ -1,6 +1,6 @@
 # Security
 
-psnr handles player data: online IDs, and each player's IP address and P2P
+re-psn (the `psnr` server) handles player data: online IDs, and each player's IP address and P2P
 port. It hands that data to the other players in the same room, because they
 need it to connect to each other. Anyone who joins your room learns your
 address, the same as on real PSN P2P.

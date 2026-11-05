@@ -2,7 +2,7 @@
 
 ## Scope
 
-psnr is for a group of players running their own server: a LAN, a tailnet, or
+re-psn is for a group of players running their own server: a LAN, a tailnet, or
 friends connecting to one person's machine. The goal is for that group to have
 everything a title's online mode needs: matchmaking, friends, invites,
 leaderboards, per-player storage.
@@ -103,7 +103,7 @@ other directly.
 
 - **A public service**, as above.
 - **Tickets and title servers.** Some titles check a PSN ticket with their
-  publisher's server; those servers are gone and psnr won't stand in for them.
+  publisher's server; those servers are gone and re-psn won't stand in for them.
 - **Third-party game servers:** Demonware (Guitar Hero III), GameSpy (MUA,
   Saints Row 2), EA, Quazal. Each would be its own project.
 - **Store, commerce, DRM.**

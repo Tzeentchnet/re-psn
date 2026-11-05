@@ -1,6 +1,6 @@
 # Contributing
 
-This is a fork of [sp00nznet/psnr](https://github.com/sp00nznet/psnr). Bug reports, fixes and ideas are welcome here, through
+re-psn is a fork of [sp00nznet/psnr](https://github.com/sp00nznet/psnr), by sp00nz. Bug reports, fixes and ideas are welcome here, through
 the issue forms (bug report, feature request) or a pull request. Something that is also wrong in upstream may be worth
 reporting there too.
 

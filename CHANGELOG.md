@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server, `client/psnr.c` and the
+  `PSNR_*` settings keep their names.
+
 ### Added
 - Release archives include an `examples/` folder: `psnr.env.example` with every setting, a systemd unit, and Traefik, nginx and HAProxy
   configs that pass the real client address. `scripts/check-deploy.sh` checks the env file against the server's flags and runs in
