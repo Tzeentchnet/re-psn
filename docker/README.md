@@ -8,6 +8,7 @@ to set it up. No image is published yet; you build it from this repository.
 - [The files](#the-files)
 - [Build and run](#build-and-run)
 - [Ports](#ports)
+- [Relay and host networking](#relay-and-host-networking)
 - [Podman](#podman)
 - [Settings](#settings)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
@@ -19,6 +20,7 @@ to set it up. No image is published yet; you build it from this repository.
 |---|---|
 | `Dockerfile` | A two-stage build: Go in the first stage, a small Alpine image with one static binary in the second. |
 | `docker-compose.yml` | The same, with the ports and a restart policy. |
+| `docker-compose.host.yml` | Opt-in, Linux only: the same server on the host's network, with no published ports. |
 | `Dockerfile.dockerignore` | Keeps everything but `go.mod` and `server/` out of the build context. |
 
 ## Build and run
@@ -63,6 +65,45 @@ flowchart LR
 > re-psn refuses a UDP probe whose source address differs from the player's TCP address
 > ([docs/running.md](../docs/running.md#udp-source-address), "UDP source address"). UDP must reach the server with the
 > player's own address, so publish it straight to the host, not through a proxy or port forwarder that rewrites the source.
+
+## Relay and host networking
+
+The image is the whole re-psn server, not a relay-only build. Relay is one setting, `RE_PSN_RELAY`, and it is off by default: without
+it the server does matchmaking, rooms, scores and address discovery, and carries none of the players' game traffic. Turn it on
+(`RE_PSN_RELAY: "true"`, commented in the compose file) to carry traffic between players who can't reach each other directly; that
+uses this server's bandwidth.
+
+Host networking is a separate, optional choice about addresses. With the shipped compose file the runtime forwards the published
+ports, and on some setups it rewrites each player's source address on the way in. Then re-psn sees every player as the host, and its UDP
+source check refuses their probes. `docker-compose.host.yml` runs the container on the host's network (`network_mode: host`, no `ports`), so the real addresses
+arrive unchanged:
+
+```sh
+docker compose -f docker/docker-compose.host.yml up
+```
+
+It works only on Linux, with Docker Engine or Podman. Docker Desktop on macOS and Windows runs containers in a virtual machine, so
+the game port would not appear on your machine; use `docker-compose.yml` there. With no `ports` list, the firewall must allow 36100/tcp and 36100/udp,
+and the status page must stay on localhost or have a token.
+
+```mermaid
+flowchart TD
+  start["Run the shipped docker-compose.yml<br/>connect from another machine"] --> addr{"Does the hello line in the log<br/>show each player's own address?"}
+  addr -- "Yes" --> keep["Keep it: published ports"]
+  addr -- "No, every player shows the host" --> linux{"Linux with Docker Engine or Podman?"}
+  linux -- "Yes" --> host["Use docker-compose.host.yml"]
+  linux -- "No, Docker Desktop on macOS or Windows" --> other["Host networking is not available:<br/>run re-psn directly on the host instead"]
+  keep --> relay{"Players who can't reach each other?"}
+  host --> relay
+  other --> relay
+  relay -- "Yes" --> on["Set RE_PSN_RELAY to true<br/>costs this server's bandwidth"]
+  relay -- "No" --> off["Leave relay off (the default)"]
+```
+
+> [!NOTE]
+> Tested with rootless Podman 6.1.4 and podman-compose 1.6.0 on Linux (podman-compose puts the service on a bridge network; `podman run`'s default, pasta, passed addresses through in the test under [Podman](#podman)): with `docker-compose.yml` the `hello` line showed the container network's
+> address (10.89.0.2) for every player and `client/test_psnr.c` failed its probe check; with `docker-compose.host.yml` it showed 127.0.0.1 and the test passed.
+> Both files also pass `docker compose config` (Compose 5.6.0). Not tested: Docker Engine itself, Docker Desktop, macOS, Windows, and players on another machine.
 
 ## Podman
 
