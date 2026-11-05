@@ -147,6 +147,24 @@ class FeaturesTest(unittest.TestCase):
         self.assertIn("tag [net-gone]", err)
         self.assertNotIn("rooms-private", err)
 
+    def test_roadmap_buckets(self):
+        f = self.fixture(roadmap="# Roadmap\n\n## Scope\n\n- [net-relay] Mentioned anywhere.\n\n## Done\n\n- [rooms-basic] Rooms.\n"
+                                 "- [net-relay] Relay.\n\n### A group\n\n## Next\n\n- [rooms-private] Private rooms.\n")
+        self.assertEqual(f.run()[0], 0)
+        rc, err = f.run("--check")
+        self.assertEqual(rc, 0, err)
+
+    def test_roadmap_wrong_bucket(self):
+        f = self.fixture()
+        self.assertEqual(f.run()[0], 0)
+        (f.root / "ROADMAP.md").write_text("# Roadmap\n\n## Done\n\n- [rooms-basic] Rooms.\n\n### Sub\n\n- [rooms-private] Private.\n"
+                                         "\n## Later\n\n- [net-relay] Relay.\n")
+        rc, err = f.run("--check")
+        self.assertEqual(rc, 1)
+        self.assertIn("[rooms-private] is planned, which does not belong under 'done'", err)
+        self.assertIn("[net-relay] is unverified, which does not belong under 'later'", err)
+        self.assertNotIn("[rooms-basic]", err)
+
 
 if __name__ == "__main__":
     unittest.main()
