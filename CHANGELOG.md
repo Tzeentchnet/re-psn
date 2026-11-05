@@ -12,7 +12,7 @@ All notable changes to this project are documented here. The format follows
   (`docs/art/transcripts/`, recorded by `tools/art/capture.sh`). CI renders them again and fails on any byte that differs.
 - `AGENTS.md`: the commands, layout and rules for AI coding agents working in the repository.
 - A `VERSION` file with a test that the code, this file and the README agree on it, `scripts/bump-version.sh` (one bump, every place,
-  `--dry-run` shows the diff), `scripts/release-notes.sh` (notes from this file, not used by the workflow yet) and
+  `--dry-run` shows the diff), `scripts/release-notes.sh` (notes from this file) and
   `scripts/check-release.sh`, run by `scripts/release-build.sh`. See `docs/releasing.md`.
 - Scores go through a storage interface, and `-db` / `-db-file` (`RE_PSN_DB`, `RE_PSN_DB_FILE`) pick the backend. Only `off` (the default)
   and `memory` exist, so scores are still kept in memory; database settings stop the server at start, and the setting is never printed.
@@ -70,6 +70,9 @@ All notable changes to this project are documented here. The format follows
 - `docs/running.md` said the P2P port is UDP only; titles use TCP on it too.
 
 ### Changed
+- The release workflow builds its notes with `scripts/release-notes.sh` from the CHANGELOG.md entries for the version in `VERSION`
+  (ending "Next release: when ready"), and on a tag fails before building unless the tag is `v` + `VERSION` and
+  `scripts/check-release.sh --tag` passes. A manual run still builds everything and publishes nothing.
 - `README.md` is rewritten: a fork notice crediting sp00nz, an overview with a session diagram, an example from real local runs,
   the available features, install, a settings table checked against the flags, and the `PSNR_*` migration note.
 - `ROADMAP.md` is rewritten around the feature ids (Done, Now, Next, Later, Not planned), keeping upstream's scope section; the

@@ -71,7 +71,7 @@ func newTree(t *testing.T, files map[string]string) string {
 	for rel, text := range files {
 		write(rel, []byte(text), 0o644)
 	}
-	for _, s := range []string{"bump-version.sh", "release-notes.sh"} {
+	for _, s := range []string{"bump-version.sh", "release-notes.sh", "check-release.sh"} {
 		b, err := os.ReadFile(filepath.Join("..", "scripts", s))
 		if err != nil {
 			t.Fatal(err)
@@ -265,5 +265,28 @@ func TestBumpVersion(t *testing.T) {
 	}
 	if _, errout, err := bump("0.4.1"); err == nil || !strings.Contains(errout, "nothing under Unreleased") {
 		t.Errorf("empty Unreleased: want a refusal, got %v %q", err, errout)
+	}
+}
+
+// The tag check in scripts/check-release.sh runs before anything else, so a wrong tag fails without running Go. The passing
+// case goes on to `go test`, which the fixture tree cannot run; there the test only checks that the tag was accepted.
+func TestCheckReleaseTag(t *testing.T) {
+	needShell(t)
+	root := newTree(t, fixtureTree) // VERSION 0.3.1
+	const refused = "is not v + VERSION"
+	for _, tag := range []string{"v0.3.2", "0.3.1", "v0.3.1-rc1", "v0.3.10", "V0.3.1"} {
+		_, errout, err := run(t, root, "sh", "scripts/check-release.sh", "--tag", tag)
+		if err == nil || !strings.Contains(errout, refused) {
+			t.Errorf("%s: want a refusal, got %v %q", tag, err, errout)
+		}
+	}
+	for _, args := range [][]string{{"--tag"}, {"--tag", ""}, {"v0.3.1"}, {"--tag", "v0.3.1", "x"}} {
+		if _, errout, err := run(t, root, "sh", append([]string{"scripts/check-release.sh"}, args...)...); err == nil ||
+			!strings.Contains(errout, "usage:") {
+			t.Errorf("%q: want a usage error, got %v %q", args, err, errout)
+		}
+	}
+	if _, errout, _ := run(t, root, "sh", "scripts/check-release.sh", "--tag", "v0.3.1"); strings.Contains(errout, refused) {
+		t.Errorf("v0.3.1 against VERSION 0.3.1 was refused: %q", errout)
 	}
 }
