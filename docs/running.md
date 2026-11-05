@@ -30,11 +30,31 @@ docker compose -f docker/docker-compose.yml up -d
 | `-trusted-proxies` | none | Reverse proxies allowed to name the real client: CIDRs or addresses, comma-separated. See [Behind a reverse proxy](#behind-a-reverse-proxy). |
 | `-proxy-protocol` | off | Require a PROXY protocol v1 or v2 header on the game TCP port from a trusted proxy. Needs `-trusted-proxies`. |
 | `-max-rooms` | `1000` | Room limit across all titles |
+| `-udp-any-source` | off | Accept UDP probes and relay packets from an address other than the player's TCP address. By default they must match; turn this on only for players whose UDP leaves from another public address (some multi-WAN or carrier NAT setups). It weakens the check, and the server warns at start. See [UDP source address](#udp-source-address). |
 | `-relay` | off | Carry traffic between players who can't reach each other directly: streams into a player behind a router, and datagrams when a router won't let punched traffic through. Uses this server's bandwidth. |
 | `-log-level` | `info` | `debug` (room and relay events), `info` (connects, hellos, disconnects), `warn` (every refusal) or `error`. |
 | `-log-format` | `text` | `text` or `json`, one line per event. |
 | `-log-file` | none | Also append the log to this file (created with mode 0600). |
 | `-v` | off | Same as `-log-level debug`. |
+
+## UDP source address
+
+A UDP PROBE (and a datagram sent through `-relay`) is accepted only from the same IP address as the player's TCP
+connection; the token alone is not enough. Without this, anyone holding a player's token, or able to forge a source
+address, could point that player's endpoint at a third party and have other players send their game traffic there.
+
+What it does not cover: a forger who can send packets with the player's own source address, or a player sharing that
+address (the same household or carrier NAT). It also refuses players whose UDP leaves from a different public address
+than their TCP (multi-WAN routers that balance per connection, some carrier NAT): their probes go unanswered, so other
+players on other networks get the address TCP shows instead of the router's mapping. The first refused probe per player is
+logged at warn level (`UDP probe refused`, with both addresses and the flag that turns the check off). If you see it for real players, `-udp-any-source` turns the
+check off. The same check means UDP must reach psnr with the player's own address: published straight to the host (see
+the next section), not through a proxy or port forwarder that rewrites the source. A TCP proxy without `-trusted-proxies`
+makes every player look like the proxy, so every probe is refused.
+
+The `local_ip` a probe carries is kept only if it is private (10/8, 172.16/12, 192.168/16), carrier-grade NAT (100.64/10),
+link-local (169.254/16), or the probe's own source address. Anything else is stored as none, since it is handed to players
+on the same network, who send UDP to it.
 
 ## Behind a reverse proxy
 
@@ -98,7 +118,7 @@ is about them; it never holds the status page token, the UDP probe token or a re
 | Level | Events |
 |---|---|
 | info | server start, each HELLO (client, title, online ID, address), a reconnect that replaces a connection, each disconnect, a failed read |
-| warn | a connection refused (too many from one address), a connection closed for its request rate, a HELLO refused (name taken), a room request refused (room limit, blob over limit), an unknown request type, a status page request refused (path only) |
+| warn | a connection refused (too many from one address), a UDP probe from another address than the player's TCP connection (once per player), a connection closed for its request rate, a HELLO refused (name taken), a room request refused (room limit, blob over limit), an unknown request type, a status page request refused (path only) |
 | debug | connects, requests before HELLO, room created, joined and closed, relay streams, UDP probe results |
 
 Rotate the file with logrotate or your service manager (`copytruncate`, or restart after moving it); the server does not rotate it.

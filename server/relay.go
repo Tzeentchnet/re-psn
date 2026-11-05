@@ -166,9 +166,9 @@ func (s *Server) splice(dst, src net.Conn) {
 }
 
 // relayUDP forwards a RELAY packet: "PSNR" 03 | from u32 | token u32 | to u32 |
-// payload becomes "PSNR" 03 | from u32 | payload, sent to the target's probed
+// payload, sent from sender, becomes "PSNR" 03 | from u32 | payload, sent to the target's probed
 // endpoint from the server's UDP port.
-func (s *Server) relayUDP(pc net.PacketConn, pkt []byte) {
+func (s *Server) relayUDP(pc net.PacketConn, pkt []byte, sender *net.UDPAddr) {
 	if !s.relay || len(pkt) < 17 {
 		return
 	}
@@ -176,6 +176,10 @@ func (s *Server) relayUDP(pc net.PacketConn, pkt []byte) {
 	s.mu.Lock()
 	src, dst := s.clients[from], s.clients[toID]
 	ok := src != nil && src.token == token && dst != nil && dst.udpPort != 0 && sharesRoom(src, dst)
+	if ok && !s.udpAnySource {
+		ip := sender.IP.To4()
+		ok = ip != nil && src.ip == [4]byte(ip) // the sender's own address, as for a probe
+	}
 	var to *net.UDPAddr
 	if ok {
 		to = &net.UDPAddr{IP: net.IP(append([]byte(nil), dst.udpIP[:]...)), Port: int(dst.udpPort)}

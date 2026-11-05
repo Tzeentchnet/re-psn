@@ -45,6 +45,7 @@ type Server struct {
 	maxReqRate     int            // requests per second per connection
 	addrConns      map[string]int // open connections by remote host
 
+	udpAnySource   bool           // accept UDP probes and relay packets from an address other than the player's TCP address (udp.go)
 	trustedProxies []netip.Prefix // peers allowed to name the real client (proxy.go)
 	proxyProto     bool           // require a PROXY header from a trusted peer
 
@@ -65,6 +66,7 @@ type client struct {
 	codeWindow time.Time // start of that window
 	token      uint32    // from HELLO_ACK; UDP probes must carry it
 	udpIP      [4]byte   // P2P socket's public endpoint, from its UDP probe
+	udpWarned  bool      // a probe from another address was already logged for this player
 	udpPort    uint16
 	localIP    [4]byte // the client's own address, from its UDP probe
 	rooms      map[uint64]*room
