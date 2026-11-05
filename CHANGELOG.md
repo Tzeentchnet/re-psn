@@ -58,6 +58,9 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 - The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. The `psnr` server, `client/psnr.c` and the
   `PSNR_*` settings keep their names.
+- The architecture and NAT lab diagrams are Mermaid (GitHub renders them), and `docs/architecture.md` gains a diagram of the optional
+  reverse proxy path and diagrams of a relayed connection (a VPS example) and of how a relayed stream is set up. The text there that said
+  there is no hole punching and no relay is corrected.
 - PROXY protocol v2 headers are now checked for family and transport: unassigned values, and a datagram or unspecified transport on the
   TCP game port, close the connection (a LOCAL header still carries no client and is consumed to its declared length). The nginx example
   is labelled v1 (`proxy_protocol on;` sends v1), and `docs/running.md` says Cloudflare Spectrum's PROXY protocol is an Enterprise feature.
