@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -146,7 +147,7 @@ func TestDBFile(t *testing.T) {
 	// so only require an error that names the variable and the path.
 	dir := t.TempDir()
 	_, err := openStore(lookupSetting("db", "", false), lookupSetting("db-file", dir, true))
-	if err == nil || !strings.Contains(err.Error(), "RE_PSN_DB_FILE") && !strings.Contains(err.Error(), "-db-file") || !strings.Contains(err.Error(), "could not read the file") || !strings.Contains(err.Error(), dir) {
+	if err == nil || !strings.Contains(err.Error(), "RE_PSN_DB_FILE") && !strings.Contains(err.Error(), "-db-file") || !strings.Contains(err.Error(), "could not read the file") || !strings.Contains(err.Error(), fmt.Sprintf("%q", dir)) {
 		t.Errorf("a directory: %v", err)
 	}
 	clearDBEnv(t)
