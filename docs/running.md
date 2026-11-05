@@ -38,6 +38,9 @@ docker compose up -d
 
 ## Behind a reverse proxy
 
+The release archives carry an `examples/` folder: `psnr.env.example` (every setting, commented, with its default; copy it to `psnr.env`), `psnr.service` (a systemd
+unit) and configs for Traefik, nginx and HAProxy. Only the Traefik one has been run (see below).
+
 Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
 (`-max-conns-per-addr` trips for everyone, and the address other players receive is wrong).
 

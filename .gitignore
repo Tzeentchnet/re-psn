@@ -20,3 +20,5 @@ setup.log
 /Start psnr.cmd
 /start-psnr.sh
 /dist/
+psnr.env
+*.env.local
