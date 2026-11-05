@@ -1,5 +1,19 @@
 # Architecture
 
+How re-psn fits between a recompiled title and other players: the server in `server/` handles rooms, leaderboards and the
+address hand-out over TCP, the C client in `client/` runs inside the title, and game traffic goes peer to peer, through the
+server's relay only when it has to.
+
+## Contents
+
+- [Overview](#overview)
+- [The parts](#the-parts)
+- [Why the server doesn't carry game traffic](#why-the-server-doesnt-carry-game-traffic)
+  - [A relayed connection](#a-relayed-connection)
+- [Why rooms and leaderboards first](#why-rooms-and-leaderboards-first)
+
+## Overview
+
 ```mermaid
 flowchart LR
   subgraph A["recompiled title (host A)"]
@@ -14,7 +28,7 @@ flowchart LR
     hb --> cb["client/psnr.c"]
     sb["sys_net (host sockets)"]
   end
-  srv[("psnr server (server/)<br/>rooms, leaderboards<br/>HTTP status :36101")]
+  srv[("re-psn server (server/)<br/>rooms, leaderboards<br/>HTTP status :36101")]
   ca -- "TCP 36100" --> srv
   cb -- "TCP 36100" --> srv
   sa <-. "UDP, peer to peer" .-> sb
@@ -29,7 +43,7 @@ the proxy, which tells the server the player's real address with PROXY protocol.
 ```mermaid
 flowchart LR
   player["player"] -- "TCP 36100" --> proxy["reverse proxy<br/>(Traefik, nginx, HAProxy)"]
-  proxy -- "TCP + PROXY protocol header<br/>(only from -trusted-proxies)" --> srv[("psnr server")]
+  proxy -- "TCP + PROXY protocol header<br/>(only from -trusted-proxies)" --> srv[("re-psn server")]
   player -. "UDP 36100, published directly" .-> srv
   admin["status page client"] -- "HTTP" --> proxy
   proxy -- "HTTP + X-Forwarded-For / CF-Connecting-IP" --> srv
@@ -76,13 +90,13 @@ the players need port forwarding or a shared VPN (Tailscale works).
 
 ### A relayed connection
 
-The example: the host runs psnr with `-relay` on a VPS with a public address. Players A and B are in different homes, each behind a router, and B's
+The example: the host runs re-psn with `-relay` on a VPS with a public address. Players A and B are in different homes, each behind a router, and B's
 router is a symmetric NAT. The control connection (rooms, leaderboards) always goes to the VPS. A direct path is tried first; when it fails, game
 datagrams and streams are carried by the VPS, which costs the VPS's bandwidth.
 
 ```mermaid
 flowchart TB
-  srv[("VPS with a public address<br/>psnr -relay, TCP + UDP 36100")]
+  srv[("VPS with a public address<br/>re-psn -relay, TCP + UDP 36100")]
   subgraph homeA["home A"]
     a["player A<br/>title + client/psnr.c"] --- ra["router"]
   end
@@ -101,7 +115,7 @@ How a relayed stream is set up (a player behind a router cannot accept an incomi
 ```mermaid
 sequenceDiagram
   participant A as player A
-  participant S as psnr -relay (VPS)
+  participant S as re-psn -relay (VPS)
   participant B as player B (behind NAT)
   S->>A: ROUTE: streams to B go through the relay
   A->>S: new TCP connection: STREAM_CONNECT (to B, vport)

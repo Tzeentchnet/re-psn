@@ -62,6 +62,7 @@ All notable changes to this project are documented here. The format follows
 - `ROADMAP.md` is rewritten around the feature ids (Done, Now, Next, Later, Not planned), keeping upstream's scope section; the
   features list gains planned and later rows for storage, high availability, metrics, the apps' themes and the docs, and
   `tools/features.py --check` also fails when a roadmap item sits under a section that does not match its status.
+- `deploy/README.txt` is now `deploy/README.md` (`examples/README.md` in the release archives); the docs share one layout, and the deploy and Docker READMEs gain Mermaid diagrams.
 - The docs use the fork's name, re-psn, and credit sp00nz as the author of the original psnr. `client/psnr.c` keeps its name.
 - Settings are read from `RE_PSN_<FLAG>` variables. The old `PSNR_<FLAG>` names still work as aliases: a flag wins, then
   `RE_PSN_<FLAG>`, then `PSNR_<FLAG>`. An old name logs a warning at start naming the old and new variable (never the value), and

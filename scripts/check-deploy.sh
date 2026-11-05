@@ -32,7 +32,7 @@ fi
 for live in re-psn.env psnr.env; do
   [ ! -e "$root/deploy/$live" ] || { echo "deploy/$live is a live settings file: only re-psn.env.example ships" >&2; exit 1; }
 done
-for f in re-psn.env.example re-psn.service README.txt traefik/traefik.yml traefik/dynamic.yml nginx/psnr.conf haproxy/haproxy.cfg; do
+for f in re-psn.env.example re-psn.service README.md traefik/traefik.yml traefik/dynamic.yml nginx/psnr.conf haproxy/haproxy.cfg; do
   [ -s "$root/deploy/$f" ] || { echo "deploy/$f is missing or empty" >&2; exit 1; }
 done
 [ ! -e "$root/deploy/psnr.service" ] || { echo "deploy/psnr.service is the old unit name: the unit is deploy/re-psn.service" >&2; exit 1; }
