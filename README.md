@@ -30,7 +30,8 @@ named `re-psn-vX.Y.Z-<os>-<arch>`. The systemd unit is `re-psn.service`: it star
 
 ## Status
 
-**v0.1.0, alpha.**
+**<!-- version -->v0.1.0<!-- /version -->, alpha.** Pre-releases (v0.x, marked pre-release) come whenever there is
+something worth trying, with no fixed schedule.
 - **Server:** rooms (Matching2-style) and leaderboards (Score-style) work, and
   the C client works. Both are tested against each other on Windows and Linux.
 - **Games:** Simpsons Arcade plays an online match as two instances on one
@@ -140,6 +141,7 @@ by the others.
 - [docs/connecting.md](docs/connecting.md): ways players connect: LAN, port forwarding, a public server, Tailscale or ZeroTier
 - [docker/](docker/README.md): building and running the server in a container
 - [deploy/](deploy/README.md): the settings file, systemd unit and reverse proxy examples
+- [docs/releasing.md](docs/releasing.md): the version, the bump and cutting a pre-release (for maintainers)
 - [lab/](lab/README.md): players behind NATing routers, in Docker (`lab/run.sh`)
 
 ## Building from source

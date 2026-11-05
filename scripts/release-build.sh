@@ -14,6 +14,7 @@ stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 
 "$root/scripts/check-deploy.sh"
+"$root/scripts/check-release.sh"
 
 for target in windows/amd64 linux/amd64 linux/arm64; do
   os="${target%/*}"; arch="${target#*/}"

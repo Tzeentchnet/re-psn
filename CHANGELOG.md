@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A `VERSION` file with a test that the code, this file and the README agree on it, `scripts/bump-version.sh` (one bump, every place,
+  `--dry-run` shows the diff), `scripts/release-notes.sh` (notes from this file, not used by the workflow yet) and
+  `scripts/check-release.sh`, run by `scripts/release-build.sh`. See `docs/releasing.md`.
 - Scores go through a storage interface, and `-db` / `-db-file` (`RE_PSN_DB`, `RE_PSN_DB_FILE`) pick the backend. Only `off` (the default)
   and `memory` exist, so scores are still kept in memory; database settings stop the server at start, and the setting is never printed.
 - `docs/connecting.md`: the ways players reach a server (LAN, port forwarding, a public server with `-relay`, Tailscale, ZeroTier, a
