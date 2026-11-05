@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `AGENTS.md`: the commands, layout and rules for AI coding agents working in the repository.
 - A `VERSION` file with a test that the code, this file and the README agree on it, `scripts/bump-version.sh` (one bump, every place,
   `--dry-run` shows the diff), `scripts/release-notes.sh` (notes from this file, not used by the workflow yet) and
   `scripts/check-release.sh`, run by `scripts/release-build.sh`. See `docs/releasing.md`.
