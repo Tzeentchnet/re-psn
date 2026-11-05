@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `docs/img/social.png` (1280x640), drawn by the art generator for the repository's social preview. It is uploaded by hand in the
+  repository settings and no page uses it.
 - `tools/art/make_art.py` draws the README banner and terminal images (`docs/img/`) in the gruvbox-material palette
   (`docs/art/palette.json`) with JetBrains Mono pinned by SHA-256. Terminal images come only from transcripts of real runs
   (`docs/art/transcripts/`, recorded by `tools/art/capture.sh`). CI renders them again and fails on any byte that differs.
