@@ -9,8 +9,9 @@ import (
 	crand "crypto/rand"
 	"encoding/binary"
 	"io"
-	"log"
+	"log/slog"
 	"net"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -20,8 +21,8 @@ import (
 const clientTimeout = 90 * time.Second // HELLO/HEARTBEAT keep a client alive
 
 type Server struct {
-	verbose bool
-	relay   bool // -relay: carry traffic for players who can't reach each other (relay.go)
+	log   *slog.Logger
+	relay bool // -relay: carry traffic for players who can't reach each other (relay.go)
 
 	httpToken string // -http-token: required by the status page when set (api.go)
 
@@ -70,7 +71,7 @@ type push struct {
 
 func NewServer(maxRooms int, verbose bool) *Server {
 	return &Server{
-		verbose:  verbose,
+		log:      newLogger(os.Stderr, levelFor(verbose), "text"),
 		clients:  map[uint32]*client{},
 		rooms:    map[uint64]*room{},
 		boards:   map[boardKey]*board{},
@@ -95,7 +96,7 @@ func (s *Server) Serve(ln net.Listener) error {
 		s.mu.Lock()
 		if s.maxPerAddr > 0 && s.addrConns[host] >= s.maxPerAddr {
 			s.mu.Unlock()
-			s.logf("%s: too many connections, refused", host)
+			s.log.Warn("connection refused", "addr", host, "reason", "too many connections", "limit", s.maxPerAddr)
 			conn.Close()
 			continue
 		}
@@ -103,6 +104,7 @@ func (s *Server) Serve(ln net.Listener) error {
 		s.nextID++
 		s.conns++
 		c := &client{id: s.nextID, conn: conn, rooms: map[uint64]*room{}}
+		s.log.Debug("connected", "client", c.id, "addr", host)
 		if a, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
 			copy(c.ip[:], a.IP.To4())
 		}
@@ -134,7 +136,7 @@ func (s *Server) run(c *client) {
 		delete(s.clients, c.id)
 		s.mu.Unlock()
 		s.flush(out)
-		s.logf("client %d (%s) gone", c.id, c.onlineID)
+		s.log.Info("disconnected", "client", c.id, "online_id", c.onlineID)
 	}()
 
 	windowStart, inWindow := time.Now(), 0
@@ -143,7 +145,7 @@ func (s *Server) run(c *client) {
 		t, p, err := readPacket(c.conn)
 		if err != nil {
 			if err != io.EOF {
-				s.logf("client %d read: %v", c.id, err)
+				s.log.Info("read failed", "client", c.id, "err", err)
 			}
 			return
 		}
@@ -161,7 +163,7 @@ func (s *Server) run(c *client) {
 			windowStart, inWindow = now, 0
 		}
 		if inWindow++; s.maxReqRate > 0 && inWindow > s.maxReqRate {
-			s.logf("client %d: more than %d requests a second, closed", c.id, s.maxReqRate)
+			s.log.Warn("connection closed", "client", c.id, "online_id", c.onlineID, "reason", "request rate", "limit", s.maxReqRate)
 			return
 		}
 		s.handle(c, t, p)
@@ -175,6 +177,7 @@ func (s *Server) handle(c *client, t byte, p []byte) {
 		return
 	}
 	if t != msgHello && c.commID == "" {
+		s.log.Debug("request before hello", "client", c.id, "type", t)
 		c.send(msgError, errReply(req, errNoHello))
 		return
 	}
@@ -210,6 +213,7 @@ func (s *Server) handle(c *client, t byte, p []byte) {
 	case msgGetRankingID:
 		rt, reply = s.getRankingByID(c, req, r)
 	default:
+		s.log.Warn("unknown request type", "client", c.id, "online_id", c.onlineID, "type", t)
 		rt, reply = msgError, errReply(req, errBadRequest)
 	}
 	s.mu.Unlock()
@@ -232,9 +236,10 @@ func (s *Server) hello(c *client, req uint32, r *reader) (byte, []byte) {
 			continue
 		}
 		if o.ip != c.ip {
+			s.log.Warn("hello refused", "client", c.id, "reason", "name taken", "online_id", onlineID, "addr", ipString(c.ip))
 			return msgError, errReply(req, errNameTaken)
 		}
-		log.Printf("client %d: %q reconnected as client %d", o.id, onlineID, c.id)
+		s.log.Info("reconnected", "client", c.id, "replaces", o.id, "online_id", onlineID)
 		o.commID = "" // no longer counts; its run loop cleans up once Close lands
 		o.conn.Close()
 	}
@@ -242,8 +247,7 @@ func (s *Server) hello(c *client, req uint32, r *reader) (byte, []byte) {
 	var tok [4]byte
 	crand.Read(tok[:])
 	c.token = binary.BigEndian.Uint32(tok[:]) | 1 // never 0
-	log.Printf("client %d: %s as %q from %d.%d.%d.%d, p2p port %d",
-		c.id, commID, onlineID, c.ip[0], c.ip[1], c.ip[2], c.ip[3], port)
+	s.log.Info("hello", "client", c.id, "comm_id", commID, "online_id", onlineID, "addr", ipString(c.ip), "p2p_port", port)
 	w := &writer{}
 	w.u32(req)
 	w.u32(c.id)
@@ -284,10 +288,11 @@ func okReply(req uint32) []byte {
 	return w.b
 }
 
-func (s *Server) logf(f string, a ...any) {
-	if s.verbose {
-		log.Printf(f, a...)
-	}
+func ipString(ip [4]byte) string { return net.IP(ip[:]).String() }
+
+// refused logs a request the server turned down for a limit.
+func (s *Server) refused(c *client, what, reason string) {
+	s.log.Warn("request refused", "client", c.id, "online_id", c.onlineID, "request", what, "reason", reason)
 }
 
 // sortedRooms returns a title's rooms oldest first, so search pages are stable.
