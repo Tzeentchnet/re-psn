@@ -60,6 +60,17 @@ PSNR_HTTP=0.0.0.0:36101
 PSNR_HTTP_TOKEN=<a long random string>
 ```
 
+Make the token with a random generator, not by hand. Any of these works (hex and base32 contain only characters that are safe in a `?token=` URL;
+base64 can contain `+`, `/` and `=`, which then need URL-encoding):
+
+```
+openssl rand -hex 32                          # 64 hex characters (256 bits)
+head -c 32 /dev/urandom | base32 | tr -d '='  # 52 base32 characters (256 bits), coreutils
+openssl rand -base64 32                       # 44 characters, if you send it only as a Bearer header
+```
+
+The base32 line was run here; `openssl` is not installed on the machine this was written on, so the two `openssl` lines are not run.
+
 A token set through the environment is visible to `docker inspect` and to other users on the host.
 
 ## Behind a reverse proxy
