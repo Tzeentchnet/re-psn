@@ -46,8 +46,7 @@ sh scripts/check-deploy.sh       # when deploy/ or the flags changed
   `require` line). `app/` has the ones listed in [app/README.md](app/README.md#dependencies). Adding or bumping one is its own
   change, with a stated reason, pinned in `go.mod` and `go.sum`, its licence (and its new transitive modules' licences) named,
   and `go mod verify` and `govulncheck` clean. A new dependency version must have been published at least 14 days earlier, unless
-  the maintainer has waived that for the named module. Waived: `charm.land/bubbletea/v2`, `charm.land/lipgloss/v2` and the
-  `github.com/charmbracelet/*` modules they require, at the versions in `app/go.mod`.
+  the maintainer has waived that for the named module. Waived: `charm.land/bubbletea/v2` v2.1.1 only (published 2026-10-28), and no other module.
 - **Settings:** a new flag also gets a `RE_PSN_` variable, a line in `deploy/re-psn.env.example`, and a row in
   [docs/running.md](docs/running.md). Never log a setting's value, only its name.
 - **Features list:** edit `docs/features.tsv` and `ROADMAP.md`, then run `python3 tools/features.py` to regenerate
