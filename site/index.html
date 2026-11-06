@@ -82,7 +82,7 @@
 <table class="stack feat">
 <thead><tr><th>Feature</th><th>Status</th><th>Since</th></tr></thead>
 <tbody>
-<tr id="f-status-page"><td data-label="Feature"><strong>Status page and /api/stats, with a token</strong> <code>status-page</code><br>A read-only page and JSON on a separate listener, on localhost by default. <code>-http-token</code> requires a token (<code>Authorization: Bearer</code>, or <code>?token=</code>), and the server warns at start when the page is reachable from elsewhere without one.<br><span class="note">The page and /api/stats are upstream work (0.1.0); the token is the fork&#x27;s.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-status-page"><td data-label="Feature"><strong>Status page and /api/stats, with a token</strong> <code>status-page</code><br>A read-only page and JSON on a separate listener, off unless <code>-http</code> names an address (<code>127.0.0.1:36101</code> keeps it on localhost). <code>-http-token</code> requires a token (<code>Authorization: Bearer</code>, or <code>?token=</code>), and the server warns at start when the page is reachable from elsewhere without one.<br><span class="note">The page and /api/stats are upstream work (0.1.0); the token is the fork&#x27;s.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 </tbody>
 </table>
 <h3 id="area-metrics">Metrics</h3>
@@ -107,7 +107,7 @@
 <tr id="f-deploy-examples"><td data-label="Feature"><strong>Settings file, service unit and Traefik example</strong> <code>deploy-examples</code><br><code>deploy/</code> holds <code>re-psn.env.example</code> (every setting, commented), a systemd unit and a Traefik config that sends PROXY v2. The release archives carry them as <code>examples/</code>.<br><span class="note"><code>scripts/check-deploy.sh</code> checks the env file and the unit against the server&#x27;s flags. The Traefik run (Traefik 3.1 under Podman) is recorded in docs/running.md; no run of the systemd unit is recorded.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-deploy-nginx-haproxy"><td data-label="Feature"><strong>nginx and HAProxy examples</strong> <code>deploy-nginx-haproxy</code><br>An nginx <code>stream</code> block with <code>proxy_protocol on;</code> (PROXY v1) and an HAProxy config with <code>send-proxy-v2</code>.<br><span class="note">Not checked: neither config has been run against the server (docs/running.md says so).</span></td><td data-label="Status"><span class="tag warn">not yet verified</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-deploy-caddy"><td data-label="Feature"><strong>Caddy example</strong> <code>deploy-caddy</code><br>A Caddy config next to the other examples in <code>deploy/</code>.<br><span class="note">Not started.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
-<tr id="f-deploy-container"><td data-label="Feature"><strong>Docker and Podman</strong> <code>deploy-container</code><br>A two-stage Dockerfile and a compose file in <code>docker/</code>, configured only by <code>RE_PSN_*</code> variables. The status page stays on localhost inside the container until a token is set.<br><span class="note">A Podman 6.1 run is recorded in docker/README.md, and the NAT lab builds the image with Docker in CI. The v0.2.0 image is pushed to ghcr.io (amd64 and arm64, unsigned; arm64 not run). The server runs as a non-root user and the bases are pinned by digest. Opt-in host-networking compose files, one hardened for a shared test host, are for Linux only. Compose under Podman is not tested.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-deploy-container"><td data-label="Feature"><strong>Docker and Podman</strong> <code>deploy-container</code><br>A two-stage Dockerfile and a compose file in <code>docker/</code>, configured only by <code>RE_PSN_*</code> variables. The status page is off until <code>RE_PSN_HTTP</code> is set.<br><span class="note">A Podman 6.1 run is recorded in docker/README.md, and the NAT lab builds the image with Docker in CI. The v0.2.0 image is pushed to ghcr.io (amd64 and arm64, unsigned; arm64 not run). The server runs as a non-root user and the bases are pinned by digest. Opt-in host-networking compose files, one hardened for a shared test host, are for Linux only. Compose under Podman is not tested.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 </tbody>
 </table>
 <h3 id="area-settings">Settings</h3>
@@ -274,6 +274,7 @@
 <h3>Unreleased</h3>
 <h4>Changed</h4>
 <ul>
+<li>The status page and <code>/api/stats</code> are off unless <code>-http</code> / <code>RE_PSN_HTTP</code> names an address; they used to listen on <code>127.0.0.1:36101</code> by default.</li>
 <li>The release carries one <code>SHA256SUMS</code> instead of a <code>.sha256</code> file per download: five assets instead of nine, from the next release.</li>
 <li>A shorter README: its long reference parts fold into dropdowns, and a short list linking to <code>docs/features.md</code> replaces the features table.</li>
 <li>The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server runs as the non-root user 10001.</li>
@@ -298,7 +299,7 @@
 <tr><td data-label="Flag"><code>-addr</code></td><td data-label="Variable"><code>RE_PSN_ADDR</code></td><td data-label="Default"><code>:36100</code></td><td data-label="What it does">TCP and UDP address for game clients</td></tr>
 <tr><td data-label="Flag"><code>-tcp-addr</code></td><td data-label="Variable"><code>RE_PSN_TCP_ADDR</code></td><td data-label="Default"><code>-addr</code></td><td data-label="What it does">TCP address for game clients, if different</td></tr>
 <tr><td data-label="Flag"><code>-udp-addr</code></td><td data-label="Variable"><code>RE_PSN_UDP_ADDR</code></td><td data-label="Default"><code>-addr</code></td><td data-label="What it does">UDP address for game clients, if different</td></tr>
-<tr><td data-label="Flag"><code>-http</code></td><td data-label="Variable"><code>RE_PSN_HTTP</code></td><td data-label="Default"><code>127.0.0.1:36101</code></td><td data-label="What it does">Status page and /api/stats; empty turns it off</td></tr>
+<tr><td data-label="Flag"><code>-http</code></td><td data-label="Variable"><code>RE_PSN_HTTP</code></td><td data-label="Default"><code>none (off)</code></td><td data-label="What it does">Status page and /api/stats on this address, for example 127.0.0.1:36101</td></tr>
 <tr><td data-label="Flag"><code>-http-token</code></td><td data-label="Variable"><code>RE_PSN_HTTP_TOKEN</code></td><td data-label="Default"><code>none</code></td><td data-label="What it does">Token the status page requires (Authorization: Bearer, or ?token=)</td></tr>
 <tr><td data-label="Flag"><code>-max-rooms</code></td><td data-label="Variable"><code>RE_PSN_MAX_ROOMS</code></td><td data-label="Default"><code>1000</code></td><td data-label="What it does">Rooms across all titles</td></tr>
 <tr><td data-label="Flag"><code>-max-player-rooms</code></td><td data-label="Variable"><code>RE_PSN_MAX_PLAYER_ROOMS</code></td><td data-label="Default"><code>8</code></td><td data-label="What it does">Rooms one player may be in at once (0: no limit)</td></tr>
@@ -339,7 +340,7 @@ docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.2.0
 <p>Players on one LAN or VPN need nothing forwarded. Otherwise the host forwards a port, runs a public server, or uses an overlay network such as Tailscale or ZeroTier; the relay is the fallback when two players cannot reach each other.</p>
 <ul>
 <li>Game connection and address probes: <code>:36100</code>, TCP and UDP, open to every player.</li>
-<li>Status page: <code>127.0.0.1:36101</code>, for the host only; it lists every online ID.</li>
+<li>Status page: <code>none (off)</code>, for the host only; it lists every online ID.</li>
 <li>Each player's P2P port (UDP and TCP) must be reachable by the other players; the game opens it.</li>
 </ul>
 <p>A game reaches the server through the C client in <code>client/psnr.c</code>, via ps3recomp's NP modules. That side is upstream's work; <a href="https://github.com/undecuple/re-psn/blob/main/docs/connecting.md">docs/connecting.md</a> covers each way to connect.</p>

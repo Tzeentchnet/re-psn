@@ -127,10 +127,10 @@
    "id": "status-page",
    "area": "Status page",
    "feature": "Status page and /api/stats, with a token",
-   "detail": "A read-only page and JSON on a separate listener, on localhost by default. `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one.",
+   "detail": "A read-only page and JSON on a separate listener, off unless `-http` names an address (`127.0.0.1:36101` keeps it on localhost). `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one.",
    "status": "available",
    "since": "0.2.0",
-   "evidence": "server/api.go, TestStatusToken, TestReachable, docs/status.png",
+   "evidence": "server/api.go, TestStatusToken, TestReachable, TestStatusPageOff, TestStatusPageOn, docs/status.png",
    "note": "The page and /api/stats are upstream work (0.1.0); the token is the fork's.",
    "status_label": "available"
   },
@@ -204,7 +204,7 @@
    "id": "deploy-container",
    "area": "Deployment",
    "feature": "Docker and Podman",
-   "detail": "A two-stage Dockerfile and a compose file in `docker/`, configured only by `RE_PSN_*` variables. The status page stays on localhost inside the container until a token is set.",
+   "detail": "A two-stage Dockerfile and a compose file in `docker/`, configured only by `RE_PSN_*` variables. The status page is off until `RE_PSN_HTTP` is set.",
    "status": "available",
    "since": "0.2.0",
    "evidence": "docker/Dockerfile, docker/docker-compose.yml, docker/docker-compose.host.yml, docker/docker-compose.test.yml, docker/README.md, lab/run.sh, #11",
@@ -707,8 +707,8 @@
   {
    "flag": "-http",
    "variable": "RE_PSN_HTTP",
-   "default": "127.0.0.1:36101",
-   "description": "Status page and /api/stats; empty turns it off"
+   "default": "none (off)",
+   "description": "Status page and /api/stats on this address, for example 127.0.0.1:36101"
   },
   {
    "flag": "-http-token",
@@ -813,6 +813,7 @@
    "date": "",
    "sections": {
     "Changed": [
+     "The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on `127.0.0.1:36101` by default.",
      "The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.",
      "A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.",
      "The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server runs as the non-root user 10001."
@@ -825,7 +826,7 @@
     ]
    },
    "counts": {
-    "Changed": 3,
+    "Changed": 4,
     "Added": 4
    }
   },
