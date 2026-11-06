@@ -17,6 +17,10 @@ All notable changes to this project are documented here. The format follows
   runs as the non-root user 10001. Tested with Podman and in the NAT lab on CI.
 
 ### Added
+- `app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client
+  for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT and ROUTE pushes) with a
+  conformance test against the real server, a reader and writer for the per-user settings file `re-psn.ini`, and
+  `re-psn-app check HOST:PORT` and `re-psn-app version`. No terminal UI yet. See `app/README.md`.
 - `docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities,
   read-only filesystem, resource limits). It refuses to start without an explicit `RE_PSN_BIND` address.
 - `.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to

@@ -8,12 +8,12 @@ What re-psn does today and what is planned, one row per feature. Each status res
 |---|---|---|
 | available | merged, with a test or a recorded run | 26 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
-| partial | merged in part, or with known gaps | 2 |
+| partial | merged in part, or with known gaps | 3 |
 | in progress | an open pull request or branch | 0 |
 | planned | wanted and intended, not started | 16 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
-| all | | 54 |
+| all | | 55 |
 
 ## Rooms and matchmaking
 
@@ -119,6 +119,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 | ID | Feature | Status | Since | Evidence | Note |
 |---|---|---|---|---|---|
 | `client-c` | **C client**: One file with no dependencies and no threads: `psnr_send` returns a request id, and `psnr_poll` hands out replies and pushes without blocking. It also builds the UDP probe and relay packets. | available | 0.1.0 | [`client/psnr.c`](../client/psnr.c), [`client/test_psnr.c`](../client/test_psnr.c), [`TestCClient`](../server/client_test.go) | Upstream work. `TestCClient` skips without a C compiler; CI runs it on Linux only. |
+| `app-client` | **Go client package**: `app/internal/client`: a Go client for the TCP protocol, for the desktop app. HELLO, heartbeat, create, search, join and leave rooms, record and read scores, and the member and route pushes, with typed messages and errors. `re-psn-app check HOST:PORT` uses it. | partial | main | [`app/internal/client`](../app/internal/client), [`TestConformanceRoomsAndScores`](../app/internal/client/conformance_test.go), [`TestConformanceRelayRoute`](../app/internal/client/conformance_test.go), [`TestConformanceErrors`](../app/internal/client/conformance_test.go) | Room data and messages, kicks, invite-only rooms, relay streams and UDP are not in it yet. |
 | `client-desktop` | **Desktop client, terminal UI**: A terminal program for players and hosts: launch profiles per game, a host mode, and a check of the connection. | planned |  |  | Not started. One executable per platform, with nothing else to install. |
 | `client-gui` | **Desktop client, graphical UI**: A local web UI served by the same program, and a graphical app on Windows, with the same screens as the terminal UI. | planned |  |  | Not started. After client-desktop. |
 | `app-themes` | **Colour themes**: Colour presets in the desktop apps: gruvbox-material by default, then gruvbox, catppuccin, kanagawa and melange. A preset is a data file shared by the apps and the README art. | planned |  |  | Not started. A preset ships only after its project's licence is read and credited in NOTICE.md. The terminal UI falls back to the terminal's own 16 colours and respects NO_COLOR. |
