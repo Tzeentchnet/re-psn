@@ -13,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -479,4 +481,43 @@ func TestFieldTakesNoControlCharacters(t *testing.T) {
 	if f.value != "ab[3" {
 		t.Fatalf("backspace: %q", f.value)
 	}
+}
+
+// sgr is the only escape the interface itself writes: colour and weight.
+var sgr = regexp.MustCompile(`\x1b\[[0-9;:]*m`)
+
+func TestServerTextCannotInjectEscapes(t *testing.T) {
+	hostile := []string{"ali\x1b[2Jce", "\x1b]0;x\x07zed", "bo\x00\x00b", "\x9b31mc\x7fd", "bad\xffutf\xc3"}
+	for _, in := range hostile {
+		if got := clean(in); strings.ContainsFunc(got, unicode.IsControl) || !utf8.ValidString(got) {
+			t.Errorf("clean(%q) = %q", in, got)
+		}
+	}
+	if got := clean("ali\x1b[2Jce"); got != "ali[2Jce" {
+		t.Errorf("clean keeps the printable bytes: got %q", got)
+	}
+
+	s := sampleSnap
+	s.Rooms = client.RoomList{Total: 1, Rooms: []client.RoomInfo{{ID: 1, Owner: "ali\x1b[2Jce", Cur: 1, Max: 4}}}
+	s.Ranking = client.Ranking{Total: 1, Rows: []client.RankRow{{Rank: 1, OnlineID: "\x1b]0;x\x07zed", Score: 5}}}
+	f := &fake{snap: s}
+	m := homeModel(t, f, config.Settings{Server: "h:1"})
+	m = drive(t, m, tea.WindowSizeMsg{Width: 120, Height: 30})
+	m.title, m.board = "T", "1"
+	m = drive(t, m, keys("2", "enter", "r")...)
+	check := func(want string) {
+		t.Helper()
+		raw := sgr.ReplaceAllString(m.View().Content, "")
+		if strings.ContainsAny(raw, "\x1b\x07\x00\x9b") {
+			t.Errorf("a control byte reached the screen:\n%q", raw)
+		}
+		mustShow(t, m, want)
+	}
+	check("ali[2Jce")
+	m = drive(t, m, keys("tab")...)
+	check("]0;xzed")
+
+	f.err = errors.New("dial h:1: \x1b[2Jrefused")
+	m = drive(t, m, keys("r")...)
+	check("refused")
 }

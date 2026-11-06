@@ -251,7 +251,7 @@ func (m Model) connection() []string {
 			where = " from " + server
 		}
 		return []string{
-			m.st.bad.Render("No answer"+where+": ") + m.st.text.Render(m.fetchErr.Error()),
+			m.st.bad.Render("No answer"+where+": ") + m.st.text.Render(clean(m.fetchErr.Error())),
 			m.st.muted.Render("Check the server in Settings, then press r."),
 		}
 	case m.snap == nil:
@@ -261,7 +261,7 @@ func (m Model) connection() []string {
 	return []string{
 		m.st.good.Render("Connected") + m.st.text.Render(fmt.Sprintf(" to %s; HELLO answered in %s.", server, ms(m.snap.RTT))),
 		m.st.text.Render(fmt.Sprintf("Relay %s, invite-only rooms %s. The server sees this machine as %s.", onOff(a.Relay()), onOff(a.RoomCodes()), a.PublicIP)),
-		m.st.muted.Render("Checked at " + m.fetchedAt.Format("15:04:05") + " as " + m.snap.Name + "."),
+		m.st.muted.Render("Checked at " + m.fetchedAt.Format("15:04:05") + " as " + clean(m.snap.Name) + "."),
 	}
 }
 
@@ -325,7 +325,7 @@ func (m Model) roomLines() []string {
 	}
 	b := []string{m.st.strong.Render(fmt.Sprintf("%-10s %-16s %-8s %-10s %s", "ID", "Owner", "Members", "Flags", "Age"))}
 	for _, r := range l.Rooms {
-		b = append(b, m.st.text.Render(fmt.Sprintf("%-10d %-16s %-8s 0x%08X %s", r.ID, r.Owner, fmt.Sprintf("%d/%d", r.Cur, r.Max), r.Flags, "n/a")))
+		b = append(b, m.st.text.Render(fmt.Sprintf("%-10d %-16s %-8s 0x%08X %s", r.ID, clean(r.Owner), fmt.Sprintf("%d/%d", r.Cur, r.Max), r.Flags, "n/a")))
 	}
 	return append(b, "",
 		m.st.muted.Render(fmt.Sprintf("%d of %d open rooms. Full and invite-only rooms are not listed; Age (n/a) is %s.", len(l.Rooms), l.Total, notOverProtocol)))
@@ -341,7 +341,7 @@ func (m Model) boardLines() []string {
 	case !m.current(true):
 		return []string{m.st.muted.Render("No ranking yet: press r."), note}
 	case m.snap.RankErr != nil:
-		return []string{m.st.bad.Render("Board "+m.board+": ") + m.st.text.Render(m.snap.RankErr.Error()), note}
+		return []string{m.st.bad.Render("Board "+m.board+": ") + m.st.text.Render(clean(m.snap.RankErr.Error())), note}
 	}
 	k := m.snap.Ranking
 	if len(k.Rows) == 0 {
@@ -349,7 +349,7 @@ func (m Model) boardLines() []string {
 	}
 	b := []string{m.st.strong.Render(fmt.Sprintf("%-6s %-16s %14s  %s", "Rank", "Player", "Score", "Recorded"))}
 	for _, r := range k.Rows {
-		b = append(b, m.st.text.Render(fmt.Sprintf("%-6d %-16s %14d  %s", r.Rank, r.OnlineID, r.Score, recorded(r))))
+		b = append(b, m.st.text.Render(fmt.Sprintf("%-6d %-16s %14d  %s", r.Rank, clean(r.OnlineID), r.Score, recorded(r))))
 	}
 	return append(b, "", m.st.muted.Render(fmt.Sprintf("Top %d of %d players on board %s.", len(k.Rows), k.Total, m.board)), note)
 }
@@ -390,7 +390,7 @@ func (m Model) renderSettings() []string {
 	}
 	switch {
 	case m.saveErr != nil:
-		b = append(b, m.st.bad.Render("Not saved: ")+m.st.text.Render(m.saveErr.Error()))
+		b = append(b, m.st.bad.Render("Not saved: ")+m.st.text.Render(clean(m.saveErr.Error())))
 	case m.dirty:
 		b = append(b, m.st.warn.Render("Unsaved changes: ")+m.st.text.Render("press s to save."))
 	case m.saveNote != "":
