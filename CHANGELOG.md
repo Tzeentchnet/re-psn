@@ -20,7 +20,7 @@ All notable changes to this project are documented here. The format follows
 - `site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table
   and this file (`--check` compares the committed files and the colour tokens of `site/style.css` with the sources), and `site/style.css` is hand-written in the
   gruvbox-material palette, dark by default and light with the system. No script and no third-party loads (a CSP says so). `.github/workflows/pages.yml`
-  deploys `site/` to GitHub Pages on a push to main that touches it, or by hand; Pages itself still has to be switched on in the repository settings.
+  deploys `site/` to GitHub Pages on a push to main that touches it, or by hand; the deploy job runs only when the repository variable `PAGES_ENABLED` is `true`, so nothing is published until it is set.
 - `docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities,
   read-only filesystem, resource limits). It refuses to start without an explicit `RE_PSN_BIND` address.
 - `.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to
