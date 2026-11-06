@@ -32,7 +32,7 @@
 <h2>Overview</h2>
 <p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person's machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
 <p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, with no accounts and no public instance.</p>
-<p class="status-line">Version 0.2.0 (pre-release). 55 features: 26 available, 1 not yet verified, 3 partial, 16 planned, 8 later, 1 declined.</p>
+<p class="status-line">Version 0.2.0 (pre-release). 56 features: 26 available, 1 not yet verified, 4 partial, 16 planned, 8 later, 1 declined.</p>
 <p class="notice">Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own.</p>
 </section>
 <section id="features">
@@ -155,6 +155,7 @@
 <thead><tr><th>Feature</th><th>Status</th><th>Since</th></tr></thead>
 <tbody>
 <tr id="f-client-c"><td data-label="Feature"><strong>C client</strong> <code>client-c</code><br>One file with no dependencies and no threads: <code>psnr_send</code> returns a request id, and <code>psnr_poll</code> hands out replies and pushes without blocking. It also builds the UDP probe and relay packets.<br><span class="note">Upstream work. <code>TestCClient</code> skips without a C compiler; CI runs it on Linux only.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.1.0</td></tr>
+<tr id="f-app-client"><td data-label="Feature"><strong>Go client package</strong> <code>app-client</code><br><code>app/internal/client</code>: a Go client for the TCP protocol, for the desktop app. HELLO, heartbeat, create, search, join and leave rooms, record and read scores, and the member and route pushes, with typed messages and errors. <code>re-psn-app check HOST:PORT</code> uses it.<br><span class="note">Room data and messages, kicks, invite-only rooms, relay streams and UDP are not in it yet.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">main</td></tr>
 <tr id="f-client-desktop"><td data-label="Feature"><strong>Desktop client, terminal UI</strong> <code>client-desktop</code><br>A terminal program for players and hosts: launch profiles per game, a host mode, and a check of the connection.<br><span class="note">Not started. One executable per platform, with nothing else to install.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
 <tr id="f-client-gui"><td data-label="Feature"><strong>Desktop client, graphical UI</strong> <code>client-gui</code><br>A local web UI served by the same program, and a graphical app on Windows, with the same screens as the terminal UI.<br><span class="note">Not started. After client-desktop.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
 <tr id="f-app-themes"><td data-label="Feature"><strong>Colour themes</strong> <code>app-themes</code><br>Colour presets in the desktop apps: gruvbox-material by default, then gruvbox, catppuccin, kanagawa and melange. A preset is a data file shared by the apps and the README art.<br><span class="note">Not started. A preset ships only after its project&#x27;s licence is read and credited in NOTICE.md. The terminal UI falls back to the terminal&#x27;s own 16 colours and respects NO_COLOR.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
@@ -200,7 +201,7 @@
 <h2>Roadmap</h2>
 <p>The same list grouped by status. No dates are promised; <a href="https://github.com/undecuple/re-psn/blob/main/ROADMAP.md">ROADMAP.md</a> has the order and the scope.</p>
 <div class="cols">
-<div><h3>Done <span class="count">(30)</span></h3>
+<div><h3>Done <span class="count">(31)</span></h3>
 <ul>
 <li><a href="#f-rooms-basic">Rooms and search</a></li>
 <li><a href="#f-rooms-data">Room and member data</a></li>
@@ -220,6 +221,7 @@
 <li><a href="#f-net-relay">Relay</a></li>
 <li><a href="#f-net-udp-guard">UDP source address check</a></li>
 <li><a href="#f-client-c">C client</a></li>
+<li><a href="#f-app-client">Go client package</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-test-fuzz">Fuzz tests</a></li>
 <li><a href="#f-ci-checks">CI checks</a></li>
 <li><a href="#f-release-archives">Release archives and checksums</a> <span class="tag warn">partial</span></li>
@@ -282,6 +284,7 @@
 <h4>Added</h4>
 <ul>
 <li><code>site/</code>, the project website: <code>tools/site.py</code> generates <code>site/index.html</code> and <code>site/data.json</code> from <code>docs/features.tsv</code>, <code>VERSION</code>, the README settings table and this file (<code>--check</code> compares the committed files and the ...</li>
+<li><code>app/</code>, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT ...</li>
 <li><code>docker/docker-compose.test.yml</code>: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities, read-only filesystem, resource limits).</li>
 <li><code>.github/workflows/container.yml</code>: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to <code>ghcr.io/undecuple/re-psn</code> (tags <code>X.Y.Z</code>, plus <code>X.Y</code> and <code>latest</code> for a release that is ...</li>
 <li><code>-replace</code> (<code>RE_PSN_REPLACE</code>): when the game port is held by an earlier re-psn of the same user, the server sends it SIGTERM, waits up to 10 s for the port and starts in its place (Linux only).</li>

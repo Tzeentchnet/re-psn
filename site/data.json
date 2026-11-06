@@ -6,7 +6,7 @@
  "status_counts": {
   "available": 26,
   "unverified": 1,
-  "partial": 3,
+  "partial": 4,
   "in-progress": 0,
   "planned": 16,
   "later": 8,
@@ -399,6 +399,17 @@
    "status_label": "available"
   },
   {
+   "id": "app-client",
+   "area": "Client",
+   "feature": "Go client package",
+   "detail": "`app/internal/client`: a Go client for the TCP protocol, for the desktop app. HELLO, heartbeat, create, search, join and leave rooms, record and read scores, and the member and route pushes, with typed messages and errors. `re-psn-app check HOST:PORT` uses it.",
+   "status": "partial",
+   "since": "main",
+   "evidence": "app/internal/client, TestConformanceRoomsAndScores, TestConformanceRelayRoute, TestConformanceErrors",
+   "note": "Room data and messages, kicks, invite-only rooms, relay streams and UDP are not in it yet.",
+   "status_label": "partial"
+  },
+  {
    "id": "client-desktop",
    "area": "Client",
    "feature": "Desktop client, terminal UI",
@@ -639,6 +650,7 @@
    "net-relay",
    "net-udp-guard",
    "client-c",
+   "app-client",
    "test-fuzz",
    "ci-checks",
    "release-archives",
@@ -820,6 +832,7 @@
     ],
     "Added": [
      "`site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table and this file (`--check` compares the committed files and the ...",
+     "`app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT ...",
      "`docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities, read-only filesystem, resource limits).",
      "`.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to `ghcr.io/undecuple/re-psn` (tags `X.Y.Z`, plus `X.Y` and `latest` for a release that is ...",
      "`-replace` (`RE_PSN_REPLACE`): when the game port is held by an earlier re-psn of the same user, the server sends it SIGTERM, waits up to 10 s for the port and starts in its place (Linux only)."
@@ -827,7 +840,7 @@
    },
    "counts": {
     "Changed": 4,
-    "Added": 4
+    "Added": 5
    }
   },
   "latest": {

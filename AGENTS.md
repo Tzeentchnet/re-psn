@@ -12,6 +12,7 @@ C client, for statically recompiled PS3 games.
 |---|---|
 | `server/` | The Go server (`package main`); `server/store/` holds storage backends and the contract tests they share |
 | `client/` | The C client (`psnr.c`, `psnr.h`) and its test |
+| `app/` | The desktop app, a Go module of its own: the protocol client, the settings file and `cmd/re-psn-app` |
 | `docs/` | Markdown docs; `features.tsv` is the source of `features.md` |
 | `deploy/`, `docker/` | Settings example, systemd unit, proxy examples; container files |
 | `lab/` | The NAT lab (Docker) |
@@ -33,6 +34,7 @@ go vet ./...
 go test -race ./...
 python3 tools/features.py --check && python3 tools/site.py --check && python3 -m unittest
 sh scripts/check-deploy.sh       # when deploy/ or the flags changed
+(cd app && test -z "$(gofmt -l .)" && go vet ./... && go test -race ./...)   # when app/ changed
 ```
 
 `nix develop` gives a shell with Go and gcc. The NAT lab (`sh lab/run.sh`) needs Docker.
@@ -40,7 +42,7 @@ sh scripts/check-deploy.sh       # when deploy/ or the flags changed
 ## Rules
 
 - **Wire format:** a change bumps the protocol version and updates [docs/api.md](docs/api.md) in the same commit.
-- **Dependencies:** the server has none outside the standard library. Adding one is its own change, with a stated reason.
+- **Dependencies:** the server and `app/` have none outside the standard library. Adding one is its own change, with a stated reason.
 - **Settings:** a new flag also gets a `RE_PSN_` variable, a line in `deploy/re-psn.env.example`, and a row in
   [docs/running.md](docs/running.md). Never log a setting's value, only its name.
 - **Features list:** edit `docs/features.tsv` and `ROADMAP.md`, then run `python3 tools/features.py` to regenerate
