@@ -52,6 +52,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [net-relay] An optional relay for players who cannot reach each other directly.
 - [net-udp-guard] UDP packets accepted only from the address of the player's TCP connection.
 - [client-c] A one-file C client with no dependencies.
+- [app-tui] The desktop app's terminal UI: first-run choice, Status with Rooms and Leaderboards tabs over the game protocol, Settings, dark and light; partial: no Host screen or joining yet.
 
 [Testing and CI](docs/features.md#testing-and-ci), [release](docs/features.md#release) and [documentation](docs/features.md#documentation)
 - [test-fuzz] Fuzz tests for the frame parser, the request handlers and the PROXY header.
