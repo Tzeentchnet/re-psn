@@ -14,7 +14,7 @@
 # There is no `ports` list: the container listens on the host directly, so the firewall must
 # allow 36100/tcp and 36100/udp, and a port change in RE_PSN_ADDR is the port on the host.
 #
-# The status page lists every online ID. Leave RE_PSN_HTTP on localhost (the default), or set
+# The status page lists every online ID and is off unless RE_PSN_HTTP is set. If you set it, keep it on localhost, or set
 # RE_PSN_HTTP_TOKEN before binding it to another address; on the host network it is reachable
 # from the network as soon as it is bound to a non-local address.
 services:
