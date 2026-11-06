@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server
+  runs as the non-root user 10001. Tested with Podman only; the NAT lab was not run.
+
+### Added
+- `docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities,
+  read-only filesystem, resource limits). It refuses to start without an explicit `RE_PSN_BIND` address.
+
 ## [0.2.0] - 2026-11-06
 
 ### Added

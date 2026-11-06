@@ -10,6 +10,8 @@ to set it up. No image is published yet; you build it from this repository.
 - [Ports](#ports)
 - [Relay and host networking](#relay-and-host-networking)
 - [Podman](#podman)
+- [The image](#the-image)
+- [A shared test host](#a-shared-test-host)
 - [Settings](#settings)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
 - [The lab](#the-lab)
@@ -18,9 +20,10 @@ to set it up. No image is published yet; you build it from this repository.
 
 | File | What it is |
 |---|---|
-| `Dockerfile` | A two-stage build: Go in the first stage, a small Alpine image with one static binary in the second. |
+| `Dockerfile` | A two-stage build: Go 1.26 on Alpine 3.24 in the first stage, Alpine 3.24 with one static binary in the second. Both bases are pinned by digest, and the server runs as user 10001. |
 | `docker-compose.yml` | The same, with the ports and a restart policy. |
 | `docker-compose.host.yml` | Opt-in, Linux only: the same server on the host's network, with no published ports. |
+| `docker-compose.test.yml` | Opt-in, Linux only: the host-network server with a hardened container, for a shared test host. |
 | `Dockerfile.dockerignore` | Keeps everything but `go.mod` and `server/` out of the build context. |
 
 ## Build and run
@@ -155,6 +158,62 @@ re-psn refuses a UDP probe whose source address differs from the player's TCP ad
 "UDP source address"). Tested with rootless Podman 6.1.4 (pasta, the default network mode) and the commands above: a client sending TCP and UDP from one
 address was accepted, a client sending them from two different addresses was refused, and `PSNR_UDP_ANY_SOURCE=true` accepted it; the same held with
 `--network=host`. Not tested: a client on another machine, a NAT between client and host, slirp4netns, rootful Podman, and Docker.
+
+## The image
+
+The server runs as a non-root user, `re-psn`, uid and gid 10001 (no home, no shell). The game port is above 1024, so it needs no capability.
+Compose files can say `user: "10001:10001"`. There is no `HEALTHCHECK`: the image has no tool to probe a port, and the status page is
+off the network by default, so a check would need a new package or a wider status page.
+
+Both base images are pinned by digest (`FROM image:tag@sha256:...`, the multi-arch index digest): `golang:1.26-alpine3.24` (Go 1.26.10 when
+this was written; `go.mod` says `go 1.22`, a minimum) and `alpine:3.24`. Dependabot's docker ecosystem updates the tag and the digest
+together. The image was built and run with rootless Podman 6.1.4 only (Docker is not installed on the test machine): `podman exec` showed
+`uid=10001(re-psn)`, and `client/test_psnr.c` passed against it on the host network. The NAT lab was not run, so `lab/Dockerfile`
+still has its own base tag.
+
+## A shared test host
+
+For a server you do not own outright, such as a shared machine with VPN links, `docker-compose.test.yml` adds hardening to the host-network
+setup: a non-root user, all capabilities dropped, no new privileges, a read-only root filesystem with a 16 MB tmpfs on `/tmp`, memory, CPU
+and process limits, no volumes, no published ports, and `restart: "no"`.
+
+```sh
+RE_PSN_BIND=192.0.2.10:36100 docker compose -f docker/docker-compose.test.yml up --build
+docker compose -f docker/docker-compose.test.yml down
+```
+
+`192.0.2.10` is a documentation address; use the address of the interface your testers reach.
+
+```mermaid
+flowchart LR
+  tester["tester"]
+  vpn["VPN peer"]
+  subgraph host["test host, host network"]
+    nic["listen address<br/>(RE_PSN_BIND)"]
+    other["other interfaces<br/>(not bound)"]
+    subgraph ctr["container: uid 10001, no capabilities, read-only"]
+      game["re-psn game port, with relay"]
+      status["status page<br/>127.0.0.1:36101"]
+    end
+  end
+  tester -- "TCP and UDP 36100" --> nic
+  nic --> game
+  vpn -. "refused unless it reaches the listen address" .-> other
+  game -.-> status
+```
+
+> [!WARNING]
+> - **Bind an explicit address.** `RE_PSN_BIND` is required and there is no default: the file refuses to start without it. A wildcard such as `:36100` would also answer on every VPN interface.
+> - **The relay is on** (`RE_PSN_RELAY`, default `true` here). It carries traffic between any two clients that can reach the server and uses its bandwidth. Set `RE_PSN_RELAY=false` to turn it off.
+> - **VPN peers** that can route to the listen address can connect; the firewall must allow 36100/tcp and 36100/udp only to who you intend.
+> - **Ports below 1024 fail.** `cap_drop: ALL` also drops `NET_BIND_SERVICE`, so a listen port below 1024 in `RE_PSN_BIND` cannot be bound (36100 is fine).
+> - The status page stays on the host's `127.0.0.1:36101`; set `RE_PSN_HTTP_TOKEN` if you ever bind it wider.
+
+Tested with rootless Podman 6.1.4 and podman-compose 1.6.0, with `RE_PSN_BIND=127.0.0.1:36100`: the container ran as uid 10001, a write to `/`
+failed (read-only), `/tmp` was writable, `NoNewPrivs` was 1 and the effective capabilities were empty. `docker-compose config` (Compose v2)
+printed the expected file and failed with the message when `RE_PSN_BIND` was unset. `client/test_psnr.c` passed with `RE_PSN_RELAY=false`;
+with the relay on, it stops early (it expects no relay push), which says nothing about the hardening. Not tested: Docker, a client on another
+machine, a VPN.
 
 ## Settings
 
