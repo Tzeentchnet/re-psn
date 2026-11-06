@@ -107,3 +107,22 @@ test('the script has no dynamic code, no HTML strings, one network call and no o
   assert.strictEqual(source.split('fetch(').length - 1, 1);
   assert.ok(source.includes("fetch('data.json'"));
 });
+
+test('output carries classes for colour, never styles', () => {
+  const cls = (res) => res.lines.flatMap((l) => (Array.isArray(l) ? l : [l])).filter((s) => typeof s === 'object').map((s) => s.c);
+  assert.ok(cls(T.run('nonsense', data)).includes('err'));
+  assert.ok(cls(T.run('features nope', data)).includes('err'));
+  assert.ok(cls(T.run('theme pink', data)).includes('err'));
+  assert.ok(cls(T.run('help', data)).includes('cmd'));
+  assert.ok(cls(T.run('features', data)).includes('head'));
+  assert.ok(cls(T.run('features', data)).includes('id'));
+  assert.ok(cls(T.run('features', data)).some((c) => /^tag /.test(c)));
+  assert.ok(cls(T.run('settings addr', data)).includes('flag'));
+  assert.ok(!/\.style\b/.test(source));
+});
+
+test('the script keeps the theme in one place shared by the command and the switch', () => {
+  assert.ok(source.includes("var STORE = 're-psn-theme'"));
+  assert.ok(source.includes('applyTheme(res.theme, true)'));
+  assert.ok(source.includes('[data-theme-set]'));
+});

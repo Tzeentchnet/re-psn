@@ -70,6 +70,8 @@
     return h ? { t: text, href: h } : text;
   }
 
+  function err(text) { return [{ t: text, c: 'err' }]; }
+
   function tagSpan(f) {
     return { t: '[' + f.status_label + ']', c: 'tag ' + (f.status_class || 'dim') };
   }
@@ -80,7 +82,7 @@
 
   function cmdHelp() {
     var lines = ['Commands', ''];
-    HELP.forEach(function (h) { lines.push([{ t: h[0], c: 'code' }, '  ' + h[1]]); });
+    HELP.forEach(function (h) { lines.push([{ t: h[0], c: 'cmd' }, '  ' + h[1]]); });
     lines.push('', 'Keys: arrows move, Enter opens, Tab switches pane, / jumps to the command line, Esc goes back, F1 to F4 are shortcuts for help, features, install and settings (F5 still reloads the page).');
     return lines;
   }
@@ -93,19 +95,19 @@
       if (a === '--status') {
         status = args[i + 1];
         i++;
-        if (status === undefined) { return { lines: ['--status needs a value: ' + statusList(data).join(', ')] }; }
+        if (status === undefined) { return { lines: [err('--status needs a value: ' + statusList(data).join(', '))] }; }
       } else if (a.indexOf('--status=') === 0) {
         status = a.slice(9);
       } else if (a.charAt(0) === '-') {
-        return { lines: ['features: unknown option ' + a.slice(0, 40) + ', use --status ' + statusList(data).join('|')] };
+        return { lines: [err('features: unknown option ' + a.slice(0, 40) + ', use --status ' + statusList(data).join('|'))] };
       } else if (id === null) {
         id = a;
       }
     }
     if (id !== null) {
       var f = data.features.filter(function (x) { return x.id === id; })[0];
-      if (!f) { return { lines: ['features: no feature with id ' + id.slice(0, 40) + ', run features to list them'] }; }
-      var lines = [[{ t: f.feature, c: 'strong' }, ' ', { t: f.id, c: 'code' }], [tagSpan(f), ' since ' + (f.since || 'not released')], ''];
+      if (!f) { return { lines: [err('features: no feature with id ' + id.slice(0, 40) + ', run features to list them')] }; }
+      var lines = [[{ t: f.feature, c: 'strong' }, ' ', { t: f.id, c: 'id' }], [tagSpan(f), ' since ' + (f.since || 'not released')], ''];
       if (f.detail) { lines.push(md(f.detail, data)); }
       lines.push('', ['Evidence: ' + (f.evidence || 'none listed')]);
       if (f.note) { lines.push(['Note: '].concat(md(f.note, data))); }
@@ -113,14 +115,14 @@
       return { lines: lines };
     }
     if (status !== null && statusList(data).indexOf(status) < 0) {
-      return { lines: ['features: unknown status ' + String(status).slice(0, 40) + ', use ' + statusList(data).join(', ')] };
+      return { lines: [err('features: unknown status ' + String(status).slice(0, 40) + ', use ' + statusList(data).join(', '))] };
     }
     var rows = data.features.filter(function (x) { return status === null || x.status === status; });
     var out = [status === null ? rows.length + ' features. features <id> gives the detail.' : rows.length + ' features with status ' + status + '.'];
     var area = null;
     rows.forEach(function (r) {
-      if (r.area !== area) { area = r.area; out.push('', [{ t: '# ' + area, c: 'strong' }]); }
-      out.push([tagSpan(r), ' ' + r.feature + ' ', { t: r.id, c: 'code' }]);
+      if (r.area !== area) { area = r.area; out.push('', [{ t: '# ' + area, c: 'head' }]); }
+      out.push([tagSpan(r), ' ' + r.feature + ' ', { t: r.id, c: 'id' }]);
     });
     if (!rows.length) { out.push('Nothing with that status.'); }
     return { lines: out };
@@ -133,10 +135,10 @@
     Object.keys(data.roadmap).forEach(function (name) {
       var ids = data.roadmap[name];
       if (!ids.length) { return; }
-      out.push('', [{ t: '# ' + name + ' (' + ids.length + ')', c: 'strong' }]);
+      out.push('', [{ t: '# ' + name + ' (' + ids.length + ')', c: 'head' }]);
       ids.forEach(function (i) {
         var f = byId[i];
-        out.push(['  ' + f.feature + ' ', { t: f.id, c: 'code' }].concat(f.status === 'partial' || f.status === 'unverified' ? [' ', tagSpan(f)] : []));
+        out.push(['  ' + f.feature + ' ', { t: f.id, c: 'id' }].concat(f.status === 'partial' || f.status === 'unverified' ? [' ', tagSpan(f)] : []));
       });
     });
     out.push('', [link('ROADMAP.md has the order and the scope', 'ROADMAP.md', data)]);
@@ -144,7 +146,7 @@
   }
 
   function settingLine(s) {
-    return [{ t: s.flag, c: 'code' }, '  ', { t: s.variable, c: 'code' }, '  default ', { t: s.default, c: 'code' }];
+    return [{ t: s.flag, c: 'flag' }, '  ', { t: s.variable, c: 'flag' }, '  default ', { t: s.default, c: 'code' }];
   }
 
   function cmdSettings(args, data) {
@@ -153,7 +155,7 @@
       var hit = data.settings.filter(function (s) {
         return s.flag.toLowerCase().replace(/^-+/, '') === q || s.variable.toLowerCase() === q.toLowerCase();
       })[0];
-      if (!hit) { return { lines: ['settings: no setting named ' + args[0].slice(0, 40) + ', run settings to list them'] }; }
+      if (!hit) { return { lines: [err('settings: no setting named ' + args[0].slice(0, 40) + ', run settings to list them')] }; }
       return { lines: [settingLine(hit), ''].concat([md(hit.description, data)]) };
     }
     var out = [data.settings.length + ' flags; each is also a RE_PSN_<FLAG> variable. A flag wins over the variable. settings <name> shows one.'];
@@ -167,11 +169,11 @@
 
   function cmdInstall(data) {
     var i = data.install;
-    var out = [['Latest release: ', link(i.release_tag, i.release_url, data), ' (' + data.stage + ')'], '', [{ t: '# Release archives', c: 'strong' }], md(i.archives, data)];
+    var out = [['Latest release: ', link(i.release_tag, i.release_url, data), ' (' + data.stage + ')'], '', [{ t: '# Release archives', c: 'head' }], md(i.archives, data)];
     i.verify_unix.forEach(function (l) { out.push([{ t: l, c: 'code' }]); });
-    out.push(md(i.verify_windows, data), '', [{ t: '# Container', c: 'strong' }]);
+    out.push(md(i.verify_windows, data), '', [{ t: '# Container', c: 'head' }]);
     i.container.forEach(function (l) { out.push([{ t: l, c: 'code' }]); });
-    out.push(md(i.container_note, data), '', [{ t: '# From source', c: 'strong' }], i.source_note);
+    out.push(md(i.container_note, data), '', [{ t: '# From source', c: 'head' }], i.source_note);
     i.source.forEach(function (l) { out.push([{ t: l, c: 'code' }]); });
     return out;
   }
@@ -189,7 +191,7 @@
     var out = [];
     var u = ch.unreleased;
     if (u) {
-      out.push([{ t: '# Unreleased', c: 'strong' }]);
+      out.push([{ t: '# Unreleased', c: 'head' }]);
       Object.keys(u.sections).forEach(function (sec) {
         out.push('', sec);
         u.sections[sec].forEach(function (b) { out.push(['- '].concat(md(b, data))); });
@@ -198,7 +200,7 @@
     }
     var l = ch.latest;
     var counts = Object.keys(l.counts).map(function (k) { return l.counts[k] + ' under ' + k; }).join(', ');
-    out.push([{ t: '# ' + l.version + (l.date ? ' (' + l.date + ')' : ''), c: 'strong' }], counts ? counts + '.' : '');
+    out.push([{ t: '# ' + l.version + (l.date ? ' (' + l.date + ')' : ''), c: 'head' }], counts ? counts + '.' : '');
     out.push('', [link('CHANGELOG.md has the full history', 'CHANGELOG.md', data)]);
     return out;
   }
@@ -247,7 +249,7 @@
         if (!args.length) {
           res = { lines: ['theme: ' + (ctx.theme || 'system') + ' (dark, light or system)'] };
         } else if (THEMES.indexOf(args[0]) < 0) {
-          res = { lines: ['theme: unknown value ' + args[0].slice(0, 40) + ', use dark, light or system'] };
+          res = { lines: [err('theme: unknown value ' + args[0].slice(0, 40) + ', use dark, light or system')] };
         } else {
           res = { lines: ['theme: ' + args[0]], theme: args[0] };
         }
@@ -257,7 +259,7 @@
         res = { lines: (ctx.history && ctx.history.length) ? ctx.history.map(function (h, i) { return (i + 1) + '  ' + h; }) : ['No history yet.'] };
         break;
       default:
-        return { lines: ['command not found: ' + tokens[0].slice(0, 60) + ', ' + HINT], cmd: '', error: true };
+        return { lines: [err('command not found: ' + tokens[0].slice(0, 60) + ', ' + HINT)], cmd: '', error: true };
     }
     res.cmd = word;
     return res;
@@ -324,13 +326,52 @@
     } catch (e) { return 'system'; }
   }
 
-  function applyTheme(t) {
-    var de = document.documentElement;
-    if (t === 'dark' || t === 'light') { de.setAttribute('data-theme', t); } else { de.removeAttribute('data-theme'); }
-    try {
-      if (t === 'system') { root.localStorage.removeItem(STORE); } else { root.localStorage.setItem(STORE, t); }
-    } catch (e) { /* storage is optional */ }
+  // The one theme state: data-theme on the root, the stored choice, and every System / Light / Dark control on the page.
+  var theme = 'system';
+
+  function syncControls() {
+    var btns = document.querySelectorAll('[data-theme-set]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-theme-set') === theme ? 'true' : 'false');
+    }
   }
+
+  function applyTheme(t, save) {
+    var de = document.documentElement;
+    theme = THEMES.indexOf(t) >= 0 ? t : 'system';
+    if (theme === 'dark' || theme === 'light') { de.setAttribute('data-theme', theme); } else { de.removeAttribute('data-theme'); }
+    if (save) {
+      try {
+        if (theme === 'system') { root.localStorage.removeItem(STORE); } else { root.localStorage.setItem(STORE, theme); }
+      } catch (e) { /* storage is optional */ }
+    }
+    syncControls();
+  }
+
+  // A System / Light / Dark button group. The one in the page header is generated by tools/site.py; the interface makes its own.
+  function themeControl() {
+    var g = el('div', 'theme');
+    g.setAttribute('role', 'group');
+    g.setAttribute('aria-label', 'Theme');
+    g.appendChild(el('span', 'theme-label', 'Theme'));
+    [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].forEach(function (o) {
+      var b = el('button', 'theme-btn', o[1]);
+      b.type = 'button';
+      b.setAttribute('data-theme-set', o[0]);
+      b.setAttribute('aria-pressed', 'false');
+      g.appendChild(b);
+    });
+    return g;
+  }
+
+  // Runs as soon as the script does (it is deferred, so after the page is parsed and before data.json arrives).
+  applyTheme(storedTheme(), false);
+  document.documentElement.classList.add('js');
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-theme-set]') : null;
+    if (b) { applyTheme(b.getAttribute('data-theme-set'), true); }
+  });
+  syncControls();
 
   function renderLine(line) {
     var d = el('div', 'ln');
@@ -351,8 +392,6 @@
   }
 
   function mount(data) {
-    var theme = storedTheme();
-    applyTheme(theme);
     var history = [];
     var histPos = 0;
     var current = '';
@@ -362,10 +401,11 @@
     tui.setAttribute('data-view', 'content');
 
     var title = el('div', 'tui-title');
-    title.appendChild(el('span', 'tui-name', 're-psn'));
+    title.appendChild(el('span', 'tui-name', 're:psn'));
     title.appendChild(el('span', 'tui-ver', 'v' + data.version + ' · ' + data.stage));
     var plain = el('button', 'tui-plain', 'plain view');
     plain.type = 'button';
+    title.appendChild(themeControl());
     title.appendChild(plain);
     tui.appendChild(title);
 
@@ -463,7 +503,7 @@
     function paint(res, echo) {
       if (res.clear) { out.textContent = ''; return; }
       out.textContent = '';
-      if (echo) { out.appendChild(renderLine([{ t: '$ ' + echo, c: 'echo' }])); }
+      if (echo) { out.appendChild(renderLine([{ t: '$ ', c: 'ps' }, { t: echo, c: 'echo' }])); }
       res.lines.forEach(function (l) { out.appendChild(renderLine(l)); });
       out.scrollTop = 0;
     }
@@ -480,7 +520,7 @@
       if (history[history.length - 1] !== t) { history.push(t); }
       histPos = history.length;
       var res = run(t, data, { history: history, theme: theme });
-      if (res.theme) { theme = res.theme; applyTheme(theme); }
+      if (res.theme) { applyTheme(res.theme, true); }
       paint(res, t);
       if (res.cmd) { current = res.cmd; mark(current); }
       setView('content');
@@ -570,6 +610,7 @@
     toTui.parentNode.insertBefore(tui, toTui.nextSibling);
     document.documentElement.classList.add('tui-on');
     syncCursor();
+    syncControls();
     paint(run('about', data, {}), null);
     current = 'about';
     mark(current);

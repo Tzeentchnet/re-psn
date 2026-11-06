@@ -251,5 +251,104 @@ class SiteTest(unittest.TestCase):
         self.assertEqual(code, 0, err.getvalue())
 
 
+# ---------------------------------------------------------------- colour contrast (WCAG 2.x) from docs/art/palette.json and site/style.css
+
+def _lum(hexcolour):
+    chans = [int(hexcolour[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in chans]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def contrast(a, b):
+    la, lb = sorted((_lum(a), _lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+# Every pair a text colour is drawn in: (text role, background role). A role is a CSS variable of site/style.css.
+TAGS = ("ok", "warn", "unv", "info", "plan", "dim", "bad")
+TEXT_PAIRS = (
+    [("text", "page"), ("text", "panel"), ("text", "hover"), ("text", "raised")]
+    + [("strong", bg) for bg in ("page", "panel", "raised", "select", "hover")]
+    + [("muted", bg) for bg in ("page", "panel", "raised")]
+    + [("link", "page"), ("c-h1", "page"), ("c-h1", "raised"), ("c-h2", "page"), ("c-h3", "page"), ("c-cmd", "page"),
+       ("c-prompt", "page"), ("c-code", "panel"), ("c-id", "page"), ("c-err", "page"), ("c-key", "raised"), ("page", "strong")]
+    + [("tt-" + t, "page") for t in TAGS]
+)
+
+
+def _css_roles(css, mode):
+    """The role -> palette slot map of one mode; the copies of a mode must agree."""
+    blocks = re.findall(r"/\* roles:%s \*/(.*?)/\* /roles \*/" % mode, css, re.S)
+    maps = [dict(re.findall(r"--([a-z0-9-]+):\s*var\(--([a-z0-9]+)\)", b)) for b in blocks]
+    return blocks, maps
+
+
+class ContrastTest(unittest.TestCase):
+    css = (ROOT / "site/style.css").read_text(encoding="utf-8")
+    modes = json.loads((ROOT / "docs/art/palette.json").read_text(encoding="utf-8"))["modes"]
+
+    def resolve(self, mode):
+        """Map every role to a hex colour for a mode (palette slots, shared roles, mode roles)."""
+        start = self.css.index("/* Roles that do not change")
+        shared = dict(re.findall(r"--([a-z0-9-]+):\s*var\(--([a-z0-9]+)\)", self.css[start:self.css.index("/* Text roles per mode")]))
+        blocks, maps = _css_roles(self.css, mode)
+        self.assertEqual(len(blocks), 2, mode)
+        self.assertEqual(maps[0], maps[1], f"the two {mode} copies of the roles differ")
+        roles = dict(shared, **maps[0])
+        palette = self.modes[mode]
+        return {r: palette[slot] for r, slot in roles.items() if slot in palette}
+
+    def test_every_text_pair_is_at_least_4_5(self):
+        for mode in ("dark", "light"):
+            r = self.resolve(mode)
+            for fg, bg in TEXT_PAIRS:
+                self.assertIn(fg, r, f"{mode}: no role {fg}")
+                self.assertIn(bg, r, f"{mode}: no role {bg}")
+                ratio = contrast(r[fg], r[bg])
+                self.assertGreaterEqual(ratio, 4.5, f"{mode}: {fg} {r[fg]} on {bg} {r[bg]} is {ratio:.2f}:1")
+
+    def test_stylesheet_text_colours_are_all_covered(self):
+        # Every `color: var(--x)` in the stylesheet (not border-color and so on) must be a role in the pair table above.
+        covered = {fg for fg, _ in TEXT_PAIRS}
+        used = set(re.findall(r"(?<![-\w])color:\s*var\(--([a-z0-9-]+)\)", self.css))
+        self.assertEqual(used - covered, set(), "text colour roles with no contrast pair")
+        self.assertIsNone(re.search(r"(?<![-\w])color:[ ]*(?![ ]|var\(|inherit|transparent)", self.css.split("@media print")[0]), "a literal text colour")
+
+    def test_every_palette_slot_is_used(self):
+        outside = re.sub(r"/\* palette:\w+ \*/.*?/\* /palette \*/", "", self.css, flags=re.S)
+        for slot in self.modes["dark"]:
+            self.assertIn(f"var(--{slot})", outside, f"--{slot} has no job in site/style.css")
+        self.assertEqual(set(self.modes["dark"]), set(self.modes["light"]))
+
+    def test_light_text_accents_are_only_those_that_pass(self):
+        # An accent that is too faint on the light page may be a border or an underline, never a text role.
+        r = self.resolve("light")
+        accents = {self.modes["light"][a] for a in ("red", "orange", "yellow", "green", "aqua", "blue", "purple")}
+        for fg, bg in TEXT_PAIRS:
+            if r[fg] in accents:
+                self.assertGreaterEqual(contrast(r[fg], r[bg]), 4.5, f"light: {fg} on {bg}")
+
+
+class ThemeSwitchTest(unittest.TestCase):
+    def test_page_has_the_switch_hidden_until_script_runs(self):
+        f = Fixture()
+        self.addCleanup(f.tmp.cleanup)
+        f.run()
+        page = f.read("site/index.html").decode()
+        self.assertIn('<div class="theme" role="group" aria-label="Theme">', page)
+        for k in ("system", "light", "dark"):
+            self.assertIn(f'<button type="button" class="theme-btn" data-theme-set="{k}" aria-pressed="false">', page)
+        css = (ROOT / "site/style.css").read_text(encoding="utf-8")
+        self.assertIn(".theme { display: none; }", css)
+        self.assertIn("html.js .theme", css)
+        self.assertIsNone(re.search(r"\sstyle=|<script>|\son[a-z]+=", page))
+
+    def test_script_shares_the_storage_key_and_the_attribute(self):
+        js = (ROOT / "site/terminal.js").read_text(encoding="utf-8")
+        for needle in ("'re-psn-theme'", "data-theme-set", "setAttribute('data-theme'", "removeItem(STORE)", "aria-pressed", "'js'"):
+            self.assertIn(needle, js)
+        self.assertIn("syncControls", js)
+
+
 if __name__ == "__main__":
     unittest.main()
