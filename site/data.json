@@ -665,7 +665,7 @@
    "id": "docs-website",
    "area": "Documentation",
    "feature": "Project website",
-   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone; the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
+   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone (a phone starts in the plain view); the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
    "status": "partial",
    "since": "main",
    "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml",
@@ -881,6 +881,7 @@
    "date": "",
    "sections": {
     "Changed": [
+     "The website starts in the plain view on a phone (narrow screens); the `terminal view` button switches the interface on, and nothing is stored.",
      "The website's interface on a phone: the version no longer wraps one letter per line in the title bar, and the menu is a row of tabs that scrolls sideways with the page content shown under it, instead of a full-screen ...",
      "Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE keeps upstream's copyright line with a second line for the fork's changes.",
      "The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on `127.0.0.1:36101` by default.",
@@ -900,7 +901,7 @@
     ]
    },
    "counts": {
-    "Changed": 6,
+    "Changed": 7,
     "Added": 8
    }
   },
