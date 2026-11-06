@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.
+
 ## [0.2.0] - 2026-11-06
 
 ### Added
