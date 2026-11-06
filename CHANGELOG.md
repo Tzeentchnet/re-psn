@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- The website starts in the plain view on a phone (narrow screens); the `terminal view` button switches the interface on, and nothing is stored.
 - The website's interface on a phone: the version no longer wraps one letter per line in the title bar, and the menu is a row of tabs that scrolls sideways with the page content shown under it, instead of a full-screen list that hid the content.
 - Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE
   keeps upstream's copyright line with a second line for the fork's changes.

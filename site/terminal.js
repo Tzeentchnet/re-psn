@@ -791,7 +791,8 @@
     paint(run('about', data, {}), null);
     current = 'about';
     mark(current);
-    if (root.matchMedia && root.matchMedia('(max-width: 44rem)').matches) { setView('menu'); }
+    // On a phone the plain page is the better start; the "terminal view" button switches the interface on (nothing is stored).
+    if (root.matchMedia && root.matchMedia('(max-width: 44rem)').matches) { document.documentElement.classList.add('plain'); }
   }
 
   function start() {
