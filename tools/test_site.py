@@ -270,6 +270,7 @@ TEXT_PAIRS = (
     [("text", "page"), ("text", "panel"), ("text", "hover"), ("text", "raised")]
     + [("strong", bg) for bg in ("page", "panel", "raised", "select", "hover")]
     + [("muted", bg) for bg in ("page", "panel", "raised")]
+    + [("c-cmd", "panel")]
     + [("link", "page"), ("c-h1", "page"), ("c-h1", "raised"), ("c-h2", "page"), ("c-h3", "page"), ("c-cmd", "page"),
        ("c-prompt", "page"), ("c-code", "panel"), ("c-id", "page"), ("c-err", "page"), ("c-key", "raised"), ("page", "strong")]
     + [("tt-" + t, "page") for t in TAGS]
@@ -348,6 +349,19 @@ class ThemeSwitchTest(unittest.TestCase):
         for needle in ("'re-psn-theme'", "data-theme-set", "setAttribute('data-theme'", "removeItem(STORE)", "aria-pressed", "'js'"):
             self.assertIn(needle, js)
         self.assertIn("syncControls", js)
+
+
+class AutocompleteMarkupTest(unittest.TestCase):
+    def test_listbox_is_made_by_script_only(self):
+        page = (ROOT / "site/index.html").read_text(encoding="utf-8")
+        for needle in ("combobox", "listbox", "tui-list", "tui-input", "aria-activedescendant"):
+            self.assertNotIn(needle, page)
+        js = (ROOT / "site/terminal.js").read_text(encoding="utf-8")
+        for needle in ("'combobox'", "'listbox'", "'option'", "aria-activedescendant"):
+            self.assertIn(needle, js)
+        css = (ROOT / "site/style.css").read_text(encoding="utf-8")
+        self.assertIn(".tui-list", css)
+        self.assertNotIn("transition", css)
 
 
 if __name__ == "__main__":
