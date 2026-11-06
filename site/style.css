@@ -475,7 +475,6 @@ html.tui-on:not(.plain) body { padding-bottom: 16px; }
   .tui-title .theme { flex: 1 1 auto; }
   .tui-title .tui-plain { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; }
   .tui-panes { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-  .tui[data-view="menu"] .tui-content, .tui[data-view="content"] .tui-menu { display: revert; }
   .tui-menu { overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding: 0; border-right: 0; border-bottom: 1px solid var(--line); }
   .tui-menu ul { display: flex; flex-direction: row; }
   .tui-menu li { flex: 0 0 auto; }

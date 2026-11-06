@@ -27,7 +27,7 @@ All notable changes to this project are documented here. The format follows
   deploys `site/` to GitHub Pages on a push to main that touches it, or by hand; the deploy job runs only when the repository variable `PAGES_ENABLED` is `true`.
 - `site/terminal.js`, the terminal-style interface of the project website: a menu, a content pane and a command line (`features [--status S] [id]`, `roadmap`, `settings [name]`,
   `install`, `connect`, `version`, `changelog`, `about`, `credits`, `licence`, `docs`, `links`, `theme`, `clear`, `history`, `--help`), Tab completion, history, a dark and a light theme,
-  and one pane with tappable command chips on a phone. The page still works without script and a `plain view` link switches the interface off. The only request is for `data.json`
+  and, on a phone, a row of scrolling tabs over the content with tappable command chips. The page still works without script and a `plain view` link switches the interface off. The only request is for `data.json`
   on the same site (the content security policy allows scripts and requests from this site only). The section bar now stays in view while scrolling, there is a Top link, a real
   page heading and a favicon. Tested with `node --test tools/terminal.test.js`.
 - `app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client
