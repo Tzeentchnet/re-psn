@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -50,6 +51,9 @@ func buildServer(dir string) (bin, skip string) {
 		return "", "no go command on PATH"
 	}
 	bin = filepath.Join(dir, "re-psn")
+	if runtime.GOOS == "windows" {
+		bin += ".exe"
+	}
 	cmd := exec.Command(gobin, "build", "-o", bin, "./server")
 	cmd.Dir = root
 	if out, err := cmd.CombinedOutput(); err != nil {

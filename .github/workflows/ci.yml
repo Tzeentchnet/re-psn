@@ -68,6 +68,7 @@ jobs:
   # that a person reads: the root module must keep no `require` lines, and the app builds with -mod=readonly.
   app:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
