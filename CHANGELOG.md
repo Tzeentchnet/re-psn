@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on
+  `127.0.0.1:36101` by default. To keep the old behaviour, set `RE_PSN_HTTP=127.0.0.1:36101` (or `-http 127.0.0.1:36101`).
+  `-http-token` and the warning for a page reachable beyond localhost without a token are unchanged.
 - The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.
   Check a download with `sha256sum -c SHA256SUMS --ignore-missing`.
 - A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.

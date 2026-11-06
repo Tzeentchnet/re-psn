@@ -14,7 +14,7 @@
 # There is no `ports` list: the container listens on the host directly, so the firewall must
 # allow 36100/tcp and 36100/udp, and a port change in RE_PSN_ADDR is the port on the host.
 #
-# The status page lists every online ID. Leave RE_PSN_HTTP on localhost (the default), or set
+# The status page lists every online ID and is off unless RE_PSN_HTTP is set. If you set it, keep it on localhost, or set
 # RE_PSN_HTTP_TOKEN before binding it to another address; on the host network it is reachable
 # from the network as soon as it is bound to a non-local address.
 services:
@@ -27,8 +27,10 @@ services:
     environment:
       # Any flag is RE_PSN_<FLAG> (the old PSNR_<FLAG> still works); see docs/running.md.
       RE_PSN_ADDR: ":36100"
-      # The status page is on 127.0.0.1:36101 by default, which on the host network is this
-      # machine's own localhost. Beyond localhost, set a token too:
+      # The status page is off unless RE_PSN_HTTP is set. "127.0.0.1:36101" is, on the host network,
+      # this machine's own localhost:
+      #   RE_PSN_HTTP: "127.0.0.1:36101"
+      # Beyond localhost, set a token too:
       #   RE_PSN_HTTP: "0.0.0.0:36101"
       #   RE_PSN_HTTP_TOKEN: "<a long random string>"
       # Relay is off by default; it carries traffic between players who can't reach each other

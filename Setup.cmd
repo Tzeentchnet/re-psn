@@ -36,7 +36,7 @@ popd
 > "Start re-psn.cmd" echo @echo off
 >> "Start re-psn.cmd" echo cd /d "%%~dp0server"
 >> "Start re-psn.cmd" echo start "" http://127.0.0.1:36101/
->> "Start re-psn.cmd" echo re-psn.exe
+>> "Start re-psn.cmd" echo re-psn.exe -http 127.0.0.1:36101
 echo Built.
 
 echo.

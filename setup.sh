@@ -19,7 +19,7 @@ fi
 
 cat > start-re-psn.sh <<'EOS'
 #!/bin/sh
-cd "$(dirname "$0")/server" && exec ./re-psn
+cd "$(dirname "$0")/server" && exec ./re-psn -http 127.0.0.1:36101
 EOS
 chmod +x start-re-psn.sh
 echo "Done. Run ./start-re-psn.sh, then open http://127.0.0.1:36101/"
