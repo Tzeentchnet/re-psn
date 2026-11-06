@@ -204,7 +204,9 @@ else
   tar -xzf "$tmp/$asset" -C "$tmp/x"
   extras="$tmp/x/re-psn-$version-linux-$arch"
   src="$extras/re-psn"
-  [ -f "$src" ] && [ ! -L "$src" ] || die "the archive has no re-psn binary where expected; nothing was installed."
+  if [ ! -f "$src" ] || [ -L "$src" ]; then
+    die "the archive has no re-psn binary where expected; nothing was installed."
+  fi
 fi
 
 # 5. The install: a temporary name in the same directory, then one rename.
