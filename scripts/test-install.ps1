@@ -2,7 +2,7 @@
 Tests for scripts/install.ps1, with no network and no change to the real PATH. It dot-sources install.ps1, which then
 only defines its functions, and replaces Test-Platform, Get-Https, Get-ReleaseList, Get-UserPath and Set-UserPath:
 downloads come from a fake release in a temporary folder (any URL outside the release download path fails the test),
-and the user PATH is a variable. LOCALAPPDATA points into the temporary folder. Runs in PowerShell 5.1 and 7, also
+and the user PATH is a variable. LOCALAPPDATA points into the temporary folder. Written for PowerShell 5.1 and 7 and run on 7 only, also
 on Linux (the real platform check is then tested to refuse).
 
 usage: pwsh -NoProfile -File scripts/test-install.ps1

@@ -1,6 +1,6 @@
 <#
 Install the re-psn server on Windows (amd64) from a GitHub release of undecuple/re-psn, for the current user only.
-Runs in Windows PowerShell 5.1 and PowerShell 7. No administrator rights needed.
+Written for Windows PowerShell 5.1 and PowerShell 7; tested on PowerShell 7 only. No administrator rights needed.
 
 usage: powershell -ExecutionPolicy Bypass -File install.ps1 [-Version vX.Y.Z] [-Dir DIR] [-AddToPath] [-DryRun] [-Help]
 

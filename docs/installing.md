@@ -76,11 +76,11 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -AddToPath    # also add th
 powershell -ExecutionPolicy Bypass -File install.ps1 -DryRun
 ```
 
-It runs in Windows PowerShell 5.1 and PowerShell 7 (`pwsh -File install.ps1`), needs no administrator rights, turns on TLS 1.2,
+It is written for Windows PowerShell 5.1 and PowerShell 7 (`pwsh -File install.ps1`) but has been tested on PowerShell 7 only; it needs no administrator rights, turns on TLS 1.2,
 and checks the zip with `Get-FileHash` against `SHA256SUMS`. `-Dir` picks another folder. `re-psn.exe` is copied under a
 temporary name and moved over the old one; a running server has to be stopped first, and the script says so. `LICENSE`,
 `NOTICE.md` and `examples\` go to `%LOCALAPPDATA%\re-psn\vX.Y.Z\`. Without `-AddToPath` it changes no PATH and prints the
-command that would add the folder to the user PATH.
+command that would add the folder to the user PATH. `-AddToPath` rewrites the user PATH as plain text, so an entry that used `%VARIABLE%` references loses its expansion.
 
 ## What the scripts never do
 
