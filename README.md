@@ -5,7 +5,7 @@
 A reimplementation of PSN's matchmaking rooms and leaderboards for statically recompiled PS3 games, with NAT traversal and an
 optional relay.
 
-[![CI](https://github.com/undecuple/re-psn/actions/workflows/ci.yml/badge.svg)](https://github.com/undecuple/re-psn/actions/workflows/ci.yml) <!-- version -->![version v0.2.0](https://img.shields.io/badge/pre--release-v0.2.0-d8a657?labelColor=45403d&style=flat-square)<!-- /version --> ![status: alpha](https://img.shields.io/badge/status-alpha-e78a4e?labelColor=45403d&style=flat-square)
+[![CI](https://github.com/undecuple/re-psn/actions/workflows/ci.yml/badge.svg)](https://github.com/undecuple/re-psn/actions/workflows/ci.yml) <!-- version -->![version v0.3.0](https://img.shields.io/badge/pre--release-v0.3.0-d8a657?labelColor=45403d&style=flat-square)<!-- /version --> ![status: alpha](https://img.shields.io/badge/status-alpha-e78a4e?labelColor=45403d&style=flat-square)
 ![Go server](https://img.shields.io/badge/server-Go-7daea3?labelColor=45403d&style=flat-square) ![C client](https://img.shields.io/badge/client-C-89b482?labelColor=45403d&style=flat-square) ![licence: MIT](https://img.shields.io/badge/licence-MIT-a9b665?labelColor=45403d&style=flat-square) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/undecuple/re-psn)
 
 ## Contents
