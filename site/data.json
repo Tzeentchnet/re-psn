@@ -6,7 +6,7 @@
  "status_counts": {
   "available": 26,
   "unverified": 1,
-  "partial": 5,
+  "partial": 6,
   "in-progress": 0,
   "planned": 16,
   "later": 8,
@@ -578,6 +578,18 @@
    "status_class": "warn"
   },
   {
+   "id": "install-script",
+   "area": "Release",
+   "feature": "Install scripts",
+   "detail": "`scripts/install.sh` (Linux amd64 and arm64, POSIX sh) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from a GitHub release, newest or pinned, after checking the download against SHA256SUMS. No sudo or administrator rights, no profile edits; `--dry-run`, `--dir`, `--appimage`, `-AddToPath`.",
+   "status": "partial",
+   "since": "main",
+   "evidence": "scripts/install.sh, scripts/install.ps1, scripts/test-install.sh, scripts/test-install.ps1, docs/installing.md",
+   "note": "Partial: not release assets yet, so SHA256SUMS does not list the scripts themselves. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a real release, and the PowerShell test (a fake release, 20 checks) has run under PowerShell 7 on Linux only, not on Windows or in PowerShell 5.1. No macOS builds, so no macOS support.",
+   "status_label": "partial",
+   "status_class": "warn"
+  },
+  {
    "id": "release-process",
    "area": "Release",
    "feature": "Release process",
@@ -724,6 +736,7 @@
    "ci-checks",
    "release-archives",
    "release-appimage",
+   "install-script",
    "release-process",
    "docs-features",
    "docs-diagrams",
@@ -892,8 +905,14 @@
   "unreleased": {
    "version": "Unreleased",
    "date": "",
-   "sections": {},
-   "counts": {}
+   "sections": {
+    "Added": [
+     "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
+    ]
+   },
+   "counts": {
+    "Added": 1
+   }
   },
   "latest": {
    "version": "0.3.0",

@@ -34,7 +34,7 @@
 <h2>Overview</h2>
 <p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person&#x27;s machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
 <p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, with no accounts and no public instance.</p>
-<p class="status-line">Version 0.3.0 (pre-release). 57 features: 26 available, 1 not yet verified, 5 partial, 16 planned, 8 later, 1 declined.</p>
+<p class="status-line">Version 0.3.0 (pre-release). 58 features: 26 available, 1 not yet verified, 6 partial, 16 planned, 8 later, 1 declined.</p>
 <p class="notice">Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own.</p>
 </section>
 <section id="features">
@@ -181,6 +181,7 @@
 <tbody>
 <tr id="f-release-archives"><td data-label="Feature"><strong>Release archives and checksums</strong> <code>release-archives</code><br><code>scripts/release-build.sh</code> builds static binaries for windows/amd64, linux/amd64 and linux/arm64 into <code>re-psn-vX.Y.Z-&lt;os&gt;-&lt;arch&gt;</code> archives and one SHA256SUMS listing them. A pushed version tag makes a draft pre-release; a second workflow checks a published one.<br><span class="note">Published as the v0.2.0 pre-release (2026-11-06): the release workflow and the published-release check both passed. The Windows and arm64 binaries are cross-built and not run.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-release-appimage"><td data-label="Feature"><strong>Linux AppImage</strong> <code>release-appimage</code><br><code>scripts/build-appimage.sh</code> packs the linux/amd64 server binary and its examples as <code>re-psn-vX.Y.Z-x86_64.AppImage</code>, with appimagetool 1.9.1 and the type-2 runtime 20251108, both downloaded by the release workflow and checked against pinned SHA-256 hashes. A smoke test compares its <code>-h</code> and version with the binary&#x27;s, and it is listed in SHA256SUMS.<br><span class="note">Published in the v0.2.0 pre-release (2026-11-06); the release workflow built it on a runner and passed its smoke test. It was also built and run on one x86_64 Linux machine, with FUSE and with <code>--appimage-extract-and-run</code>. x86_64 only, unsigned.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-install-script"><td data-label="Feature"><strong>Install scripts</strong> <code>install-script</code><br><code>scripts/install.sh</code> (Linux amd64 and arm64, POSIX sh) and <code>scripts/install.ps1</code> (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from a GitHub release, newest or pinned, after checking the download against SHA256SUMS. No sudo or administrator rights, no profile edits; <code>--dry-run</code>, <code>--dir</code>, <code>--appimage</code>, <code>-AddToPath</code>.<br><span class="note">Partial: not release assets yet, so SHA256SUMS does not list the scripts themselves. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a real release, and the PowerShell test (a fake release, 20 checks) has run under PowerShell 7 on Linux only, not on Windows or in PowerShell 5.1. No macOS builds, so no macOS support.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">main</td></tr>
 <tr id="f-release-process"><td data-label="Feature"><strong>Release process</strong> <code>release-process</code><br>Written steps for cutting a release (tag, notes from CHANGELOG.md, checking the draft, publishing), a check that the version in the code and in CHANGELOG.md agree, and a dry run of the release workflow before the first tag.<br><span class="note">VERSION, the version check (TestVersionAgrees), scripts/bump-version.sh and scripts/release-notes.sh are built and docs/releasing.md has the steps; the release workflow builds its notes with the notes script and checks that a tag is v + VERSION, and the first tag, v0.2.0 (2026-11-06), ran the whole path: the dry run, the tag step and the draft job passed, and the draft was published by hand after its assets were read back. No fixed release day: while things are worked out, pre-releases (v0.x, marked pre-release) come whenever there is something worth trying.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-release-signing"><td data-label="Feature"><strong>Signed releases</strong> <code>release-signing</code><br>Sign <code>re-psn.exe</code> so Windows does not warn about an unsigned program, and sign the checksums.<br><span class="note">The exe and SHA256SUMS are unsigned today.</span></td><td data-label="Status"><span class="tag dim">later</span></td><td data-label="Since">not released</td></tr>
 </tbody>
@@ -204,7 +205,7 @@
 <h2>Roadmap</h2>
 <p>The same list grouped by status. No dates are promised; <a href="https://github.com/undecuple/re-psn/blob/main/ROADMAP.md">ROADMAP.md</a> has the order and the scope.</p>
 <div class="cols">
-<div><h3>Done <span class="count">(32)</span></h3>
+<div><h3>Done <span class="count">(33)</span></h3>
 <ul>
 <li><a href="#f-rooms-basic">Rooms and search</a></li>
 <li><a href="#f-rooms-data">Room and member data</a></li>
@@ -230,6 +231,7 @@
 <li><a href="#f-ci-checks">CI checks</a></li>
 <li><a href="#f-release-archives">Release archives and checksums</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-release-appimage">Linux AppImage</a> <span class="tag warn">partial</span></li>
+<li><a href="#f-install-script">Install scripts</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-release-process">Release process</a></li>
 <li><a href="#f-docs-features">Features list</a></li>
 <li><a href="#f-docs-diagrams">Mermaid diagrams</a></li>
@@ -278,6 +280,10 @@
 <section id="changes">
 <h2>Changes</h2>
 <h3>Unreleased</h3>
+<h4>Added</h4>
+<ul>
+<li>Optional install scripts: <code>scripts/install.sh</code> (POSIX sh; Linux amd64 and arm64) and <code>scripts/install.ps1</code> (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ...</li>
+</ul>
 <h3>0.3.0 (2026-11-06)</h3>
 <p>7 under Changed, 9 under Added.</p>
 <p>The full history is in <a href="https://github.com/undecuple/re-psn/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>

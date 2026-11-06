@@ -41,6 +41,17 @@ jobs:
       - name: test (Windows)
         if: runner.os == 'Windows'
         run: go test -v ./...
+      # The install scripts against a fake release (no network): the shell script under dash and bash, the PowerShell script
+      # under PowerShell 7 on both systems.
+      - name: install script tests (sh)
+        if: runner.os == 'Linux'
+        run: |
+          shellcheck -s sh scripts/install.sh scripts/test-install.sh
+          dash scripts/test-install.sh dash
+          bash scripts/test-install.sh bash
+      - name: install script tests (PowerShell)
+        shell: pwsh
+        run: ./scripts/test-install.ps1
       # The features list: the generated page is current and the data is well formed (python3 is on the runner image).
       - name: features list
         if: runner.os == 'Linux'
