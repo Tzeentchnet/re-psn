@@ -164,7 +164,7 @@ desktop apps and more) is in [ROADMAP.md](ROADMAP.md) too.
 
 ## Install
 
-The first release, [v0.2.0](https://github.com/undecuple/re-psn/releases/tag/v0.2.0), is a pre-release (see [Release archives](#release-archives)). No container image is published yet; build from source or build the image yourself.
+The first release, [v0.2.0](https://github.com/undecuple/re-psn/releases/tag/v0.2.0), is a pre-release (see [Release archives](#release-archives)). The v0.2.0 container image is `ghcr.io/undecuple/re-psn:0.2.0` (see [Container](#container)).
 
 ### From source
 
@@ -183,8 +183,9 @@ Run the tests with `go vet ./...` and `go test ./...` (on Linux with a C compile
 
 ### Container
 
-No image is published; build it from this repository with Docker or Podman. [docker/README.md](docker/README.md) covers ports,
-the status page and Podman.
+The v0.2.0 image is on GitHub's container registry for amd64 and arm64: `docker pull ghcr.io/undecuple/re-psn:0.2.0`. It is unsigned, and
+the arm64 image has been built but not run. You can also build it from this repository with Docker or Podman.
+[docker/README.md](docker/README.md) covers ports, the status page and Podman.
 
 <details>
 <summary>Build and run commands</summary>
