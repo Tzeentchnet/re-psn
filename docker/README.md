@@ -206,6 +206,7 @@ flowchart LR
 > - **Bind an explicit address.** `RE_PSN_BIND` is required and there is no default: the file refuses to start without it. A wildcard such as `:36100` would also answer on every VPN interface.
 > - **The relay is on** (`RE_PSN_RELAY`, default `true` here). It carries traffic between any two clients that can reach the server and uses its bandwidth. Set `RE_PSN_RELAY=false` to turn it off.
 > - **VPN peers** that can route to the listen address can connect; the firewall must allow 36100/tcp and 36100/udp only to who you intend.
+> - **Ports below 1024 fail.** `cap_drop: ALL` also drops `NET_BIND_SERVICE`, so a listen port below 1024 in `RE_PSN_BIND` cannot be bound (36100 is fine).
 > - The status page stays on the host's `127.0.0.1:36101`; set `RE_PSN_HTTP_TOKEN` if you ever bind it wider.
 
 Tested with rootless Podman 6.1.4 and podman-compose 1.6.0, with `RE_PSN_BIND=127.0.0.1:36100`: the container ran as uid 10001, a write to `/`
