@@ -81,7 +81,7 @@
   function cmdHelp() {
     var lines = ['Commands', ''];
     HELP.forEach(function (h) { lines.push([{ t: h[0], c: 'code' }, '  ' + h[1]]); });
-    lines.push('', 'Keys: arrows move, Enter opens, Tab switches pane, / jumps to the command line, Esc goes back, F1 to F5 are shortcuts for help, features, install, settings and connect.');
+    lines.push('', 'Keys: arrows move, Enter opens, Tab switches pane, / jumps to the command line, Esc goes back, F1 to F4 are shortcuts for help, features, install and settings (F5 still reloads the page).');
     return lines;
   }
 
@@ -373,7 +373,7 @@
     fk.setAttribute('aria-label', 'Shortcuts');
     Object.keys(FKEYS).forEach(function (k) {
       var li = el('li');
-      var b = el('button', 'fk', '[' + k + ' ' + FKEYS[k] + ']');
+      var b = el('button', 'fk', k === 'F5' ? '[' + FKEYS[k] + ']' : '[' + k + ' ' + FKEYS[k] + ']');
       b.type = 'button';
       b.setAttribute('data-cmd', FKEYS[k]);
       li.appendChild(b);
@@ -558,7 +558,7 @@
     document.addEventListener('keydown', function (e) {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) { return; }
       if (document.documentElement.classList.contains('plain')) { return; }
-      if (FKEYS[e.key]) { e.preventDefault(); exec(FKEYS[e.key], false); return; }
+      if (FKEYS[e.key] && e.key !== 'F5') { e.preventDefault(); exec(FKEYS[e.key], false); return; }
       var t = e.target;
       var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
       if (e.key === '/' && !typing) { e.preventDefault(); input.focus(); }
