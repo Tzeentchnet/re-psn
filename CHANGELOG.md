@@ -16,7 +16,7 @@ All notable changes to this project are documented here. The format follows
 - The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on
   `127.0.0.1:36101` by default. To keep the old behaviour, set `RE_PSN_HTTP=127.0.0.1:36101` (or `-http 127.0.0.1:36101`).
   `-http-token` and the warning for a page reachable beyond localhost without a token are unchanged.
-- The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.
+- The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine.
   Check a download with `sha256sum -c SHA256SUMS --ignore-missing`.
 - A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.
 - The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server
@@ -42,10 +42,10 @@ All notable changes to this project are documented here. The format follows
   and, on a phone, a row of scrolling tabs over the content with tappable command chips. The page still works without script and a `plain view` link switches the interface off. The only request is for `data.json`
   on the same site (the content security policy allows scripts and requests from this site only). The section bar now stays in view while scrolling, there is a Top link, a real
   page heading and a favicon. Tested with `node --test tools/terminal.test.js`.
-- `app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client
+- `app/`, the start of the desktop app, as a Go module of its own: a client
   for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT and ROUTE pushes) with a
   conformance test against the real server, a reader and writer for the per-user settings file `re-psn.ini`, and
-  `re-psn-app check HOST:PORT` and `re-psn-app version`. No terminal UI yet. See `app/README.md`.
+  `re-psn-app check HOST:PORT` and `re-psn-app version`, next to the terminal UI described above. See `app/README.md`.
 - `docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities,
   read-only filesystem, resource limits). It refuses to start without an explicit `RE_PSN_BIND` address.
 - `.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to
