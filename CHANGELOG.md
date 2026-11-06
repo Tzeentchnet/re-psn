@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
 - `.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to
   `ghcr.io/undecuple/re-psn` (tags `X.Y.Z`, plus `X.Y` and `latest` for a release that is not a pre-release). A manual run builds and
   pushes nothing unless asked. The first image, `0.2.0`, was pushed by a manual run (amd64 and arm64, unsigned); the arm64 image was not run.
+- `-replace` (`RE_PSN_REPLACE`): when the game port is held by an earlier re-psn of the same user, the server sends it SIGTERM,
+  waits up to 10 s for the port and starts in its place (Linux only). It finds the earlier instance through a pidfile in
+  `$XDG_RUNTIME_DIR/re-psn/` and signals it only if the pid, owner, start time and program name all check out. The server now
+  stops cleanly on SIGINT or SIGTERM, and without `-replace` a busy port names the earlier re-psn holding it. See `docs/running.md`.
 
 ## [0.2.0] - 2026-11-06
 
