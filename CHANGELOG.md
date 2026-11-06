@@ -18,7 +18,7 @@ All notable changes to this project are documented here. The format follows
   read-only filesystem, resource limits). It refuses to start without an explicit `RE_PSN_BIND` address.
 - `.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to
   `ghcr.io/undecuple/re-psn` (tags `X.Y.Z`, plus `X.Y` and `latest` for a release that is not a pre-release). A manual run builds and
-  pushes nothing unless asked. Not run yet: nothing has been pushed, and the package starts private.
+  pushes nothing unless asked. The first image, `0.2.0`, was pushed by a manual run (amd64 and arm64, unsigned); the arm64 image was not run.
 
 ## [0.2.0] - 2026-11-06
 
