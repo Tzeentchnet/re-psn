@@ -14,6 +14,7 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 - [Cut a pre-release](#cut-a-pre-release)
 - [Before the first tag: the dry run](#before-the-first-tag-the-dry-run)
 - [The AppImage](#the-appimage)
+- [The container image](#the-container-image)
 - [Checked automatically](#checked-automatically)
 - [Not checked yet](#not-checked-yet)
 
@@ -151,6 +152,22 @@ How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), ru
    prints what the binary's `-h` prints (apart from the program path on the first line), and the server it starts on
    loopback reports the tag's version.
 5. It adds the AppImage to `SHA256SUMS`, and `sha256sum -c SHA256SUMS` runs on the lot.
+
+## The container image
+
+`.github/workflows/container.yml` builds `docker/Dockerfile` for linux/amd64 and linux/arm64 and pushes `ghcr.io/<owner>/re-psn`.
+
+- A published (not draft) release runs it and pushes. The workflow file is the one in the release's tag, so a tag made before the
+  file existed does not trigger it.
+- A manual run takes the release tag and a `push` choice. With `push` off (the default) it builds both platforms and pushes nothing:
+  the dry run. With `push` on it pushes, which is also how an older tag such as `v0.2.0` gets its image: the run checks out that tag's
+  Dockerfile.
+- The tag must be v + VERSION (`scripts/check-release.sh --tag`). The amd64 image is started and must report the version and run as
+  uid 10001 before anything is pushed.
+- Tags: `X.Y.Z` always; `X.Y` and `latest` only for a release that is not a pre-release. A manual run counts as a pre-release, so it never pushes `X.Y` or `latest`.
+- The image is unsigned, and the workflow switches the provenance and SBOM attestations off, so it is a plain image.
+- The package starts private under a user account. Making it public, and linking it to the repository, is a setting changed by hand;
+  the image's `org.opencontainers.image.source` label points at this repository.
 
 ## Checked automatically
 

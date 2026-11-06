@@ -11,6 +11,7 @@ to set it up. No image is published yet; you build it from this repository.
 - [Relay and host networking](#relay-and-host-networking)
 - [Podman](#podman)
 - [The image](#the-image)
+- [The published image](#the-published-image)
 - [A shared test host](#a-shared-test-host)
 - [Settings](#settings)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
@@ -170,6 +171,21 @@ this was written; `go.mod` says `go 1.22`, a minimum) and `alpine:3.24`. Dependa
 together. The image was built and run with rootless Podman 6.1.4 only (Docker is not installed on the test machine): `podman exec` showed
 `uid=10001(re-psn)`, and `client/test_psnr.c` passed against it on the host network. The NAT lab was not run, so `lab/Dockerfile`
 still has its own base tag.
+
+## The published image
+
+`.github/workflows/container.yml` builds the image for `linux/amd64` and `linux/arm64` and pushes it to GitHub's container registry as
+`ghcr.io/undecuple/re-psn` when a release is published. Tags: `X.Y.Z` for every release; `X.Y` and `latest` only for a release that is
+not a pre-release, so while every release is a 0.x pre-release only the exact version tag exists. Before it pushes, the workflow starts
+the amd64 image and checks that it reports the version and runs as uid 10001; the arm64 image is built under emulation and not run.
+
+```sh
+docker pull ghcr.io/undecuple/re-psn:0.2.0
+```
+
+Not published yet: the workflow has not pushed anything, and a new package under a user account starts private until its visibility is
+changed in the package settings on GitHub. The image is unsigned, and the workflow switches the provenance and SBOM attestations off, so it is a plain image. Build your own image from the
+Dockerfile as above until the first push.
 
 ## A shared test host
 
