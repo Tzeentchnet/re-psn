@@ -1,7 +1,8 @@
 # CI for the fork. It checks formatting, vet, the Go tests with the race detector (on Linux this includes the C client
 # against the server), known vulnerabilities in the Go module and its standard library, secrets in the full history,
-# the NAT lab in Docker, that docs/features.md matches docs/features.tsv, and that the README art in docs/img/ matches a
-# fresh render. It does not check Windows beyond the tests, or the C client outside Linux.
+# the NAT lab in Docker, that docs/features.md matches docs/features.tsv, that the README art in docs/img/ matches a
+# fresh render, and that site/ matches what tools/site.py builds and its script tests pass. The desktop app module in app/
+# has its own job. It does not check Windows beyond the tests, or the C client outside Linux.
 name: CI
 on:
   push:
@@ -45,7 +46,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python3 tools/features.py --check
+          python3 tools/site.py --check
           python3 -m unittest -v
+      # The website's script: its command logic is tested with Node's own test runner (Node is on the runner image).
+      - name: site script tests
+        if: runner.os == 'Linux'
+        run: node --test tools/terminal.test.js
       # The README art: with the pinned Pillow and the fonts checked against their pinned SHA-256, a fresh render must
       # equal docs/img/*.png and tools/art/art.json byte for byte (tools/art/make_art.py).
       - name: art
@@ -56,6 +62,52 @@ jobs:
           "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --fetch-fonts
           "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --check
           "$RUNNER_TEMP/art/bin/python" -m unittest -v tools.art.test_make_art
+
+  # The desktop app: a separate Go module in app/ (Go 1.26), with no dependencies outside the standard library today. The
+  # conformance test builds ../server and runs it on loopback ports. A new dependency has to show up as a go.mod change
+  # that a person reads: the root module must keep no `require` lines, and the app builds with -mod=readonly.
+  app:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version: '1.26'
+          cache-dependency-path: app/go.mod
+      - name: gofmt
+        if: runner.os == 'Linux'
+        run: test -z "$(gofmt -l .)"
+      - name: verify modules
+        run: go mod verify
+      - name: vet
+        run: go vet -mod=readonly ./...
+      - name: test
+        if: runner.os == 'Linux'
+        run: go test -mod=readonly -race -v ./...
+      - name: test (Windows)
+        if: runner.os == 'Windows'
+        run: go test -mod=readonly -v ./...
+      - name: cross-build
+        if: runner.os == 'Linux'
+        run: |
+          GOOS=windows go build -mod=readonly ./...
+          GOOS=darwin go build -mod=readonly ./...
+      - name: the server module has no dependencies
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          if grep -qE '^[[:space:]]*require' go.mod; then
+            echo "go.mod has a require line: the server module is meant to stay standard-library only" >&2
+            exit 1
+          fi
 
   # Known vulnerabilities (Go vulnerability database) in the code that is built and in the standard library it is
   # built with. Runs on a current Go so a fixed standard library is the one that is checked.
@@ -68,6 +120,9 @@ jobs:
         with:
           go-version: stable
       - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      - name: govulncheck (app)
+        working-directory: app
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   # Secrets in the whole history. The scanner is a pinned release whose checksum is verified before it runs.
