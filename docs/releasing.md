@@ -164,7 +164,8 @@ How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), ru
   Dockerfile.
 - The tag must be v + VERSION (`scripts/check-release.sh --tag`). The amd64 image is started and must report the version and run as
   uid 10001 before anything is pushed.
-- Tags: `X.Y.Z` always; `X.Y` and `latest` only for a release that is not a pre-release.
+- Tags: `X.Y.Z` always; `X.Y` and `latest` only for a release that is not a pre-release. A manual run counts as a pre-release, so it never pushes `X.Y` or `latest`.
+- The image is unsigned, and the workflow switches the provenance and SBOM attestations off, so it is a plain image.
 - The package starts private under a user account. Making it public, and linking it to the repository, is a setting changed by hand;
   the image's `org.opencontainers.image.source` label points at this repository.
 

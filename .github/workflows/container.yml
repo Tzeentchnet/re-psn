@@ -5,7 +5,8 @@
 # so none of them is "latest"). The tag must be v + VERSION (scripts/check-release.sh --tag). The package starts private under
 # a user account: its visibility is a setting on GitHub, changed by hand, and the image's source label links it to this repo.
 # Checks: the amd64 image starts and reports the version before anything is pushed. Not checked: the image on arm64 (built
-# under emulation, not run), signing, provenance.
+# under emulation, not run). Not done: signing; provenance and SBOM attestations are switched off, so the pushed image is plain.
+# A manual run counts as a pre-release for tagging: it never pushes X.Y or latest.
 name: container
 on:
   release:
@@ -48,7 +49,7 @@ jobs:
       - name: Image name and tags
         id: img
         env:
-          PRERELEASE: ${{ github.event.release.prerelease || 'true' }}
+          PRERELEASE: ${{ github.event_name != 'release' || github.event.release.prerelease }}
         run: |
           version="$(tr -d '\r\n' < VERSION)"
           name="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/re-psn"
@@ -98,6 +99,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ env.PUSH == 'true' }}
           tags: ${{ steps.img.outputs.tags }}
+          provenance: false
+          sbom: false
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.img.outputs.version }}

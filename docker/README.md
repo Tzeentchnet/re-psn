@@ -184,7 +184,7 @@ docker pull ghcr.io/undecuple/re-psn:0.2.0
 ```
 
 Not published yet: the workflow has not pushed anything, and a new package under a user account starts private until its visibility is
-changed in the package settings on GitHub. The image is unsigned and has no provenance attestation. Build your own image from the
+changed in the package settings on GitHub. The image is unsigned, and the workflow switches the provenance and SBOM attestations off, so it is a plain image. Build your own image from the
 Dockerfile as above until the first push.
 
 ## A shared test host
