@@ -585,7 +585,7 @@
    "status": "partial",
    "since": "main",
    "evidence": "scripts/install.sh, scripts/install.ps1, scripts/test-install.sh, scripts/test-install.ps1, docs/installing.md",
-   "note": "Partial: not release assets yet, so SHA256SUMS does not list the scripts themselves. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a real release, and the PowerShell script and its test have not been run yet. No macOS builds, so no macOS support.",
+   "note": "Partial: not release assets yet, so SHA256SUMS does not list the scripts themselves. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a real release, and the PowerShell test (a fake release, 20 checks) has run under PowerShell 7 on Linux only, not on Windows or in PowerShell 5.1. No macOS builds, so no macOS support.",
    "status_label": "partial",
    "status_class": "warn"
   },

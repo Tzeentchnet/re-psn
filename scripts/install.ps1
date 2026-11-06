@@ -181,7 +181,7 @@ function Install-RePsn([string]$Version, [string]$Dir, [bool]$AddToPath, [bool]$
         $part = Join-Path $Dir ".re-psn.exe.part.$PID"
         Copy-Item -LiteralPath $src -Destination $part
         if (Test-Path -LiteralPath $target) {
-            try { [IO.File]::Replace($part, $target, $null) }
+            try { [IO.File]::Replace($part, $target, [NullString]::Value) }
             catch { throw "could not replace $target (stop a running re-psn first): $($_.Exception.Message)" }
         } else {
             [IO.File]::Move($part, $target)
@@ -199,6 +199,7 @@ function Install-RePsn([string]$Version, [string]$Dir, [bool]$AddToPath, [bool]$
                 $p = Join-Path $extras $f
                 if (Test-Path -LiteralPath $p) { Copy-Item -LiteralPath $p -Destination $stage -Recurse }
             }
+            New-Item -ItemType Directory -Force -Path $base | Out-Null
             Move-Item -LiteralPath $stage -Destination $shared
             Write-Output "Copied LICENSE, NOTICE.md and examples\ to $shared"
         }
