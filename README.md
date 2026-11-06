@@ -14,7 +14,7 @@ optional relay.
 - [Overview](#overview)
 - [Example](#example)
 - [Features](#features)
-- [Desktop app (in progress)](#desktop-app-in-progress)
+- [Desktop app](#desktop-app)
 - [Install](#install)
 - [Configuration](#configuration)
 - [Security and privacy](#security-and-privacy)
@@ -163,11 +163,12 @@ Available on `main` today; [docs/features.md](docs/features.md) has every featur
 Partial, unverified and planned work (release archives and the AppImage, the nginx and HAProxy examples, storage backends, the
 desktop apps and more) is in [ROADMAP.md](ROADMAP.md) too.
 
-## Desktop app (in progress)
+## Desktop app
 
 [app/](app/README.md) holds the start of the desktop app, a separate Go module with no dependencies yet: a Go client for the
 protocol, tested against the real server, a settings file reader, and `re-psn-app check HOST:PORT`, which connects, says HELLO and
-reports what the server answered. The terminal UI comes next.
+reports what the server answered. The terminal UI comes next. The app module needs Go 1.26 or newer; the server and
+the C client keep their own requirements.
 
 ## Install
 
