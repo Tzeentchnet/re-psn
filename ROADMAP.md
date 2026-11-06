@@ -23,7 +23,7 @@ It is **not** a public PSN replacement, and won't grow into one:
 
 ## Done
 
-Merged into main. Most of it is not in a release yet.
+Merged into main and released in v0.2.0, unless a line says otherwise.
 
 [Rooms and matchmaking](docs/features.md#rooms-and-matchmaking)
 - [rooms-basic] Create, search, join and leave rooms, with room messages and owner handoff.
