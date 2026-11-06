@@ -8,12 +8,12 @@ What re-psn does today and what is planned, one row per feature. Each status res
 |---|---|---|
 | available | merged, with a test or a recorded run | 26 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
-| partial | merged in part, or with known gaps | 3 |
+| partial | merged in part, or with known gaps | 4 |
 | in progress | an open pull request or branch | 0 |
 | planned | wanted and intended, not started | 16 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
-| all | | 55 |
+| all | | 56 |
 
 ## Rooms and matchmaking
 
@@ -153,6 +153,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 | `docs-connecting` | **Ways to connect**: A page on how players reach a server: same LAN, port forwarding, a public server with `-relay`, a VPN overlay (Tailscale, ZeroTier) or a reverse proxy, with what each needs, its limits, diagrams and links to the overlays' official documentation. | available | 0.2.0 | [`docs/connecting.md`](connecting.md) | Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only. |
 | `docs-readme` | **README rewrite**: A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream. | available | 0.2.0 | [`README.md`](../README.md) | Example output comes from real local runs; the settings table was checked against the server flags. The banner comes from the art generator (docs-art). |
 | `docs-art` | **Art generator**: `tools/art/make_art.py` draws the README banner, a social preview image and terminal images in the gruvbox-material palette (`docs/art/palette.json`), with JetBrains Mono fetched from its tagged release and pinned by SHA-256. Terminal images are drawn only from transcripts of real runs (`docs/art/transcripts/`, recorded by `tools/art/capture.sh`). CI renders again and fails when a byte differs. | available | 0.2.0 | [`tools/art/make_art.py`](../tools/art/make_art.py), [`tools/art/test_make_art.py`](../tools/art/test_make_art.py), [`tools/art/art.json`](../tools/art/art.json), [`tools/art/capture.sh`](../tools/art/capture.sh), [`docs/art/palette.json`](art/palette.json), [`docs/img/banner.png`](img/banner.png), [`docs/img/social.png`](img/social.png), [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | The README shows the banner; the social image is uploaded by hand in the repository settings; its example stays text, and the terminal images are kept for the site. Images are dark only; the light colours are in the palette for later. Fonts are not committed. |
+| `docs-website` | **Project website**: A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. No script, no third-party loads, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages. | partial | main | [`tools/site.py`](../tools/site.py), [`tools/test_site.py`](../tools/test_site.py), [`site/index.html`](../site/index.html), [`site/style.css`](../site/style.css), [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) | Partial: the page is built and checked but not published yet; Pages is enabled; the deploy job waits for the repository variable PAGES_ENABLED. No terminal-style interface yet. |
 | `repo-check` | **Repository layout check**: A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist. | planned |  |  | Not started. After docs-markdown. |
 
 The order of the planned work is in [ROADMAP.md](../ROADMAP.md).

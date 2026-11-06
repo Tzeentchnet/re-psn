@@ -17,6 +17,10 @@ All notable changes to this project are documented here. The format follows
   runs as the non-root user 10001. Tested with Podman and in the NAT lab on CI.
 
 ### Added
+- `site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table
+  and this file (`--check` compares the committed files and the colour tokens of `site/style.css` with the sources), and `site/style.css` is hand-written in the
+  gruvbox-material palette, dark by default and light with the system. No script and no third-party loads (a CSP says so). `.github/workflows/pages.yml`
+  deploys `site/` to GitHub Pages on a push to main that touches it, or by hand; the deploy job runs only when the repository variable `PAGES_ENABLED` is `true`, so nothing is published until it is set.
 - `app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client
   for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT and ROUTE pushes) with a
   conformance test against the real server, a reader and writer for the per-user settings file `re-psn.ini`, and
