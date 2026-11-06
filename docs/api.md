@@ -279,8 +279,8 @@ it came from that member's address.
 
 ## HTTP
 
-This is a separate listener, `127.0.0.1:36101` by default (`-http`). It is
-read-only and has no authentication unless `-http-token` is set.
+This is a separate listener, off unless `-http` names an address (for example
+`127.0.0.1:36101`). It is read-only and has no authentication unless `-http-token` is set.
 
 | Path | Returns |
 |---|---|

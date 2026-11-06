@@ -25,7 +25,6 @@ go build -o re-psn .      # re-psn.exe on Windows
 
 ```text
 time=2026-09-29T02:17:35.000+00:00 level=INFO msg=started version=0.1.0 clients=[::]:36100 udp=[::]:36100 relay=false
-time=2026-09-29T02:17:35.000+00:00 level=INFO msg="status page" addr=127.0.0.1:36101 token=false
 ```
 
 With Docker (see [docker/README.md](../docker/README.md)):
@@ -40,7 +39,7 @@ docker compose -f docker/docker-compose.yml up -d
 |---|---|---|
 | `-addr` | `:36100` | TCP and UDP address for game clients |
 | `-tcp-addr`, `-udp-addr` | `-addr` | Give TCP or UDP its own address (a different port, or one interface). Unset, each takes `-addr`. |
-| `-http` | `127.0.0.1:36101` | Status page and `/api/stats`. Set it to `""` to turn it off. |
+| `-http` | none (off) | Status page and `/api/stats` on this address, for example `127.0.0.1:36101`. Unset or empty, neither is served. |
 | `-http-token` | none | Require this token on the status page, as `Authorization: Bearer <token>` or `?token=<token>`. Set it whenever `-http` is not on localhost; the server logs a warning if it is not. |
 | `-trusted-proxies` | none | Reverse proxies allowed to name the real client: CIDRs or addresses, comma-separated. See [Behind a reverse proxy](#behind-a-reverse-proxy). |
 | `-proxy-protocol` | off | Require a PROXY protocol v1 or v2 header on the game TCP port from a trusted proxy. Needs `-trusted-proxies`. |
@@ -122,8 +121,8 @@ accepts v1 and v2. A v2 header must describe a TCP stream: a datagram or unassig
 ## Environment variables
 
 Every flag can be set as `RE_PSN_<FLAG>`, upper case, dashes as underscores: `-max-rooms` is `RE_PSN_MAX_ROOMS`, `-tcp-addr`
-is `RE_PSN_TCP_ADDR`, `-v` is `RE_PSN_V`. A variable that is set but empty counts as set, so `RE_PSN_HTTP=` turns the status
-page off. A number or true/false that does not parse stops the server at start with a message naming the variable it read.
+is `RE_PSN_TCP_ADDR`, `-v` is `RE_PSN_V`. A variable that is set but empty counts as set, so `RE_PSN_HTTP=` keeps the status
+page off even when `PSNR_HTTP` is set. A number or true/false that does not parse stops the server at start with a message naming the variable it read.
 Booleans take `true` or `false` (also `1`, `0`).
 
 The old names, `PSNR_<FLAG>`, still work. The order is: the flag on the command line, then `RE_PSN_<FLAG>`, then
@@ -132,8 +131,8 @@ warning at start naming the old and the new variable, once per variable. When bo
 `RE_PSN_<FLAG>` and logs a warning saying so. These warnings name variables only, never their values. Rename the old
 variables when convenient; nothing else changes.
 
-The Docker image has no fixed flags: it is configured only by these variables. The status page is not reachable from the
-host until you set `RE_PSN_HTTP` (for example `0.0.0.0:36101` inside the container) and `RE_PSN_HTTP_TOKEN`; the compose file
+The Docker image has no fixed flags: it is configured only by these variables. The status page is off, and not reachable from
+the host, until you set `RE_PSN_HTTP` (for example `0.0.0.0:36101` inside the container) and `RE_PSN_HTTP_TOKEN`; the compose file
 shows the lines. A token set this way is visible to `docker inspect` and to other users on the host (process list, for a
 native run), so treat the token as protecting a status page on a trusted machine, not as a secret that survives a shared host.
 If you change a port, change it in the compose `ports` list as well, and in your firewall rule.
@@ -156,7 +155,7 @@ Rotate the file with logrotate or your service manager (`copytruncate`, or resta
 | Port | Proto | Open to |
 |---|---|---|
 | 36100 | TCP and UDP | every player (the only port the server needs reachable). UDP carries the players' address probes. |
-| 36101 | TCP | you. It lists every player's online ID and has no auth unless `-http-token` is set. Keep it on localhost or a LAN, not the internet. |
+| 36101 | TCP | you, and only when `-http` is set. It lists every player's online ID and has no auth unless `-http-token` is set. Keep it on localhost or a LAN, not the internet. |
 | each player's P2P port (3658 unless `PS3_NET_P2P_PORT` says otherwise) | UDP and TCP | the other players. The game opens this port itself; titles use both (Simpsons Arcade sends its game setup over TCP). |
 
 Players on the same LAN or tailnet need nothing forwarded. Across the internet,

@@ -36,7 +36,7 @@ func main() {
 	addr := flag.String("addr", envStr("addr", ":36100"), "TCP and UDP address for game clients")
 	tcpAddr := flag.String("tcp-addr", envStr("tcp-addr", ""), "TCP address for game clients (default: -addr)")
 	udpAddr := flag.String("udp-addr", envStr("udp-addr", ""), "UDP address for game clients (default: -addr)")
-	httpAddr := flag.String("http", envStr("http", "127.0.0.1:36101"), "HTTP status page and /api/stats (empty to disable)")
+	httpAddr := flag.String("http", envStr("http", ""), "HTTP status page and /api/stats, off unless set (for example 127.0.0.1:36101)")
 	httpToken := flag.String("http-token", envStr("http-token", ""), "require this token (Authorization: Bearer, or ?token=) on the status page; set it when -http is not on localhost")
 	maxRooms := num("max-rooms", 1000, "room limit across all titles")
 	playerRooms := num("max-player-rooms", 8, "rooms one player may be in at once (0 for no limit)")
@@ -129,6 +129,8 @@ func main() {
 			logger.Warn("the status page lists every online ID and has no token; set -http-token or bind -http to localhost")
 		}
 		go func() { fatal(http.ListenAndServe(*httpAddr, s.HTTP())) }()
+	} else {
+		logger.Debug("status page off (set -http to turn it on)")
 	}
 	fatal(s.Serve(ln))
 }

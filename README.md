@@ -64,7 +64,7 @@ sequenceDiagram
 
 ### A session, step by step
 
-1. **The host starts re-psn**, listening on TCP and UDP 36100, with a status page on `127.0.0.1:36101`.
+1. **The host starts re-psn**, listening on TCP and UDP 36100 (and, with `-http 127.0.0.1:36101`, a status page there).
 2. **A game connects** through the C client (`client/psnr.c`): HELLO with the game's ID, the player's name and P2P port; HELLO_ACK
    returns a user id, the address the server sees, a token and flags (relay on, invite-only rooms).
 3. **A UDP PROBE** from the game's P2P socket tells the server its public address and port (accepted only from the TCP address).
@@ -98,12 +98,12 @@ Captured from a local run on loopback: start the server with the defaults.
 
 ```text
 $ ./re-psn
-time=2026-11-05T22:37:02.339Z level=INFO msg=storage backend=memory
-time=2026-11-05T22:37:02.340Z level=INFO msg=started version=0.1.0 clients=[::]:36100 udp=[::]:36100 relay=false
-time=2026-11-05T22:37:02.340Z level=INFO msg="status page" addr=127.0.0.1:36101 token=false
+time=2026-11-06T01:44:42.396Z level=INFO msg=storage backend=memory
+time=2026-11-06T01:44:42.396Z level=INFO msg=started version=0.2.0 clients=[::]:36100 udp=[::]:36100 relay=false
 ```
 
-The rest comes from a second run of the same build, started as `./re-psn -v` (debug log).
+The status page is off by default. The rest comes from a second run of the same build, started as
+`./re-psn -v -http 127.0.0.1:36101` (debug log, status page on).
 
 Captured from a local run on loopback: build the test player, and let alice host a room in one terminal.
 
@@ -141,7 +141,7 @@ $ curl -s http://127.0.0.1:36101/api/stats
 
 </details>
 
-http://127.0.0.1:36101/ shows the same as a page: below, alice hosting and waiting, with the score the test left, from a real run
+With `-http 127.0.0.1:36101`, http://127.0.0.1:36101/ shows the same as a page: below, alice hosting and waiting, with the score the test left, from a real run
 ([tools/art/capture-status.sh](tools/art/capture-status.sh) takes it). Routers and the relay are tested in Docker by the
 [NAT lab](lab/README.md).
 
@@ -170,7 +170,7 @@ The first release, [v0.2.0](https://github.com/undecuple/re-psn/releases/tag/v0.
 
 Prerequisites: Go 1.22 or newer (as in `go.mod`); a C compiler only for the C client and its tests. The quick way is `Setup.cmd`
 (Windows; it offers to install Go with winget) or `./setup.sh` (Linux, macOS): both build the server in `server/` and leave a
-`Start re-psn.cmd` or `start-re-psn.sh` launcher. By hand from the repository root, captured from a local run on loopback (the
+`Start re-psn.cmd` or `start-re-psn.sh` launcher, which turns the status page on at `127.0.0.1:36101`. By hand from the repository root, captured from a local run on loopback (the
 build prints nothing when it succeeds):
 
 ```text
@@ -240,7 +240,7 @@ Variables are upper case, with dashes as underscores. Defaults are those of `./r
 | `-addr` | `RE_PSN_ADDR` | `:36100` | TCP and UDP address for game clients |
 | `-tcp-addr` | `RE_PSN_TCP_ADDR` | `-addr` | TCP address for game clients, if different |
 | `-udp-addr` | `RE_PSN_UDP_ADDR` | `-addr` | UDP address for game clients, if different |
-| `-http` | `RE_PSN_HTTP` | `127.0.0.1:36101` | Status page and `/api/stats`; empty turns it off |
+| `-http` | `RE_PSN_HTTP` | none (off) | Status page and `/api/stats` on this address, for example `127.0.0.1:36101` |
 | `-http-token` | `RE_PSN_HTTP_TOKEN` | none | Token the status page requires (`Authorization: Bearer`, or `?token=`) |
 | `-max-rooms` | `RE_PSN_MAX_ROOMS` | `1000` | Rooms across all titles |
 | `-max-player-rooms` | `RE_PSN_MAX_PLAYER_ROOMS` | `8` | Rooms one player may be in at once (0: no limit) |
@@ -286,7 +286,7 @@ The binary is now `re-psn` (`re-psn.exe`); no `psnr` copy is built. The unit `re
 | Port | Protocol | Open to |
 |---|---|---|
 | 36100 | TCP and UDP | Every player: game connection and address probes |
-| 36101 | TCP | You only: the status page lists every online ID |
+| 36101 | TCP | You only, when `-http` turns the status page on: it lists every online ID |
 | each player's P2P port (3658 unless the game's `PS3_NET_P2P_PORT` says otherwise) | UDP and TCP | The other players; the game opens it |
 
 Players on one LAN or VPN need nothing forwarded. Firewall commands are in [docs/running.md](docs/running.md#firewall).
@@ -302,8 +302,8 @@ What to set before the server goes behind a proxy or on the internet.
   the name rule and the address other players receive. UDP is never proxied: publish it straight to the host. See
   [docs/running.md](docs/running.md#behind-a-reverse-proxy) and [deploy/README.md](deploy/README.md) (Traefik tested; nginx and
   HAProxy not yet run).
-- **Status page token:** set `-http-token` whenever `-http` is not on localhost; the server warns at start if it is reachable
-  without one.
+- **Status page:** off by default; `-http 127.0.0.1:36101` turns it on. Set `-http-token` whenever `-http` is not on localhost;
+  the server warns at start if it is reachable without one.
 - **Limits:** room data is capped at 4096 bytes; the four `-max-*` settings above cover the rest. Each refusal is logged at warn level.
 - **Storage:** `-db` accepts only `off` (the default) and `memory`, which both keep scores in memory; a restart empties every
   board. Database backends are planned ([docs/features.md](docs/features.md#storage)); a database setting stops the server at start.
@@ -315,7 +315,8 @@ What to set before the server goes behind a proxy or on the internet.
 - **What the server stores:** nothing on disk. Rooms, names and scores live in memory; the only file is the log, if you set
   `-log-file` (it holds online IDs and addresses, never tokens).
 - **What other players learn:** everyone in a room receives the other members' IP addresses and P2P ports, because that is how they
-  connect. The status page lists every connected online ID, which is why it stays on localhost or behind a token.
+  connect. The status page lists every connected online ID, which is why it is off unless `-http` is set, and then
+  stays on localhost or behind a token.
 - **No accounts:** a name is not authenticated; anyone who can reach TCP 36100 can join. Run it for people you would let onto your
   network.
 

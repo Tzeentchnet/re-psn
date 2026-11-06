@@ -28,7 +28,7 @@ flowchart LR
     hb --> cb["client/psnr.c"]
     sb["sys_net (host sockets)"]
   end
-  srv[("re-psn server (server/)<br/>rooms, leaderboards<br/>HTTP status :36101")]
+  srv[("re-psn server (server/)<br/>rooms, leaderboards<br/>HTTP status :36101 if -http is set")]
   ca -- "TCP 36100" --> srv
   cb -- "TCP 36100" --> srv
   sa <-. "UDP, peer to peer" .-> sb

@@ -19,7 +19,7 @@ ln -s "$ROOT/lab" "$RUN/lab"
 cd "$RUN"
 gcc -std=gnu11 -o natcheck client/psnr.c lab/natcheck.c
 gcc -std=gnu11 -o test_psnr client/psnr.c client/test_psnr.c
-./re-psn >/dev/null 2>&1 &
+./re-psn -http 127.0.0.1:36101 >/dev/null 2>&1 &
 SP=$!
 sleep 1
 ./test_psnr 127.0.0.1 36100 >/dev/null

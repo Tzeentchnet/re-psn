@@ -41,5 +41,5 @@ services:
       # The test wants the relay on. It carries traffic between any two clients that can reach
       # this server, and it uses this server's bandwidth. Set RE_PSN_RELAY=false to turn it off.
       RE_PSN_RELAY: "${RE_PSN_RELAY:-true}"
-      # The status page stays on its default, 127.0.0.1:36101, which on the host network is the
-      # host's own localhost. If you ever bind it wider, set RE_PSN_HTTP_TOKEN as well.
+      # The status page is off unless RE_PSN_HTTP is set. RE_PSN_HTTP: "127.0.0.1:36101" puts it on
+      # the host's own localhost. If you ever bind it wider, set RE_PSN_HTTP_TOKEN as well.
