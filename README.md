@@ -164,7 +164,7 @@ desktop apps and more) is in [ROADMAP.md](ROADMAP.md) too.
 
 ## Install
 
-No release or container image is published yet; build from source.
+The first release, [v0.2.0](https://github.com/undecuple/re-psn/releases/tag/v0.2.0), is a pre-release (see [Release archives](#release-archives)). No container image is published yet; build from source or build the image yourself.
 
 ### From source
 
@@ -201,13 +201,13 @@ It is configured only by `RE_PSN_*` variables.
 
 ### Release archives
 
-> [!WARNING]
-> No release has been published yet. The workflow is in place; until the first tag, build from source or use the container.
+> [!NOTE]
+> [v0.2.0](https://github.com/undecuple/re-psn/releases/tag/v0.2.0) is a pre-release: archives for Linux (amd64, arm64) and Windows (amd64), and an x86_64 AppImage, all unsigned. The Windows and arm64 binaries are cross-built and have not been run on those systems.
 
 <details>
-<summary>What each release will carry, and how to check a download</summary>
+<summary>What each release carries, and how to check a download</summary>
 
-Each release will carry `re-psn-vX.Y.Z-windows-amd64.zip`, `re-psn-vX.Y.Z-linux-amd64.tar.gz` and
+Each release carries `re-psn-vX.Y.Z-windows-amd64.zip`, `re-psn-vX.Y.Z-linux-amd64.tar.gz` and
 `re-psn-vX.Y.Z-linux-arm64.tar.gz` (built by [scripts/release-build.sh](scripts/release-build.sh)): a static `re-psn` binary
 (`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. Each archive has a `.sha256` file, and
 `SHA256SUMS` lists them all. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
