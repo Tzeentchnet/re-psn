@@ -881,6 +881,7 @@
    "date": "",
    "sections": {
     "Changed": [
+     "The website's interface on a phone: the version no longer wraps one letter per line in the title bar, and the menu is a row of tabs that scrolls sideways with the page content shown under it, instead of a full-screen ...",
      "Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE keeps upstream's copyright line with a second line for the fork's changes.",
      "The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on `127.0.0.1:36101` by default.",
      "The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.",
@@ -898,7 +899,7 @@
     ]
    },
    "counts": {
-    "Changed": 5,
+    "Changed": 6,
     "Added": 7
    }
   },
