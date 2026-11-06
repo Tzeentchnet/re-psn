@@ -14,6 +14,6 @@ COPY --from=build /re-psn /usr/local/bin/re-psn
 USER 10001:10001
 EXPOSE 36100/tcp 36100/udp 36101/tcp
 # Settings come from RE_PSN_* variables (the old PSNR_* names still work;
-# docs/running.md). The status page is off the network until you set
-# RE_PSN_HTTP and RE_PSN_HTTP_TOKEN.
+# docs/running.md). The status page is off unless RE_PSN_HTTP is set
+# (36101 is its usual port); off localhost, set RE_PSN_HTTP_TOKEN too.
 ENTRYPOINT ["re-psn"]

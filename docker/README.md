@@ -43,7 +43,7 @@ way (`podman build -f docker/Dockerfile .`).
 
 ## Ports
 
-The game port is published for TCP and UDP. The status page stays inside the container until you set it up (see
+The game port is published for TCP and UDP. The status page is off until you set `RE_PSN_HTTP` (see
 [Settings](#settings)); the compose file has the line that publishes it on this machine only, commented:
 
 ```mermaid
@@ -55,7 +55,7 @@ flowchart LR
     p36101["127.0.0.1:36101<br/>(not published by default)"]
     subgraph ctr["re-psn container"]
       game["game port :36100<br/>TCP and UDP (RE_PSN_ADDR)"]
-      status["status page<br/>127.0.0.1:36101 inside by default<br/>0.0.0.0:36101 with RE_PSN_HTTP and a token"]
+      status["status page<br/>off by default<br/>0.0.0.0:36101 with RE_PSN_HTTP and a token"]
     end
   end
   player -- "TCP 36100" --> p36100
@@ -164,7 +164,7 @@ address was accepted, a client sending them from two different addresses was ref
 
 The server runs as a non-root user, `re-psn`, uid and gid 10001 (no home, no shell). The game port is above 1024, so it needs no capability.
 Compose files can say `user: "10001:10001"`. There is no `HEALTHCHECK`: the image has no tool to probe a port, and the status page is
-off the network by default, so a check would need a new package or a wider status page.
+off by default, so a check would need a new package or a wider status page.
 
 Both base images are pinned by digest (`FROM image:tag@sha256:...`, the multi-arch index digest): `golang:1.26-alpine3.24` (Go 1.26.10 when
 this was written; `go.mod` says `go 1.22`, a minimum) and `alpine:3.24`. Dependabot's docker ecosystem updates the tag and the digest
@@ -210,7 +210,7 @@ flowchart LR
     other["other interfaces<br/>(not bound)"]
     subgraph ctr["container: uid 10001, no capabilities, read-only"]
       game["re-psn game port, with relay"]
-      status["status page<br/>127.0.0.1:36101"]
+      status["status page<br/>off unless RE_PSN_HTTP is set"]
     end
   end
   tester -- "TCP and UDP 36100" --> nic
@@ -224,7 +224,7 @@ flowchart LR
 > - **The relay is on** (`RE_PSN_RELAY`, default `true` here). It carries traffic between any two clients that can reach the server and uses its bandwidth. Set `RE_PSN_RELAY=false` to turn it off.
 > - **VPN peers** that can route to the listen address can connect; the firewall must allow 36100/tcp and 36100/udp only to who you intend.
 > - **Ports below 1024 fail.** `cap_drop: ALL` also drops `NET_BIND_SERVICE`, so a listen port below 1024 in `RE_PSN_BIND` cannot be bound (36100 is fine).
-> - The status page stays on the host's `127.0.0.1:36101`; set `RE_PSN_HTTP_TOKEN` if you ever bind it wider.
+> - The status page is off unless `RE_PSN_HTTP` is set (`127.0.0.1:36101` is the host's own localhost); set `RE_PSN_HTTP_TOKEN` if you ever bind it wider.
 
 Tested with rootless Podman 6.1.4 and podman-compose 1.6.0, with `RE_PSN_BIND=127.0.0.1:36100`: the container ran as uid 10001, a write to `/`
 failed (read-only), `/tmp` was writable, `NoNewPrivs` was 1 and the effective capabilities were empty. `docker-compose config` (Compose v2)
@@ -240,7 +240,7 @@ file shows `RE_PSN_ADDR`. If you change a port, change the published port and yo
 
 ### The status page
 
-The status page lists every online ID, so it is not reachable from the host by default. To reach it, bind it inside the container
+The status page lists every online ID, so it is off by default. To reach it, bind it inside the container
 and set a token, then publish the port on this machine only (the lines are in the compose file, commented):
 
 ```dotenv

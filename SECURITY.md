@@ -10,7 +10,7 @@ address, the same as on real PSN P2P.
 - **No authentication.** Anyone who can reach TCP 36100 can join, and can claim
   any online ID. Run it for people you'd let onto your network: a LAN, a
   tailnet, or friends.
-- **The status page** (`-http`, `127.0.0.1:36101` by default) lists every
+- **The status page** (`-http`, off by default; `127.0.0.1:36101` is the usual address) lists every
   connected player's online ID. Don't expose it publicly. If you bind it
   beyond localhost, set `-http-token`; the server warns when you don't.
 - **The relay** (`-relay`, off by default) carries traffic between players

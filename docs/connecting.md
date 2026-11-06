@@ -24,7 +24,7 @@ Whatever the network, these hold (see [running.md](running.md#ports) and [api.md
 |---|---|---|
 | 36100 | TCP | each player's control connection: HELLO, rooms, leaderboards |
 | 36100 | UDP | each player's P2P socket sends PROBEs here, so the server learns the address and port other players should use |
-| 36101 | TCP | the status page; keep it on localhost or a LAN, not for players |
+| 36101 | TCP | the status page, only when `-http` is set; keep it on localhost or a LAN, not for players |
 | each player's P2P port (3658 unless `PS3_NET_P2P_PORT` says otherwise) | UDP and TCP | game traffic between players, peer to peer |
 
 - **The UDP source address check.** A PROBE (and a datagram sent through `-relay`) is answered only when it comes from the same
