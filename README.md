@@ -38,6 +38,9 @@ someone, for a group running its own server: a LAN, a VPN, or friends connecting
 and leaderboards and tells each player where the others are; the game traffic itself goes directly between players, and through
 the server only when two players cannot reach each other and the host has turned the relay on.
 
+<details>
+<summary>The message flow of a session, as a diagram</summary>
+
 ```mermaid
 sequenceDiagram
   participant A as player A (title + client/psnr.c)
@@ -56,6 +59,8 @@ sequenceDiagram
   B->>A: PUNCH, then game traffic, peer to peer
   Note over A,B: if nothing direct gets through and the server runs with -relay,<br/>datagrams and streams go through the server instead
 ```
+
+</details>
 
 ### A session, step by step
 
