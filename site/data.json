@@ -1,0 +1,924 @@
+{
+ "version": "0.2.0",
+ "stage": "pre-release",
+ "repository": "https://github.com/undecuple/re-psn",
+ "go": "1.22",
+ "status_counts": {
+  "available": 26,
+  "unverified": 1,
+  "partial": 3,
+  "in-progress": 0,
+  "planned": 16,
+  "later": 8,
+  "declined": 1
+ },
+ "features": [
+  {
+   "id": "rooms-basic",
+   "area": "Rooms and matchmaking",
+   "feature": "Rooms and search",
+   "detail": "Create, search, join and leave rooms modelled on sceNpMatching2. A search sees only the rooms of its own title, with each room's external data. Room messages, owner handoff when the owner leaves, and member pushes with each peer's address and P2P port.",
+   "status": "available",
+   "since": "0.1.0",
+   "evidence": "server/rooms.go, TestRooms",
+   "note": "Upstream work. Kick (`KICK_MEMBER`) is in the server but no test covers it.",
+   "status_label": "available"
+  },
+  {
+   "id": "rooms-data",
+   "area": "Rooms and matchmaking",
+   "feature": "Room and member data",
+   "detail": "External and internal room data (only the owner writes it), room flags that searchers see (`SET_ROOM_DATA` which 2), and member data sent with `CREATE_ROOM` and `JOIN_ROOM` and returned in every member entry.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/rooms.go, TestRooms",
+   "note": "External and internal data are upstream work (0.1.0). Room flags and member data are newer, so clients built against 0.1.0 no longer match.",
+   "status_label": "available"
+  },
+  {
+   "id": "rooms-codes",
+   "area": "Rooms and matchmaking",
+   "feature": "Invite-only rooms",
+   "detail": "An 8-character code per room (`SET_ROOM_ACCESS`, `JOIN_BY_CODE`, `GET_ROOM_ACCESS`). The room leaves search and the status page, which counts unlisted rooms. A connection that sends too many wrong codes is closed.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/codes_test.go, TestInviteOnlyRoom, TestCodeGuessesCloseTheConnection, TestCodeStaysOutOfLogAndStatus, #7",
+   "note": "Protocol 0.4: `HELLO_ACK` flags bit 1 says the server has them. Codes are never logged.",
+   "status_label": "available"
+  },
+  {
+   "id": "rooms-private",
+   "area": "Rooms and matchmaking",
+   "feature": "Private rooms",
+   "detail": "Matching2 room passwords, private slots and join by room ID. A relay-only variant that keeps members' addresses hidden from each other is also wanted.",
+   "status": "planned",
+   "since": "",
+   "evidence": "ROADMAP.md",
+   "note": "The relay-only variant is not designed yet.",
+   "status_label": "planned"
+  },
+  {
+   "id": "scores-boards",
+   "area": "Leaderboards",
+   "feature": "Leaderboards",
+   "detail": "Modelled on sceNpScore: each player's best score is kept, a tie goes to whoever scored first, boards are higher-is-better or lower-is-better, and ranks are read by range or by online ID.",
+   "status": "available",
+   "since": "0.1.0",
+   "evidence": "server/scores.go, TestScores",
+   "note": "Upstream work. Kept in memory: a restart empties every board. Opt-in storage is planned (store-sqlite).",
+   "status_label": "available"
+  },
+  {
+   "id": "players-names",
+   "area": "Players",
+   "feature": "One player per name",
+   "detail": "Names are compared case-insensitively. A HELLO with a name held from another address gets ERROR 8 (name taken); from the same address it is the same player reconnecting, and the old connection is closed.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "TestNameTakenFromAnotherAddress, TestSameAddressReconnectTakesOver",
+   "note": "No passwords: a name is not authenticated.",
+   "status_label": "available"
+  },
+  {
+   "id": "players-friends",
+   "area": "Players",
+   "feature": "Friends, presence and invites",
+   "detail": "sceNpBasic: a friends list (everyone on the same server), presence (online, title, room), invites and join-a-friend, player history and a block list.",
+   "status": "planned",
+   "since": "",
+   "evidence": "ROADMAP.md",
+   "note": "Not in the server today.",
+   "status_label": "planned"
+  },
+  {
+   "id": "players-accounts",
+   "area": "Players",
+   "feature": "Optional sign-in",
+   "detail": "Optional accounts next to the default of a name per player: a credential per server kept on the player's machine, sign-in through a generic OpenID Connect provider, or with Discord or GitHub.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. Needs the opt-in database (store-sqlite) first, and the scope in ROADMAP.md says no accounts or passwords, so that needs changing too. The default would stay a name per player.",
+   "status_label": "later"
+  },
+  {
+   "id": "limits-requests",
+   "area": "Limits",
+   "feature": "Request and connection limits",
+   "detail": "`-max-rooms`, `-max-player-rooms`, `-max-conns-per-addr`, `-max-req-rate` (requests per second per connection) and a size cap on room data. A request over a limit is refused; a connection over the rate is closed. Each refusal is logged at warn level.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/limits_test.go, TestBlobLimit, TestPlayerRoomLimit, TestConnLimitPerAddr, TestRequestRateLimit, TestLogHelloAndRefusals",
+   "note": "TCP only. UDP rate limits are planned (net-guardrails).",
+   "status_label": "available"
+  },
+  {
+   "id": "logs-levels",
+   "area": "Logging",
+   "feature": "Log levels and formats",
+   "detail": "`-log-level` (debug, info, warn, error), `-v` as debug, `-log-format` text or json, and `-log-file` to append to a file (mode 0600). Every refusal is logged at warn level; tokens and query strings are never logged.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/logging.go, TestLogHelloAndRefusals, TestLogLevelAndFormat, TestLogStatusRefusalKeepsTokenOut, #4",
+   "note": "Not checked: no test covers `-log-file`. The server does not rotate the file.",
+   "status_label": "available"
+  },
+  {
+   "id": "status-page",
+   "area": "Status page",
+   "feature": "Status page and /api/stats, with a token",
+   "detail": "A read-only page and JSON on a separate listener, on localhost by default. `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/api.go, TestStatusToken, TestReachable, docs/status.png",
+   "note": "The page and /api/stats are upstream work (0.1.0); the token is the fork's.",
+   "status_label": "available"
+  },
+  {
+   "id": "metrics-endpoint",
+   "area": "Metrics",
+   "feature": "Metrics endpoint",
+   "detail": "`/metrics` in the Prometheus text format, off by default, with the status page's token rules: connections, rooms, refusals, UDP probes and relay traffic. No names, addresses, room codes or tokens in any label.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. Needs the counters from net-guardrails first.",
+   "status_label": "later"
+  },
+  {
+   "id": "metrics-dashboard",
+   "area": "Metrics",
+   "feature": "Grafana dashboard and alerts",
+   "detail": "Example Prometheus scrape config, alert rules and a Grafana dashboard in `deploy/`, written from the real metric names.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "After metrics-endpoint.",
+   "status_label": "later"
+  },
+  {
+   "id": "proxy-support",
+   "area": "Reverse proxy",
+   "feature": "PROXY protocol and trusted proxies",
+   "detail": "`-trusted-proxies` (CIDRs or addresses) and `-proxy-protocol` (a PROXY v1 or v2 header required on the game TCP port from a listed proxy), and forwarded headers for the status page log. The real client address then counts for the limits, the name rule, `public_ip` and the log.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/proxy.go, TestReadProxyHeader, TestClientAddr, TestProxyHeaderFromUntrustedPeerIsJunk, TestTrustedPeerWithoutHeaderIsClosed, TestLimitUsesRealAddress, #9, #12",
+   "note": "Off by default. UDP is not proxied. See docs/running.md.",
+   "status_label": "available"
+  },
+  {
+   "id": "deploy-examples",
+   "area": "Deployment",
+   "feature": "Settings file, service unit and Traefik example",
+   "detail": "`deploy/` holds `re-psn.env.example` (every setting, commented), a systemd unit and a Traefik config that sends PROXY v2. The release archives carry them as `examples/`.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "deploy/re-psn.env.example, deploy/re-psn.service, deploy/traefik/dynamic.yml, scripts/check-deploy.sh, docs/running.md, #10",
+   "note": "`scripts/check-deploy.sh` checks the env file and the unit against the server's flags. The Traefik run (Traefik 3.1 under Podman) is recorded in docs/running.md; no run of the systemd unit is recorded.",
+   "status_label": "available"
+  },
+  {
+   "id": "deploy-nginx-haproxy",
+   "area": "Deployment",
+   "feature": "nginx and HAProxy examples",
+   "detail": "An nginx `stream` block with `proxy_protocol on;` (PROXY v1) and an HAProxy config with `send-proxy-v2`.",
+   "status": "unverified",
+   "since": "0.2.0",
+   "evidence": "deploy/nginx/psnr.conf, deploy/haproxy/haproxy.cfg",
+   "note": "Not checked: neither config has been run against the server (docs/running.md says so).",
+   "status_label": "not yet verified"
+  },
+  {
+   "id": "deploy-caddy",
+   "area": "Deployment",
+   "feature": "Caddy example",
+   "detail": "A Caddy config next to the other examples in `deploy/`.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started.",
+   "status_label": "planned"
+  },
+  {
+   "id": "deploy-container",
+   "area": "Deployment",
+   "feature": "Docker and Podman",
+   "detail": "A two-stage Dockerfile and a compose file in `docker/`, configured only by `RE_PSN_*` variables. The status page stays on localhost inside the container until a token is set.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "docker/Dockerfile, docker/docker-compose.yml, docker/docker-compose.host.yml, docker/docker-compose.test.yml, docker/README.md, lab/run.sh, #11",
+   "note": "A Podman 6.1 run is recorded in docker/README.md, and the NAT lab builds the image with Docker in CI. The v0.2.0 image is pushed to ghcr.io (amd64 and arm64, unsigned; arm64 not run). The server runs as a non-root user and the bases are pinned by digest. Opt-in host-networking compose files, one hardened for a shared test host, are for Linux only. Compose under Podman is not tested.",
+   "status_label": "available"
+  },
+  {
+   "id": "settings-env",
+   "area": "Settings",
+   "feature": "Flags and RE_PSN_* variables",
+   "detail": "Every flag can be set as `RE_PSN_<FLAG>`; the old `PSNR_<FLAG>` names still work as aliases. A flag wins, then `RE_PSN_`, then `PSNR_`. An old name logs a warning that names the variables, never the value. `-tcp-addr` and `-udp-addr` give the two game sockets their own addresses. A bad value stops the server at start.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/config.go, TestEnvAlias, TestEnvNoticeHidesValue, TestFlagBeatsEnv, TestEnvBad, TestListenAddrs, #8, #17",
+   "note": "No config file yet.",
+   "status_label": "available"
+  },
+  {
+   "id": "store-interface",
+   "area": "Storage",
+   "feature": "Storage interface",
+   "detail": "A storage layer with an in-memory backend, the leaderboards wired through it, and a `-db` (`RE_PSN_DB`) setting. Off by default, so nothing changes unless a host turns it on.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/store/store.go, server/store/storetest/storetest.go, TestMemoryContract, TestDBSetting, TestDBNotLogged, TestScoreStoreFailure, TestScoresOutsideRoomLock, #22",
+   "note": "Only `off` and `memory` exist, so scores are still kept in memory and lost on restart; other schemes stop the start. First step of opt-in storage (store-sqlite is next).",
+   "status_label": "available"
+  },
+  {
+   "id": "store-sqlite",
+   "area": "Storage",
+   "feature": "SQLite storage (opt-in)",
+   "detail": "An SQLite backend with a pure-Go driver, so the release archives stay static, and migrations built into the binary. With it on, scores survive a restart. The connection string is never logged.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. The server's first third-party Go module. Player names and bans would follow with accounts.",
+   "status_label": "planned"
+  },
+  {
+   "id": "store-backup",
+   "area": "Storage",
+   "feature": "Backup and restore",
+   "detail": "Documented backup and restore for each database: a backup command or a copy procedure for SQLite; a dump command with timer and cron examples for PostgreSQL and MariaDB. How long backups are kept is up to the host.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. Comes with store-sqlite.",
+   "status_label": "planned"
+  },
+  {
+   "id": "store-postgres",
+   "area": "Storage",
+   "feature": "PostgreSQL storage",
+   "detail": "A PostgreSQL backend for hosts who bring their own database; the server does not run or manage it.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "After store-sqlite.",
+   "status_label": "later"
+  },
+  {
+   "id": "store-mariadb",
+   "area": "Storage",
+   "feature": "MariaDB storage",
+   "detail": "A MariaDB backend for hosts who bring their own database; the server does not run or manage it.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "After store-sqlite.",
+   "status_label": "later"
+  },
+  {
+   "id": "ha-restart",
+   "area": "High availability",
+   "feature": "Health check and clean restarts",
+   "detail": "A `/healthz` endpoint on the status listener (200 when the server accepts connections, no player data), a graceful shutdown that closes connections so players reconnect at once, and a page on restart settings and what players see.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart.",
+   "status_label": "planned"
+  },
+  {
+   "id": "ha-failover",
+   "area": "High availability",
+   "feature": "Active/passive failover",
+   "detail": "Docs and example files for a standby server: a floating address (keepalived) or a proxy's health checks, both servers on the same database, one active at a time. No election or replication inside the server.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. After ha-restart; the shared database needs store-postgres or store-mariadb. Live rooms are lost on failover.",
+   "status_label": "planned"
+  },
+  {
+   "id": "ha-multi",
+   "area": "High availability",
+   "feature": "Several servers",
+   "detail": "Several servers behind one address, each room wholly on one server, with a routing layer that sends a new room or a join to the right one.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "On the back burner: revisited after ha-restart and ha-failover exist and one server is not enough.",
+   "status_label": "later"
+  },
+  {
+   "id": "ha-handover",
+   "area": "High availability",
+   "feature": "Live room handover",
+   "detail": "Rooms that survive the loss of a server.",
+   "status": "declined",
+   "since": "",
+   "evidence": "",
+   "note": "Needs replicated live state; out of scope for a server of this size.",
+   "status_label": "declined"
+  },
+  {
+   "id": "net-punch",
+   "area": "Network",
+   "feature": "Address discovery and hole punching",
+   "detail": "A player's P2P socket sends the server a UDP PROBE. The server records the public endpoint and gives each viewer the address that works from where they are: the public one from another network, the LAN address from the same one.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/udp.go, TestProbeRecordsPublicEndpoint, TestEndpointPerViewer, lab/README.md",
+   "note": "Upstream work. The NAT lab runs it in Docker in CI.",
+   "status_label": "available"
+  },
+  {
+   "id": "net-relay",
+   "area": "Network",
+   "feature": "Relay",
+   "detail": "`-relay`, off by default: streams into a player behind a router go through the server, and datagrams go through the server's UDP port when punching does not get through (as with a symmetric NAT).",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/relay.go, TestUDPRelay, TestStreamRelay, TestRoutePushOnJoin, lab/run.sh",
+   "note": "Upstream work. Uses the server's bandwidth; there is no per-player budget yet (net-guardrails).",
+   "status_label": "available"
+  },
+  {
+   "id": "net-udp-guard",
+   "area": "Network",
+   "feature": "UDP source address check",
+   "detail": "PROBE and RELAY packets are accepted only from the IP address of the player's TCP connection. A probe's `local_ip` is kept only if it is private, carrier-grade NAT, link-local or the probe's own source. `-udp-any-source` turns the check off.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "TestProbeFromOtherAddressRefused, TestUDPRelayFromOtherAddress, TestProbeAnySource, TestProbeDropsPublicLocalIP, docker/README.md, #16",
+   "note": "A Podman run is recorded in docker/README.md.",
+   "status_label": "available"
+  },
+  {
+   "id": "net-guardrails",
+   "area": "Network",
+   "feature": "More UDP and relay guardrails",
+   "detail": "Per-source UDP rate limits and a failed-token counter, relay budgets (datagram size, per-player rates, idle streams), a 64-bit token, the limits written down, counters of dropped packets on /api/stats, and a test for each, with a fuzz test for the UDP packets.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. The 64-bit token changes the wire format and waits for a protocol version bump.",
+   "status_label": "planned"
+  },
+  {
+   "id": "net-checks",
+   "area": "Network",
+   "feature": "Connection checks",
+   "detail": "A check for players and hosts that says where a connection fails (server reachable, HELLO accepted, UDP probe answered, NAT behaviour, peer reachable, relay available) and shows round trip, loss and whether each peer is up.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not designed yet.",
+   "status_label": "planned"
+  },
+  {
+   "id": "net-upnp",
+   "area": "Network",
+   "feature": "UPnP",
+   "detail": "Open a player's P2P port on their router automatically.",
+   "status": "later",
+   "since": "",
+   "evidence": "",
+   "note": "Not started.",
+   "status_label": "later"
+  },
+  {
+   "id": "client-c",
+   "area": "Client",
+   "feature": "C client",
+   "detail": "One file with no dependencies and no threads: `psnr_send` returns a request id, and `psnr_poll` hands out replies and pushes without blocking. It also builds the UDP probe and relay packets.",
+   "status": "available",
+   "since": "0.1.0",
+   "evidence": "client/psnr.c, client/test_psnr.c, TestCClient",
+   "note": "Upstream work. `TestCClient` skips without a C compiler; CI runs it on Linux only.",
+   "status_label": "available"
+  },
+  {
+   "id": "client-desktop",
+   "area": "Client",
+   "feature": "Desktop client, terminal UI",
+   "detail": "A terminal program for players and hosts: launch profiles per game, a host mode, and a check of the connection.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. One executable per platform, with nothing else to install.",
+   "status_label": "planned"
+  },
+  {
+   "id": "client-gui",
+   "area": "Client",
+   "feature": "Desktop client, graphical UI",
+   "detail": "A local web UI served by the same program, and a graphical app on Windows, with the same screens as the terminal UI.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. After client-desktop.",
+   "status_label": "planned"
+  },
+  {
+   "id": "app-themes",
+   "area": "Client",
+   "feature": "Colour themes",
+   "detail": "Colour presets in the desktop apps: gruvbox-material by default, then gruvbox, catppuccin, kanagawa and melange. A preset is a data file shared by the apps and the README art.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. A preset ships only after its project's licence is read and credited in NOTICE.md. The terminal UI falls back to the terminal's own 16 colours and respects NO_COLOR.",
+   "status_label": "planned"
+  },
+  {
+   "id": "app-appearance",
+   "area": "Client",
+   "feature": "Appearance mode",
+   "detail": "Dark, Light or System (the default): presets carry a dark and a light variant where their project has both, and System follows the OS or the terminal background and switches while the app runs.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. Whether the status page follows the browser's setting too is not decided.",
+   "status_label": "planned"
+  },
+  {
+   "id": "app-colours",
+   "area": "Client",
+   "feature": "Custom colours",
+   "detail": "Edit named colour slots (background, surface, text, muted, accent, good, warn, bad) as hex values, with a contrast warning below 4.5:1, import and export, saved per user and per mode.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. A bad value falls back to the default preset.",
+   "status_label": "planned"
+  },
+  {
+   "id": "test-fuzz",
+   "area": "Testing and CI",
+   "feature": "Fuzz tests",
+   "detail": "Go fuzz targets for the frame parser, the request handlers and the PROXY header parser. Their seed inputs run with every `go test`.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "server/fuzz_test.go, FuzzReadPacket, FuzzHandle, FuzzReadProxyHeader, #2",
+   "note": "CI runs the seeds only; longer fuzzing runs are by hand. The UDP packets have no fuzz target yet.",
+   "status_label": "available"
+  },
+  {
+   "id": "ci-checks",
+   "area": "Testing and CI",
+   "feature": "CI checks",
+   "detail": "gofmt, go vet, `go test -race` on Linux (with the C client) and `go test` on Windows, govulncheck, gitleaks over the full history, the NAT lab in Docker, and CodeQL for Go and the workflows. Actions are pinned and permissions are read-only by default.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": ".github/workflows/ci.yml, .github/workflows/codeql.yml, .github/dependabot.yml, #1, #6",
+   "note": "Dependabot proposes version updates.",
+   "status_label": "available"
+  },
+  {
+   "id": "ci-more",
+   "area": "Testing and CI",
+   "feature": "More CI checks",
+   "detail": "Candidates: the C client outside Linux, the race detector on Windows, and a scan of the container image.",
+   "status": "planned",
+   "since": "",
+   "evidence": ".github/workflows/ci.yml",
+   "note": "The list is not settled. The header of ci.yml says what CI does not check today.",
+   "status_label": "planned"
+  },
+  {
+   "id": "release-archives",
+   "area": "Release",
+   "feature": "Release archives and checksums",
+   "detail": "`scripts/release-build.sh` builds static binaries for windows/amd64, linux/amd64 and linux/arm64 into `re-psn-vX.Y.Z-<os>-<arch>` archives and one SHA256SUMS listing them. A pushed version tag makes a draft pre-release; a second workflow checks a published one.",
+   "status": "partial",
+   "since": "0.2.0",
+   "evidence": "scripts/release-build.sh, .github/workflows/release.yml, .github/workflows/release-check.yml, #5",
+   "note": "Published as the v0.2.0 pre-release (2026-11-06): the release workflow and the published-release check both passed. The Windows and arm64 binaries are cross-built and not run.",
+   "status_label": "partial"
+  },
+  {
+   "id": "release-appimage",
+   "area": "Release",
+   "feature": "Linux AppImage",
+   "detail": "`scripts/build-appimage.sh` packs the linux/amd64 server binary and its examples as `re-psn-vX.Y.Z-x86_64.AppImage`, with appimagetool 1.9.1 and the type-2 runtime 20251108, both downloaded by the release workflow and checked against pinned SHA-256 hashes. A smoke test compares its `-h` and version with the binary's, and it is listed in SHA256SUMS.",
+   "status": "partial",
+   "since": "0.2.0",
+   "evidence": "scripts/build-appimage.sh, scripts/appimage/AppRun, .github/workflows/release.yml, TestBuildAppImageRefuses, TestAppImagePinsAgree, docs/releasing.md",
+   "note": "Published in the v0.2.0 pre-release (2026-11-06); the release workflow built it on a runner and passed its smoke test. It was also built and run on one x86_64 Linux machine, with FUSE and with `--appimage-extract-and-run`. x86_64 only, unsigned.",
+   "status_label": "partial"
+  },
+  {
+   "id": "release-process",
+   "area": "Release",
+   "feature": "Release process",
+   "detail": "Written steps for cutting a release (tag, notes from CHANGELOG.md, checking the draft, publishing), a check that the version in the code and in CHANGELOG.md agree, and a dry run of the release workflow before the first tag.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "VERSION, scripts/bump-version.sh, scripts/release-notes.sh, docs/releasing.md, TestVersionAgrees",
+   "note": "VERSION, the version check (TestVersionAgrees), scripts/bump-version.sh and scripts/release-notes.sh are built and docs/releasing.md has the steps; the release workflow builds its notes with the notes script and checks that a tag is v + VERSION, and the first tag, v0.2.0 (2026-11-06), ran the whole path: the dry run, the tag step and the draft job passed, and the draft was published by hand after its assets were read back. No fixed release day: while things are worked out, pre-releases (v0.x, marked pre-release) come whenever there is something worth trying.",
+   "status_label": "available"
+  },
+  {
+   "id": "release-signing",
+   "area": "Release",
+   "feature": "Signed releases",
+   "detail": "Sign `re-psn.exe` so Windows does not warn about an unsigned program, and sign the checksums.",
+   "status": "later",
+   "since": "",
+   "evidence": ".github/workflows/release.yml",
+   "note": "The exe and SHA256SUMS are unsigned today.",
+   "status_label": "later"
+  },
+  {
+   "id": "docs-features",
+   "area": "Documentation",
+   "feature": "Features list",
+   "detail": "`docs/features.tsv` holds one row per feature with its status and evidence, and `tools/features.py` generates this page. CI fails when the page is stale, a row is malformed, or evidence is missing.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "docs/features.tsv, tools/features.py, tools/test_features.py, .github/workflows/ci.yml, #19",
+   "note": "",
+   "status_label": "available"
+  },
+  {
+   "id": "docs-diagrams",
+   "area": "Documentation",
+   "feature": "Mermaid diagrams",
+   "detail": "The architecture, reverse proxy, relay and NAT lab diagrams are Mermaid, which GitHub renders.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "docs/architecture.md, lab/README.md, #13",
+   "note": "No generated images to keep in step.",
+   "status_label": "available"
+  },
+  {
+   "id": "docs-markdown",
+   "area": "Documentation",
+   "feature": "Docs in Markdown",
+   "detail": "Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "deploy/README.md, docker/README.md, docs/running.md, #20",
+   "note": "Links were checked once with a throwaway script; a CI link check is planned (repo-check).",
+   "status_label": "available"
+  },
+  {
+   "id": "docs-connecting",
+   "area": "Documentation",
+   "feature": "Ways to connect",
+   "detail": "A page on how players reach a server: same LAN, port forwarding, a public server with `-relay`, a VPN overlay (Tailscale, ZeroTier) or a reverse proxy, with what each needs, its limits, diagrams and links to the overlays' official documentation.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "docs/connecting.md",
+   "note": "Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only.",
+   "status_label": "available"
+  },
+  {
+   "id": "docs-readme",
+   "area": "Documentation",
+   "feature": "README rewrite",
+   "detail": "A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "README.md",
+   "note": "Example output comes from real local runs; the settings table was checked against the server flags. The banner comes from the art generator (docs-art).",
+   "status_label": "available"
+  },
+  {
+   "id": "docs-art",
+   "area": "Documentation",
+   "feature": "Art generator",
+   "detail": "`tools/art/make_art.py` draws the README banner, a social preview image and terminal images in the gruvbox-material palette (`docs/art/palette.json`), with JetBrains Mono fetched from its tagged release and pinned by SHA-256. Terminal images are drawn only from transcripts of real runs (`docs/art/transcripts/`, recorded by `tools/art/capture.sh`). CI renders again and fails when a byte differs.",
+   "status": "available",
+   "since": "0.2.0",
+   "evidence": "tools/art/make_art.py, tools/art/test_make_art.py, tools/art/art.json, tools/art/capture.sh, docs/art/palette.json, docs/img/banner.png, docs/img/social.png, .github/workflows/ci.yml",
+   "note": "The README shows the banner; the social image is uploaded by hand in the repository settings; its example stays text, and the terminal images are kept for the site. Images are dark only; the light colours are in the palette for later. Fonts are not committed.",
+   "status_label": "available"
+  },
+  {
+   "id": "docs-website",
+   "area": "Documentation",
+   "feature": "Project website",
+   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. No script, no third-party loads, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
+   "status": "partial",
+   "since": "main",
+   "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml",
+   "note": "Partial: the page is built and checked but not published yet; Pages is switched on in the repository settings after review. No terminal-style interface yet.",
+   "status_label": "partial"
+  },
+  {
+   "id": "repo-check",
+   "area": "Documentation",
+   "feature": "Repository layout check",
+   "detail": "A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist.",
+   "status": "planned",
+   "since": "",
+   "evidence": "",
+   "note": "Not started. After docs-markdown.",
+   "status_label": "planned"
+  }
+ ],
+ "roadmap": {
+  "Done": [
+   "rooms-basic",
+   "rooms-data",
+   "rooms-codes",
+   "scores-boards",
+   "players-names",
+   "limits-requests",
+   "logs-levels",
+   "status-page",
+   "proxy-support",
+   "deploy-examples",
+   "deploy-nginx-haproxy",
+   "deploy-container",
+   "settings-env",
+   "store-interface",
+   "net-punch",
+   "net-relay",
+   "net-udp-guard",
+   "client-c",
+   "test-fuzz",
+   "ci-checks",
+   "release-archives",
+   "release-appimage",
+   "release-process",
+   "docs-features",
+   "docs-diagrams",
+   "docs-markdown",
+   "docs-connecting",
+   "docs-readme",
+   "docs-art",
+   "docs-website"
+  ],
+  "Now": [],
+  "Next": [
+   "rooms-private",
+   "players-friends",
+   "deploy-caddy",
+   "store-sqlite",
+   "store-backup",
+   "ha-restart",
+   "ha-failover",
+   "net-guardrails",
+   "net-checks",
+   "client-desktop",
+   "client-gui",
+   "app-themes",
+   "app-appearance",
+   "app-colours",
+   "ci-more",
+   "repo-check"
+  ],
+  "Later": [
+   "players-accounts",
+   "metrics-endpoint",
+   "metrics-dashboard",
+   "store-postgres",
+   "store-mariadb",
+   "ha-multi",
+   "net-upnp",
+   "release-signing"
+  ],
+  "Not planned": [
+   "ha-handover"
+  ]
+ },
+ "settings": [
+  {
+   "flag": "-addr",
+   "variable": "RE_PSN_ADDR",
+   "default": ":36100",
+   "description": "TCP and UDP address for game clients"
+  },
+  {
+   "flag": "-tcp-addr",
+   "variable": "RE_PSN_TCP_ADDR",
+   "default": "-addr",
+   "description": "TCP address for game clients, if different"
+  },
+  {
+   "flag": "-udp-addr",
+   "variable": "RE_PSN_UDP_ADDR",
+   "default": "-addr",
+   "description": "UDP address for game clients, if different"
+  },
+  {
+   "flag": "-http",
+   "variable": "RE_PSN_HTTP",
+   "default": "127.0.0.1:36101",
+   "description": "Status page and /api/stats; empty turns it off"
+  },
+  {
+   "flag": "-http-token",
+   "variable": "RE_PSN_HTTP_TOKEN",
+   "default": "none",
+   "description": "Token the status page requires (Authorization: Bearer, or ?token=)"
+  },
+  {
+   "flag": "-max-rooms",
+   "variable": "RE_PSN_MAX_ROOMS",
+   "default": "1000",
+   "description": "Rooms across all titles"
+  },
+  {
+   "flag": "-max-player-rooms",
+   "variable": "RE_PSN_MAX_PLAYER_ROOMS",
+   "default": "8",
+   "description": "Rooms one player may be in at once (0: no limit)"
+  },
+  {
+   "flag": "-max-conns-per-addr",
+   "variable": "RE_PSN_MAX_CONNS_PER_ADDR",
+   "default": "32",
+   "description": "Open connections per remote address (0: no limit)"
+  },
+  {
+   "flag": "-max-req-rate",
+   "variable": "RE_PSN_MAX_REQ_RATE",
+   "default": "200",
+   "description": "Requests per second per connection before it is closed (0: no limit)"
+  },
+  {
+   "flag": "-v",
+   "variable": "RE_PSN_V",
+   "default": "off",
+   "description": "Same as -log-level debug"
+  },
+  {
+   "flag": "-log-level",
+   "variable": "RE_PSN_LOG_LEVEL",
+   "default": "info",
+   "description": "debug (room events), info, warn or error"
+  },
+  {
+   "flag": "-log-format",
+   "variable": "RE_PSN_LOG_FORMAT",
+   "default": "text",
+   "description": "text or json"
+  },
+  {
+   "flag": "-log-file",
+   "variable": "RE_PSN_LOG_FILE",
+   "default": "none",
+   "description": "Also append the log to this file (mode 0600)"
+  },
+  {
+   "flag": "-trusted-proxies",
+   "variable": "RE_PSN_TRUSTED_PROXIES",
+   "default": "none",
+   "description": "Reverse proxies allowed to name the real client (CIDRs or addresses)"
+  },
+  {
+   "flag": "-proxy-protocol",
+   "variable": "RE_PSN_PROXY_PROTOCOL",
+   "default": "off",
+   "description": "Require a PROXY v1/v2 header from a trusted proxy on the game TCP port"
+  },
+  {
+   "flag": "-udp-any-source",
+   "variable": "RE_PSN_UDP_ANY_SOURCE",
+   "default": "off",
+   "description": "Accept UDP probes and relay packets from another address than the player's TCP one"
+  },
+  {
+   "flag": "-relay",
+   "variable": "RE_PSN_RELAY",
+   "default": "off",
+   "description": "Carry traffic for players who cannot reach each other (uses the host's bandwidth)"
+  },
+  {
+   "flag": "-db",
+   "variable": "RE_PSN_DB",
+   "default": "off",
+   "description": "Score storage: off or memory"
+  },
+  {
+   "flag": "-db-file",
+   "variable": "RE_PSN_DB_FILE",
+   "default": "none",
+   "description": "Read the -db setting from this file instead"
+  },
+  {
+   "flag": "-replace",
+   "variable": "RE_PSN_REPLACE",
+   "default": "off",
+   "description": "If an earlier re-psn of this user holds the game port, stop it (SIGTERM) and start in its place (Linux only)"
+  }
+ ],
+ "changelog": {
+  "unreleased": {
+   "version": "Unreleased",
+   "date": "",
+   "sections": {
+    "Changed": [
+     "The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.",
+     "A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.",
+     "The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server runs as the non-root user 10001."
+    ],
+    "Added": [
+     "`site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table and this file (`--check` compares the committed files and the ...",
+     "`docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities, read-only filesystem, resource limits).",
+     "`.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to `ghcr.io/undecuple/re-psn` (tags `X.Y.Z`, plus `X.Y` and `latest` for a release that is ...",
+     "`-replace` (`RE_PSN_REPLACE`): when the game port is held by an earlier re-psn of the same user, the server sends it SIGTERM, waits up to 10 s for the port and starts in its place (Linux only)."
+    ]
+   },
+   "counts": {
+    "Changed": 3,
+    "Added": 4
+   }
+  },
+  "latest": {
+   "version": "0.2.0",
+   "date": "2026-11-06",
+   "sections": {},
+   "counts": {
+    "Added": 18,
+    "Fixed": 1,
+    "Changed": 14,
+    "Security": 1
+   }
+  }
+ },
+ "docs": [
+  {
+   "path": "docs/architecture.md",
+   "title": "Architecture",
+   "summary": "The parts, the threadless client, why game traffic is peer to peer, the relay",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/architecture.md"
+  },
+  {
+   "path": "docs/api.md",
+   "title": "Protocol",
+   "summary": "Framing, session, rooms, leaderboards, UDP, relay, HTTP",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/api.md"
+  },
+  {
+   "path": "docs/running.md",
+   "title": "Running a server",
+   "summary": "Flags, variables, UDP source check, reverse proxy, logging, ports, firewall, storage",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/running.md"
+  },
+  {
+   "path": "docs/connecting.md",
+   "title": "Connecting players",
+   "summary": "LAN, port forwarding, a public server, Tailscale or ZeroTier",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/connecting.md"
+  },
+  {
+   "path": "docs/features.md",
+   "title": "Features",
+   "summary": "Every feature with its status and evidence",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/features.md"
+  },
+  {
+   "path": "ROADMAP.md",
+   "title": "Roadmap",
+   "summary": "What is done, planned and out of scope",
+   "url": "https://github.com/undecuple/re-psn/blob/main/ROADMAP.md"
+  },
+  {
+   "path": "CHANGELOG.md",
+   "title": "Changelog",
+   "summary": "What changed in each release",
+   "url": "https://github.com/undecuple/re-psn/blob/main/CHANGELOG.md"
+  },
+  {
+   "path": "docs/releasing.md",
+   "title": "Releasing",
+   "summary": "The version, the bump and cutting a pre-release",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/releasing.md"
+  },
+  {
+   "path": "deploy/README.md",
+   "title": "Deployment examples",
+   "summary": "Settings file, systemd unit, Traefik, nginx and HAProxy",
+   "url": "https://github.com/undecuple/re-psn/blob/main/deploy/README.md"
+  },
+  {
+   "path": "docker/README.md",
+   "title": "Container",
+   "summary": "Building and running with Docker or Podman",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docker/README.md"
+  },
+  {
+   "path": "lab/README.md",
+   "title": "NAT lab",
+   "summary": "Players behind routers, in Docker",
+   "url": "https://github.com/undecuple/re-psn/blob/main/lab/README.md"
+  },
+  {
+   "path": "CONTRIBUTING.md",
+   "title": "Contributing",
+   "summary": "Ground rules and the tests to run",
+   "url": "https://github.com/undecuple/re-psn/blob/main/CONTRIBUTING.md"
+  },
+  {
+   "path": "SECURITY.md",
+   "title": "Security",
+   "summary": "How to report a vulnerability privately",
+   "url": "https://github.com/undecuple/re-psn/blob/main/SECURITY.md"
+  }
+ ]
+}

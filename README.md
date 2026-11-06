@@ -18,6 +18,7 @@ optional relay.
 - [Configuration](#configuration)
 - [Security and privacy](#security-and-privacy)
 - [More](#more)
+- [Website](#website)
 - [Credits](#credits), [Licence](#licence), [How AI was used](#how-ai-was-used)
 
 ## About this fork
@@ -341,6 +342,11 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 | [docker/README.md](docker/README.md) | Building and running the container with Docker or Podman |
 | [lab/README.md](lab/README.md) | The NAT lab: players behind routers in Docker |
 | [CHANGELOG.md](CHANGELOG.md), [NOTICE.md](NOTICE.md) | What changed; third-party components and credits |
+
+## Website
+
+The project page is built from `site/` by [tools/site.py](tools/site.py) out of the features list, `VERSION`, the settings table above and
+[CHANGELOG.md](CHANGELOG.md), with no script and nothing loaded from another site. It is published to GitHub Pages only after review.
 
 ## Credits
 
