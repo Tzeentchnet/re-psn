@@ -21,6 +21,11 @@ All notable changes to this project are documented here. The format follows
   and this file (`--check` compares the committed files and the colour tokens of `site/style.css` with the sources), and `site/style.css` is hand-written in the
   gruvbox-material palette, dark by default and light with the system. No script and no third-party loads (a CSP says so). `.github/workflows/pages.yml`
   deploys `site/` to GitHub Pages on a push to main that touches it, or by hand; the deploy job runs only when the repository variable `PAGES_ENABLED` is `true`.
+- `site/terminal.js`, the terminal-style interface of the project website: a menu, a content pane and a command line (`features [--status S] [id]`, `roadmap`, `settings [name]`,
+  `install`, `connect`, `version`, `changelog`, `about`, `credits`, `licence`, `docs`, `links`, `theme`, `clear`, `history`, `--help`), Tab completion, history, a dark and a light theme,
+  and one pane with tappable command chips on a phone. The page still works without script and a `plain view` link switches the interface off. The only request is for `data.json`
+  on the same site (the content security policy allows scripts and requests from this site only). The section bar now stays in view while scrolling, there is a Top link, a real
+  page heading and a favicon. Tested with `node --test tools/terminal.test.js`.
 - `app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client
   for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT and ROUTE pushes) with a
   conformance test against the real server, a reader and writer for the per-user settings file `re-psn.ini`, and

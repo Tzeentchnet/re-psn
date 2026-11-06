@@ -9,6 +9,7 @@ import importlib.util
 import io
 import json
 import pathlib
+import re
 import sys
 import tempfile
 import unittest
@@ -57,6 +58,8 @@ CSS = """/* palette:dark */
 /* /palette */
 }
 """
+ICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><title>t</title>'
+        '<rect width="8" height="8" fill="#000000"/><rect width="2" height="2" fill="#ffffff"/></svg>')
 PALETTE = {"modes": {"dark": {"bg0": "#000000", "fg0": "#ffffff"}, "light": {"bg0": "#ffffff", "fg0": "#000000"}}}
 
 
@@ -79,6 +82,8 @@ class Fixture:
         (self.root / "go.mod").write_text("module x\n\ngo 1.22\n")
         (self.root / "docs/art/palette.json").write_text(json.dumps(PALETTE))
         (self.root / "site/style.css").write_text(CSS)
+        (self.root / "site/terminal.js").write_text("// stub\n")
+        (self.root / "site/favicon.svg").write_text(ICON)
         for path, _, _ in sitegen.DOCS:
             p = self.root / path
             p.parent.mkdir(parents=True, exist_ok=True)
@@ -124,9 +129,58 @@ class SiteTest(unittest.TestCase):
         self.f.run()
         page = self.f.read("site/index.html").decode()
         self.assertIn(f'<a href="{features.REPO_URL}/blob/main/ROADMAP.md">the roadmap</a>', page)
-        self.assertIn("connect-src &#x27;none&#x27;", page)
-        self.assertNotIn("<script", page)
+        self.assertIn("script-src &#x27;self&#x27;; style-src &#x27;self&#x27;;", page)
+        self.assertIn("connect-src &#x27;self&#x27;", page)
+        self.assertNotIn("&#x27;unsafe", page)
         self.assertEqual(page.count("<title>"), 1)
+        self.assertEqual(page.count("<h1"), 1)
+
+    def test_only_the_one_local_script_and_no_outside_load(self):
+        self.f.run()
+        page = self.f.read("site/index.html").decode()
+        scripts = re.findall(r"<script\b[^>]*>", page)
+        self.assertEqual(scripts, ['<script src="terminal.js" defer>'])
+        self.assertNotIn("</script>", page.replace('<script src="terminal.js" defer></script>', ""))
+        self.assertIsNone(re.search(r"\sstyle=|\son[a-z]+=|<style|<iframe|<img|<object|<embed|<form", page))
+        for tagtext in re.findall(r"<(?:link|script)\b[^>]*>", page):
+            self.assertIsNone(re.search(r'(?:src|href)="(?:[a-z]+:)?//|(?:src|href)="https?:', tagtext), tagtext)
+        self.assertIn('<link rel="icon" href="favicon.svg" type="image/svg+xml">', page)
+
+    def test_icon_checks(self):
+        self.assertEqual(self.f.run("--check")[0], 1)  # generated files missing, but the icon itself is fine
+        self.f.run()
+        for bad, word in ((ICON.replace("#ffffff", "#123456"), "not in docs/art/palette.json"),
+                          (ICON.replace("</svg>", "<script>x</script></svg>"), "<script>"),
+                          (ICON.replace("</svg>", '<use href="x.svg"/></svg>'), "not allowed"),
+                          ("<svg", "favicon.svg")):
+            (self.f.root / "site/favicon.svg").write_text(bad)
+            code, _, err = self.f.run("--check")
+            self.assertEqual(code, 1)
+            self.assertIn(word, err)
+        (self.f.root / "site/favicon.svg").unlink()
+        self.assertIn("favicon.svg", self.f.run("--check")[2])
+
+    def test_missing_script_file(self):
+        self.f.run()
+        (self.f.root / "site/terminal.js").unlink()
+        self.assertIn("site/terminal.js is missing", self.f.run("--check")[2])
+
+    def test_real_script_is_safe(self):
+        js = (ROOT / "site/terminal.js").read_text(encoding="utf-8")
+        for bad in ("eval(", "new Function", "innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "XMLHttpRequest",
+                    "WebSocket", "sendBeacon", "document.cookie", "sessionStorage", "indexedDB", "import("):
+            self.assertNotIn(bad, js)
+        self.assertEqual(js.count("fetch("), 1)
+        self.assertIn("fetch('data.json'", js)
+        # Every address in the script is github.com; nothing else is named.
+        for url in re.findall(r"https?://[^\s'\"`)]+", js):
+            self.assertTrue(url.startswith("https://github.com/"), url)
+
+    def test_real_icon_is_valid(self):
+        out, err = io.StringIO(), io.StringIO()
+        problems = []
+        sitegen.check_icon(ROOT, problems)
+        self.assertEqual(problems, [])
 
     def test_data_comes_from_sources(self):
         self.f.run()

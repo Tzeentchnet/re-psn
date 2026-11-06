@@ -47,7 +47,7 @@ sh scripts/check-deploy.sh       # when deploy/ or the flags changed
   [docs/running.md](docs/running.md). Never log a setting's value, only its name.
 - **Features list:** edit `docs/features.tsv` and `ROADMAP.md`, then run `python3 tools/features.py` to regenerate
   `docs/features.md`. Do not edit the generated file by hand.
-- **Website:** `site/index.html` and `site/data.json` are generated; run `python3 tools/site.py` after changing the features list, `VERSION`, the README settings table or `CHANGELOG.md`, and commit the result. No script and nothing loaded from another site.
+- **Website:** `site/index.html` and `site/data.json` are generated; run `python3 tools/site.py` after changing the features list, `VERSION`, the README settings table or `CHANGELOG.md`, and commit the result. One script file (`site/terminal.js`, no dependencies, tested with `node --test tools/terminal.test.js`) and nothing loaded from another site; no inline script or style, no `innerHTML`.
 - **Docs:** Markdown, one layout, diagrams in Mermaid. Update them in the same change as the behaviour.
 - **Tests:** add them in the same commit. Say in the pull request what you ran and what you did not run.
 - **Never add:** game files or links to them, keys or credentials, saves, private logs, local paths or user names.

@@ -355,7 +355,7 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 ## Website
 
 The project page is built from `site/` by [tools/site.py](tools/site.py) out of the features list, `VERSION`, the settings table above and
-[CHANGELOG.md](CHANGELOG.md), with no script and nothing loaded from another site. It is published to GitHub Pages only after review.
+[CHANGELOG.md](CHANGELOG.md). It works without script; `site/terminal.js` (no dependencies) adds a terminal-style interface with commands such as `features`, `settings` and `install`, and the `plain view` link switches it off. Nothing is loaded from another site, and the only request is for `data.json` on the same site. It is published to GitHub Pages only after review.
 
 ## Credits
 
