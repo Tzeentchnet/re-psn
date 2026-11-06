@@ -1,5 +1,5 @@
 {
- "version": "0.2.0",
+ "version": "0.3.0",
  "stage": "pre-release",
  "repository": "https://github.com/undecuple/re-psn",
  "go": "1.22",
@@ -892,42 +892,16 @@
   "unreleased": {
    "version": "Unreleased",
    "date": "",
-   "sections": {
-    "Changed": [
-     "The website starts in the plain view on a phone (narrow screens); the `terminal view` button switches the interface on, and nothing is stored.",
-     "The website's interface on a phone: the version no longer wraps one letter per line in the title bar, and the menu is a row of tabs that scrolls sideways with the page content shown under it, instead of a full-screen ...",
-     "Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE keeps upstream's copyright line with a second line for the fork's changes.",
-     "The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on `127.0.0.1:36101` by default.",
-     "The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.",
-     "A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.",
-     "The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server runs as the non-root user 10001."
-    ],
-    "Added": [
-     "`re-psn-app` starts a terminal UI when run with no arguments, built on Bubble Tea v2.1.1 and Lip Gloss v2.0.6 (MIT; the app module's first dependencies, pinned in `app/go.mod` and `app/go.sum`; the server module still ...",
-     "Website: autocomplete in the terminal interface.",
-     "Website: a visible System / Light / Dark switch in the page header and in the terminal interface (without script it is hidden and the page follows the system), kept in step with the `theme` command and remembered in the ...",
-     "`site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table and this file (`--check` compares the committed files and the ...",
-     "`site/terminal.js`, the terminal-style interface of the project website: a menu, a content pane and a command line (`features [--status S] [id]`, `roadmap`, `settings [name]`, `install`, `connect`, `version`, ...",
-     "`app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT ...",
-     "`docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities, read-only filesystem, resource limits).",
-     "`.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to `ghcr.io/undecuple/re-psn` (tags `X.Y.Z`, plus `X.Y` and `latest` for a release that is ...",
-     "`-replace` (`RE_PSN_REPLACE`): when the game port is held by an earlier re-psn of the same user, the server sends it SIGTERM, waits up to 10 s for the port and starts in its place (Linux only)."
-    ]
-   },
-   "counts": {
-    "Changed": 7,
-    "Added": 9
-   }
+   "sections": {},
+   "counts": {}
   },
   "latest": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "date": "2026-11-06",
    "sections": {},
    "counts": {
-    "Added": 18,
-    "Fixed": 1,
-    "Changed": 14,
-    "Security": 1
+    "Changed": 7,
+    "Added": 9
    }
   }
  },
@@ -939,16 +913,16 @@
   "notice": "Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own."
  },
  "install": {
-  "release_tag": "v0.2.0",
-  "release_url": "https://github.com/undecuple/re-psn/releases/tag/v0.2.0",
+  "release_tag": "v0.3.0",
+  "release_url": "https://github.com/undecuple/re-psn/releases/tag/v0.3.0",
   "archives": "Archives for Linux (amd64, arm64) and Windows (amd64), and a Linux x86_64 AppImage, all unsigned, with a `SHA256SUMS` file. Check a download on Linux:",
   "verify_unix": [
    "sha256sum -c SHA256SUMS --ignore-missing"
   ],
   "verify_windows": "On Windows, compare the output of `Get-FileHash <archive>` with the line in `SHA256SUMS`.",
   "container": [
-   "docker pull ghcr.io/undecuple/re-psn:0.2.0",
-   "docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.2.0"
+   "docker pull ghcr.io/undecuple/re-psn:0.3.0",
+   "docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.3.0"
   ],
   "container_note": "Podman works the same way. See [docker/README.md](docker/README.md).",
   "source_note": "You need Go 1.22 or newer; a C compiler only for the C client and its tests.",
