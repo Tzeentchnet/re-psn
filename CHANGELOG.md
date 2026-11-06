@@ -6,11 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
 ### Added
 - A Linux x86_64 AppImage of the server in the release, `re-psn-vX.Y.Z-x86_64.AppImage`, beside the archives: the same binary and
   examples as one runnable file, built by `scripts/build-appimage.sh` with appimagetool 1.9.1 and the type-2 runtime 20251108
   (both downloaded by the release workflow and checked against pinned SHA-256 hashes), smoke-tested in the workflow, listed in
-  `SHA256SUMS`. Unsigned; needs FUSE or `--appimage-extract-and-run`. The workflow has not run with it yet. See `docs/releasing.md`.
+  `SHA256SUMS`. Unsigned; needs FUSE or `--appimage-extract-and-run`. A manual run of the release workflow built and smoke-tested it on a runner; no release has been published. See `docs/releasing.md`.
 - `docs/img/social.png` (1280x640), drawn by the art generator for the repository's social preview. It is uploaded by hand in the
   repository settings and no page uses it.
 - `tools/art/make_art.py` draws the README banner and terminal images (`docs/img/`) in the gruvbox-material palette

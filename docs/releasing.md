@@ -4,8 +4,9 @@ How a maintainer cuts a re-psn pre-release: where the version lives, the bump, t
 checked on the way. Pre-releases come often and on no schedule, whenever there is something worth trying.
 
 > [!IMPORTANT]
-> Not run yet: there is no tag and nothing has been published. The release workflow has not run on a tag, and the dry
-> run (a manual run of the workflow) has not been done (see [Not checked yet](#not-checked-yet)).
+> Not run yet: nothing has been published and no tag exists. A manual run of the release workflow (the dry run) has
+> built everything and passed its checks on a runner; the tag step and the draft job have not run (see
+> [Not checked yet](#not-checked-yet)).
 
 ## Contents
 
@@ -22,6 +23,8 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
   heading in [CHANGELOG.md](../CHANGELOG.md) and the `<!-- version -->...<!-- /version -->` span in the
   [README](../README.md) status line state the same number; `TestVersionAgrees` fails when they differ. Release builds
   also set the version with `-ldflags -X main.version=...` from the tag.
+- The status badge in the README top row (`status-alpha`) is not inside the version span, so a bump does not touch it. Change it
+  by hand only when the project's stage changes (for example from alpha to beta), in the same pull request as that decision.
 - A tag is `v` + `VERSION` at the tagged commit, for example `v0.2.0`. Tags are never moved, deleted or reused. A bad
   release is followed by the next version.
 - Every release is a pre-release while the version is below 1.0.0: the workflow creates it with the pre-release flag,
@@ -167,8 +170,8 @@ How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), ru
 
 ## Not checked yet
 
-- The release workflow itself: it has not run on Actions since the tag check and the notes script were added, nor with
-  the AppImage steps. The dry run comes first.
+- The tag step ("Tag is v + VERSION") and the draft job of the release workflow: a manual run skips both, so the first tag
+  is their first run. A wrong tag fails at the tag step before anything is built; the draft job never publishes.
 - That the Windows and arm64 binaries run; they are cross-built. The exe, the AppImage and `SHA256SUMS` are unsigned.
 - The AppImage on other distributions: it was built and run (with FUSE and with `--appimage-extract-and-run`) on one
   x86_64 Linux machine only.
