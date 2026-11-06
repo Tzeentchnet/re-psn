@@ -615,7 +615,7 @@
    "status": "partial",
    "since": "main",
    "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml",
-   "note": "Partial: the page is built and checked but not published yet; Pages is enabled; the deploy job waits for the repository variable PAGES_ENABLED. No terminal-style interface yet.",
+   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and redeployed on a push to main that touches `site/`, while the repository variable PAGES_ENABLED is true. No terminal-style interface yet.",
    "status_label": "partial"
   },
   {
