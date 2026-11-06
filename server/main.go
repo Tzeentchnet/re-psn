@@ -5,14 +5,18 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"io"
 	"log"
 	"log/slog"
-	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
+	"time"
 )
 
 var version = "0.2.0"
@@ -52,9 +56,13 @@ func main() {
 	relay := toggle("relay", false, "carry traffic between players who can't reach each other directly (uses this server's bandwidth)")
 	db := flag.String("db", "off", "score storage: off or memory (both keep scores in memory; no database backend is built yet)")
 	dbFile := flag.String("db-file", "", "read the -db setting from this file instead (it may hold a password)")
+	replace := toggle("replace", false, "if the game port is already in use by an earlier instance of this server, ask it to stop, wait for the port, then start (Linux only)")
 	flag.Parse()
 	if bad != nil {
 		log.Fatal(bad)
+	}
+	if *replace && !replaceSupported {
+		log.Fatalf("-replace is not supported on %s", runtime.GOOS)
 	}
 	onCmdLine := map[string]bool{}
 	flag.Visit(func(f *flag.Flag) { onCmdLine[f.Name] = true })
@@ -112,25 +120,53 @@ func main() {
 	}
 	s.maxPlayerRooms, s.maxPerAddr, s.maxReqRate = *playerRooms, *perAddr, *reqRate
 	tcpA, udpA := listenAddrs(*addr, *tcpAddr, *udpAddr)
-	ln, err := net.Listen("tcp", tcpA)
+	ln, pc, err := listenGame(logger, tcpA, udpA, *replace)
 	if err != nil {
 		fatal(err)
 	}
-	pc, err := net.ListenPacket("udp", udpA)
-	if err != nil {
-		fatal(err)
-	}
-	go func() { fatal(s.ServeUDP(pc)) }()
+	pidPath := writePidFile(logger, portOf(ln.Addr().String()), ln.Addr().String())
+
+	// SIGINT or SIGTERM stops the server; the listeners closing then is not
+	// an error. Anything else a serving goroutine returns is fatal.
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, stopSignals()...)
+	errc := make(chan error, 3)
+	go func() { errc <- s.ServeUDP(pc) }()
 	logger.Info("started", "version", version, "clients", ln.Addr().String(), "udp", pc.LocalAddr().String(), "relay", *relay)
+	var hs *http.Server
 	if *httpAddr != "" {
 		s.httpToken = *httpToken
 		logger.Info("status page", "addr", *httpAddr, "token", *httpToken != "")
 		if reachable(*httpAddr) && *httpToken == "" {
 			logger.Warn("the status page lists every online ID and has no token; set -http-token or bind -http to localhost")
 		}
-		go func() { fatal(http.ListenAndServe(*httpAddr, s.HTTP())) }()
+		hs = &http.Server{Addr: *httpAddr, Handler: s.HTTP()}
+		go func() { errc <- hs.ListenAndServe() }()
 	} else {
 		logger.Debug("status page off (set -http to turn it on)")
 	}
-	fatal(s.Serve(ln))
+	go func() { errc <- s.Serve(ln) }()
+	select {
+	case err := <-errc:
+		removePidFile(pidPath)
+		fatal(err)
+	case <-stop:
+	}
+	logger.Info("stopping")
+	ln.Close()
+	pc.Close()
+	if hs != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		hs.Shutdown(ctx)
+		cancel()
+	}
+	removePidFile(pidPath)
+}
+
+// stopSignals are the signals that stop the server: Windows has only Ctrl-C.
+func stopSignals() []os.Signal {
+	if runtime.GOOS == "windows" {
+		return []os.Signal{os.Interrupt}
+	}
+	return []os.Signal{os.Interrupt, syscall.SIGTERM}
 }
