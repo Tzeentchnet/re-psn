@@ -72,6 +72,55 @@
   }
 }
 
+/* The theme command sets data-theme on the root; these two copies of the palette follow the same tokens (checked by tools/site.py). */
+/* palette:dark */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg0: #282828;
+  --bg1: #32302f;
+  --bg2: #32302f;
+  --bg3: #45403d;
+  --bg4: #45403d;
+  --bg5: #5a524c;
+  --fg0: #d4be98;
+  --fg1: #ddc7a1;
+  --grey0: #7c6f64;
+  --grey1: #928374;
+  --grey2: #a89984;
+  --red: #ea6962;
+  --orange: #e78a4e;
+  --yellow: #d8a657;
+  --green: #a9b665;
+  --aqua: #89b482;
+  --blue: #7daea3;
+  --purple: #d3869b;
+}
+/* /palette */
+:root[data-theme="dark"] { --muted: var(--grey2); }
+/* palette:light */
+:root[data-theme="light"] {
+    --bg0: #fbf1c7;
+    --bg1: #f4e8be;
+    --bg2: #f2e5bc;
+    --bg3: #eee0b7;
+    --bg4: #e5d5ad;
+    --bg5: #ddccab;
+    --fg0: #654735;
+    --fg1: #4f3829;
+    --grey0: #a89984;
+    --grey1: #928374;
+    --grey2: #7c6f64;
+    --red: #c14a4a;
+    --orange: #c35e0a;
+    --yellow: #b47109;
+    --green: #6c782e;
+    --aqua: #4c7a5d;
+    --blue: #45707a;
+    --purple: #945e80;
+  }
+/* /palette */
+:root[data-theme="light"] { --muted: var(--fg0); }
+
 * { box-sizing: border-box; }
 
 html {
@@ -108,6 +157,7 @@ a:focus-visible, summary:focus-visible {
   left: -999px;
   top: 0;
   background: var(--panel);
+  color: var(--strong);
   padding: 0.25em 1ch;
 }
 .skip:focus { left: 16px; top: 8px; z-index: 2; }
@@ -133,13 +183,21 @@ li { margin: 0.25em 0; }
 .bar {
   margin: 16px 0 0;
   border: 1px solid var(--line);
-  border-bottom: 3px double var(--line);
+  border-bottom: 0;
   padding: 0.25em 1ch;
 }
+nav.bar {
+  margin: 0;
+  border-bottom: 3px double var(--line);
+  background: var(--page);
+}
+/* The section bar stays in view while scrolling; it is in the normal tab order and never traps focus. */
+nav.sticky { position: sticky; top: 0; z-index: 5; }
+[id] { scroll-margin-top: 6rem; }
 .bar .title { margin: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 2ch; color: var(--strong); }
 .bar .title span { color: var(--muted); }
-.bar nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0 2ch; }
-.bar nav li { margin: 0; }
+.bar ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0 2ch; }
+.bar li { margin: 0; }
 
 main { display: block; }
 
@@ -221,4 +279,123 @@ footer { margin: 2em 0 0; color: var(--muted); }
 @media print {
   html { background: #fff; color: #000; }
   a { color: #000; }
+}
+
+/* Back to top: a plain link, fixed at the bottom right of the document view. */
+body { padding-bottom: 72px; }
+.totop {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 1ch;
+  background: var(--panel);
+  color: var(--strong);
+  border: 1px solid var(--line);
+  text-decoration: none;
+}
+.totop:hover { background: var(--strong); color: var(--page); }
+.totop:focus-visible { outline: 2px solid var(--strong); outline-offset: 2px; }
+
+/* ---- The terminal interface (site/terminal.js adds .tui-on to the root and builds #tui) ---------------------------------- */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.tui, .plain-bar { display: none; }
+html.tui-on:not(.plain) .tui { display: grid; }
+html.tui-on:not(.plain) :is(.bar, main, .skip, .totop) { display: none; }
+html.tui-on.plain .plain-bar { display: block; margin: 16px 0 0; }
+html.tui-on:not(.plain) footer { margin-top: 0.75em; }
+html.tui-on:not(.plain) body { padding-bottom: 16px; }
+
+.tui button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: left; cursor: pointer; }
+.tui-plain { color: var(--link); text-decoration: underline; text-underline-offset: 0.2em; background: none; border: 0; font: inherit; cursor: pointer; padding: 0; }
+.tui button:focus-visible, .tui-plain:focus-visible, .tui input:focus-visible, .tui-out:focus-visible {
+  outline: 2px solid var(--strong);
+  outline-offset: -2px;
+}
+.tui-plain:focus-visible { outline-offset: 2px; }
+
+.tui {
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  height: calc(100vh - 6.5rem);
+  height: calc(100dvh - 6.5rem);
+  min-height: 24rem;
+  margin: 16px 0 0;
+  border: 1px solid var(--line);
+  background: var(--page);
+}
+.tui ul { list-style: none; margin: 0; padding: 0; }
+.tui li { margin: 0; }
+.tui-title { display: flex; flex-wrap: wrap; gap: 0 2ch; padding: 0.25em 1ch; color: var(--strong); border-bottom: 1px solid var(--line); }
+.tui-name { font-weight: bold; }
+.tui-ver { color: var(--muted); flex: 1; }
+.tui ul.tui-fkeys { display: flex; flex-wrap: wrap; gap: 0 2ch; padding: 0.25em 1ch; border-bottom: 3px double var(--line); }
+.tui-panes { display: grid; grid-template-columns: 24ch minmax(0, 1fr); min-height: 0; }
+.tui-menu { border-right: 1px solid var(--line); padding: 0.5em 0; overflow-y: auto; }
+.tui-menu .mi { display: block; width: 100%; padding: 0 1ch; }
+.tui-menu .mi::before { content: "  "; white-space: pre; }
+.tui-menu .mi:hover { text-decoration: underline; }
+.tui-menu .mi[aria-current] { background: var(--fg0); color: var(--bg0); }
+.tui-menu .mi[aria-current]::before { content: "> "; }
+.tui-content { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.tui .chip.tui-back { display: none; }
+.tui-out { flex: 1; overflow: auto; padding: 0.5em 1ch; min-height: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tui-out .ln { min-height: 1.5em; }
+.tui-out .echo { color: var(--muted); }
+.tui-out .strong { color: var(--strong); font-weight: bold; }
+.tui-out .code { background: var(--panel); padding: 0 0.5ch; }
+
+.tui-cmd { border-top: 1px solid var(--line); padding: 0.25em 1ch; }
+.tui-hint { margin: 0; color: var(--muted); }
+.tui:not(.empty) .tui-hint { visibility: hidden; }
+.tui-row { position: relative; display: flex; align-items: center; gap: 1ch; }
+.tui-ps { color: var(--strong); }
+.tui-row input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--strong);
+  background: transparent;
+  border: 0;
+  padding: 0.25em 0;
+  caret-color: var(--strong);
+  caret-shape: block;
+}
+/* The resting cursor is a block after the prompt; once the input has focus the real caret takes over. */
+.cursor { position: absolute; left: 3ch; color: var(--strong); pointer-events: none; animation: blink 1.1s steps(1) infinite; }
+.tui:not(.empty) .cursor, .tui-row:focus-within .cursor { display: none; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+
+.tui ul.tui-chips { display: none; flex-wrap: wrap; gap: 8px; padding: 8px 1ch; border-top: 1px solid var(--line); }
+.tui .chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.5ch;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.tui-keys { margin: 0; padding: 0.25em 1ch; color: var(--muted); border-top: 1px solid var(--line); }
+.tui .tag { margin-right: 0; padding: 0 0.5ch; }
+.tui .tag::before, .tui .tag::after { content: none; }
+
+/* Under about 70 columns: one pane at a time, command chips for visitors without a keyboard. */
+@media (max-width: 44rem) {
+  .tui { height: auto; min-height: calc(100dvh - 5rem); grid-template-rows: auto auto 1fr auto auto auto; }
+  .tui-panes { grid-template-columns: minmax(0, 1fr); }
+  .tui[data-view="menu"] .tui-content { display: none; }
+  .tui[data-view="content"] .tui-menu { display: none; }
+  .tui-menu { border-right: 0; }
+  .tui-menu .mi { min-height: 44px; display: flex; align-items: center; }
+  .tui .chip.tui-back { display: inline-flex; margin: 8px 1ch 0; align-self: flex-start; }
+  .tui ul.tui-chips { display: flex; }
+  .tui-keys, .tui ul.tui-fkeys { display: none; }
+  .tui-out { overflow: visible; }
+  nav.bar ul { gap: 0 1.5ch; }
 }

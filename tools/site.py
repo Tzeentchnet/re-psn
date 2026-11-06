@@ -13,7 +13,9 @@ Sources, one for each kind of content, so no number or status is copied by hand:
     CHANGELOG.md        the Unreleased section and the latest release
     go.mod              the Go version named in the build steps
 
-The page has no script and loads nothing from another site (see CSP below). site/style.css has the colour tokens of
+The page works without script. site/terminal.js (hand-written, no dependencies) turns it into a terminal-style interface when
+it runs; it reads site/data.json from the same origin and nothing else. The page loads nothing from another site (see CSP
+below). site/style.css has the colour tokens of
 docs/art/palette.json on :root; --check fails when a token differs from the palette.
 """
 import argparse
@@ -29,10 +31,12 @@ import features  # noqa: E402
 OUT_HTML = "site/index.html"
 OUT_JSON = "site/data.json"
 CSS = "site/style.css"
+JS = "site/terminal.js"
+ICON = "site/favicon.svg"
 PALETTE = "docs/art/palette.json"
 REPO_URL = features.REPO_URL
 TITLE = "re-psn matchmaking server"
-CSP = "default-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"
+CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'"
 UNOFFICIAL = "Unofficial; not affiliated with Sony."
 AI_LINE = "Developed with AI agent assistance."
 
@@ -49,6 +53,27 @@ ROADMAP = (
     ("Later", ("later",)),
     ("Not planned", ("declined",)),
 )
+# Paragraphs written once and used by the page and by the terminal interface (through data.json). Inline `code` and [text](link).
+ABOUT = (
+    "re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own "
+    "server: a LAN, a VPN, or friends connecting to one person's machine. The server keeps rooms and leaderboards and tells "
+    "each player where the others are. Game traffic goes directly between players, and through the server only when two "
+    "players cannot reach each other and the host has turned the relay on.",
+    "It is a fork of [psnr](https://github.com/sp00nznet/psnr) by sp00nz: a Go server and a one-file C client, "
+    "with no accounts and no public instance.",
+)
+NOTICE = UNOFFICIAL + " No game files, keys or firmware are in the repository or needed from it. Play only games you own."
+CREDITS = (
+    "sp00nz ([sp00nznet](https://github.com/sp00nznet)) wrote [psnr](https://github.com/sp00nznet/psnr): the server, the C client, "
+    "the protocol, NAT traversal, the relay and the NAT lab.",
+    "undecuple ([undecuple](https://github.com/undecuple)) maintains re-psn and wrote everything added since the fork: the release and "
+    "container tooling, the AppImage, hardening and limits, rooms and invite codes, the desktop app, this website, the documentation "
+    "and the tests.",
+    "[ps3recomp](https://github.com/sp00nznet/ps3recomp) is the recompiler whose NP modules use the client.",
+    "Colours from [gruvbox-material](https://github.com/sainnhe/gruvbox-material) (MIT, Copyright (c) 2020 sainnhe).",
+)
+LICENCE = ("MIT, see [LICENSE](LICENSE); upstream's copyright line is kept and a line for the fork's changes is added. PlayStation, PS3 and PSN are "
+           "trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.")
 # (path, title, what is in it); each path must exist
 DOCS = (
     ("docs/architecture.md", "Architecture", "The parts, the threadless client, why game traffic is peer to peer, the relay"),
@@ -185,16 +210,60 @@ def build_data(root):
             raise SourceError(f"site.py lists {path}, which does not exist")
     counts = {s: sum(1 for r in rows if r["status"] == s) for s in features.STATUS}
     roadmap = {name: [r["id"] for r in rows if r["status"] in statuses] for name, statuses in ROADMAP}
+    changelog = read_changelog(root)
+    go = read_go_version(root)
+    stage = "pre-release" if version.startswith("0.") else "release"
+    latest = changelog["latest"]["version"]
+    by_flag = {r["flag"]: r for r in settings}
+    game = by_flag.get("-addr", {}).get("default", "")
+    web = by_flag.get("-http", {}).get("default", "")
+    points = []
+    if game:
+        points.append(f"Game connection and address probes: `{game}`, TCP and UDP, open to every player.")
+    if web:
+        points.append(f"Status page: `{web}`, for the host only; it lists every online ID.")
+    points.append("Each player's P2P port (UDP and TCP) must be reachable by the other players; the game opens it.")
     return {
         "version": version,
-        "stage": "pre-release" if version.startswith("0.") else "release",
+        "stage": stage,
         "repository": REPO_URL,
-        "go": read_go_version(root),
+        "go": go,
         "status_counts": counts,
-        "features": [dict(r, status_label=features.STATUS[r["status"]][0]) for r in rows],
+        "features": [dict(r, status_label=features.STATUS[r["status"]][0], status_class=TAG_CLASS[r["status"]]) for r in rows],
         "roadmap": roadmap,
         "settings": settings,
-        "changelog": read_changelog(root),
+        "changelog": changelog,
+        "about": {"paragraphs": list(ABOUT), "notice": NOTICE},
+        "install": {
+            "release_tag": f"v{latest}",
+            "release_url": f"{REPO_URL}/releases/tag/v{latest}",
+            "archives": "Archives for Linux (amd64, arm64) and Windows (amd64), and a Linux x86_64 AppImage, all unsigned, with a "
+                        "`SHA256SUMS` file. Check a download on Linux:",
+            "verify_unix": ["sha256sum -c SHA256SUMS --ignore-missing"],
+            "verify_windows": "On Windows, compare the output of `Get-FileHash <archive>` with the line in `SHA256SUMS`.",
+            "container": [f"docker pull ghcr.io/undecuple/re-psn:{latest}",
+                          f"docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:{latest}"],
+            "container_note": "Podman works the same way. See [docker/README.md](docker/README.md).",
+            "source_note": f"You need {'Go ' + go + ' or newer' if go else 'Go'}; a C compiler only for the C client and its tests.",
+            "source": ["go build -o re-psn ./server", "./re-psn"],
+        },
+        "connect": {
+            "intro": "Players on one LAN or VPN need nothing forwarded. Otherwise the host forwards a port, runs a public server, or "
+                     "uses an overlay network such as Tailscale or ZeroTier; the relay is the fallback when two players cannot reach each other.",
+            "points": points,
+            "client": "A game reaches the server through the C client in `client/psnr.c`, via ps3recomp's NP modules. That side is "
+                      "upstream's work; [docs/connecting.md](docs/connecting.md) covers each way to connect.",
+        },
+        "credits": list(CREDITS),
+        "licence": LICENCE,
+        "links": [
+            {"title": "Repository", "url": REPO_URL},
+            {"title": "Issues", "url": f"{REPO_URL}/issues"},
+            {"title": "Releases", "url": f"{REPO_URL}/releases"},
+            {"title": "Security policy", "url": doc_url("SECURITY.md")},
+            {"title": "Upstream psnr", "url": "https://github.com/sp00nznet/psnr"},
+            {"title": "ps3recomp", "url": "https://github.com/sp00nznet/ps3recomp"},
+        ],
         "docs": [{"path": p, "title": t, "summary": s, "url": doc_url(p)} for p, t, s in DOCS],
     }
 
@@ -324,28 +393,23 @@ def render_page(data):
     w('<meta name="color-scheme" content="dark light">\n')
     w(f'<meta name="description" content="Matchmaking rooms and leaderboards for statically recompiled PS3 games, with NAT traversal and an optional relay. {esc(UNOFFICIAL)}">\n')
     w(f'<title>{esc(TITLE)}</title>\n')
-    w('<link rel="icon" href="data:,">\n<link rel="stylesheet" href="style.css">\n</head>\n<body>\n')
+    w('<link rel="icon" href="favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="style.css">\n<script src="terminal.js" defer></script>\n</head>\n<body id="top">\n')
     w('<a class="skip" href="#overview">Skip to the content</a>\n')
     w('<header class="bar">\n')
-    w(f'<p class="title"><strong>re-psn</strong> <span>v{esc(v)} &middot; {esc(data["stage"])}</span></p>\n')
-    w('<nav aria-label="Sections"><ul>\n')
+    w(f'<h1 class="title"><strong>re-psn</strong> <span>v{esc(v)} &middot; {esc(data["stage"])}</span></h1>\n</header>\n')
+    w('<nav class="bar sticky" aria-label="Sections"><ul>\n')
     for slug, label in (("overview", "Overview"), ("features", "Features"), ("roadmap", "Roadmap"), ("changes", "Changes"),
                         ("settings", "Settings"), ("install", "Install"), ("connect", "Connect"), ("docs", "Docs"),
                         ("credits", "Credits")):
         w(f'<li><a href="#{slug}">{label}</a></li>\n')
-    w('</ul></nav>\n</header>\n<main>\n')
+    w('</ul></nav>\n<main>\n')
 
     w('<section id="overview">\n<h2>Overview</h2>\n')
-    w('<p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own '
-      'server: a LAN, a VPN, or friends connecting to one person\'s machine. The server keeps rooms and leaderboards and tells '
-      'each player where the others are. Game traffic goes directly between players, and through the server only when two '
-      'players cannot reach each other and the host has turned the relay on.</p>\n')
-    w('<p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, '
-      'with no accounts and no public instance.</p>\n')
+    for para in data["about"]["paragraphs"]:
+        w(f'<p>{inline(para)}</p>\n')
     w(f'<p class="status-line">Version {esc(v)} ({esc(data["stage"])}). {total} features: '
       + ", ".join(f'{n[s]} {esc(features.STATUS[s][0])}' for s in features.STATUS if n[s]) + '.</p>\n')
-    w(f'<p class="notice">{esc(UNOFFICIAL)} No game files, keys or firmware are in the repository or needed from it. '
-      'Play only games you own.</p>\n</section>\n')
+    w(f'<p class="notice">{esc(data["about"]["notice"])}</p>\n</section>\n')
 
     w('<section id="features">\n<h2>Features</h2>\n')
     w(f'<p>One row per feature. A status rests on a test or a recorded run in the repository; the '
@@ -370,36 +434,25 @@ def render_page(data):
     render_settings(data, w)
     w('</section>\n')
 
-    latest = ch["latest"]["version"]
+    ins = data["install"]
     w('<section id="install">\n<h2>Install</h2>\n')
-    w(f'<p>The latest release is <a href="{REPO_URL}/releases/tag/v{esc(latest)}">v{esc(latest)}</a>, a {esc(data["stage"])}.</p>\n')
+    w(f'<p>The latest release is <a href="{esc(ins["release_url"])}">{esc(ins["release_tag"])}</a>, a {esc(data["stage"])}.</p>\n')
     w('<h3>Release archives</h3>\n')
-    w(f'<p>Archives for Linux (amd64, arm64) and Windows (amd64), and a Linux x86_64 AppImage, all unsigned, with a '
-      f'<code>SHA256SUMS</code> file. Check a download on Linux:</p>\n<pre><code>sha256sum -c SHA256SUMS --ignore-missing</code></pre>\n')
-    w('<p>On Windows, compare the output of <code>Get-FileHash &lt;archive&gt;</code> with the line in <code>SHA256SUMS</code>.</p>\n')
+    w(f'<p>{inline(ins["archives"])}</p>\n<pre><code>{esc(chr(10).join(ins["verify_unix"]))}</code></pre>\n')
+    w(f'<p>{inline(ins["verify_windows"])}</p>\n')
     w('<h3>Container</h3>\n')
-    w(f'<pre><code>docker pull ghcr.io/undecuple/re-psn:{esc(latest)}\n'
-      'docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:' + esc(latest) + '</code></pre>\n')
-    w(f'<p>Podman works the same way. See <a href="{esc(doc_url("docker/README.md"))}">docker/README.md</a>.</p>\n')
+    w(f'<pre><code>{esc(chr(10).join(ins["container"]))}</code></pre>\n')
+    w(f'<p>{inline(ins["container_note"])}</p>\n')
     w('<h3>From source</h3>\n')
-    go = f"Go {esc(data['go'])} or newer" if data["go"] else "Go"
-    w(f'<p>You need {go}; a C compiler only for the C client and its tests.</p>\n')
-    w('<pre><code>go build -o re-psn ./server\n./re-psn</code></pre>\n</section>\n')
+    w(f'<p>{esc(ins["source_note"])}</p>\n')
+    w(f'<pre><code>{esc(chr(10).join(ins["source"]))}</code></pre>\n</section>\n')
 
-    by_flag = {s["flag"]: s for s in data["settings"]}
-    game = by_flag.get("-addr", {}).get("default", "")
-    web = by_flag.get("-http", {}).get("default", "")
+    con = data["connect"]
     w('<section id="connect">\n<h2>Connect</h2>\n')
-    w('<p>Players on one LAN or VPN need nothing forwarded. Otherwise the host forwards a port, runs a public server, or '
-      'uses an overlay network such as Tailscale or ZeroTier; the relay is the fallback when two players cannot reach each other.</p>\n')
-    w('<ul>\n')
-    if game:
-        w(f'<li>Game connection and address probes: <code>{esc(game)}</code>, TCP and UDP, open to every player.</li>\n')
-    if web:
-        w(f'<li>Status page: <code>{esc(web)}</code>, for the host only; it lists every online ID.</li>\n')
-    w('<li>Each player\'s P2P port (UDP and TCP) must be reachable by the other players; the game opens it.</li>\n</ul>\n')
-    w('<p>A game reaches the server through the C client in <code>client/psnr.c</code>, via ps3recomp\'s NP modules. That side is '
-      f'upstream\'s work; <a href="{esc(doc_url("docs/connecting.md"))}">docs/connecting.md</a> covers each way to connect.</p>\n</section>\n')
+    w(f'<p>{esc(con["intro"])}</p>\n<ul>\n')
+    for pt in con["points"]:
+        w(f'<li>{inline(pt)}</li>\n')
+    w(f'</ul>\n<p>{inline(con["client"])}</p>\n</section>\n')
 
     w('<section id="docs">\n<h2>Docs</h2>\n<ul class="docs">\n')
     for d in data["docs"]:
@@ -421,7 +474,8 @@ def render_page(data):
     w('</section>\n')
 
     w('</main>\n<footer>\n')
-    w(f'<p>{esc(UNOFFICIAL)} {esc(AI_LINE)}</p>\n</footer>\n</body>\n</html>\n')
+    w(f'<p>{esc(UNOFFICIAL)} {esc(AI_LINE)}</p>\n</footer>\n')
+    w('<a class="totop" href="#top"><span aria-hidden="true">&uarr;</span> Top</a>\n</body>\n</html>\n')
     return "".join(o)
 
 
@@ -436,16 +490,39 @@ def check_css(root, problems):
         problems.append(f"{CSS}: {e}")
         return
     for mode in ("dark", "light"):
-        m = re.search(r"/\* palette:%s \*/(.*?)/\* /palette \*/" % mode, css, re.S)
-        if not m:
+        # A mode can appear more than once (the system light variant and the one chosen with data-theme); each copy is checked.
+        blocks = re.findall(r"/\* palette:%s \*/(.*?)/\* /palette \*/" % mode, css, re.S)
+        if not blocks:
             problems.append(f"{CSS}: no '/* palette:{mode} */ ... /* /palette */' block")
-            continue
-        found = dict(re.findall(r"--([a-z0-9]+):\s*(#[0-9a-fA-F]{6})\s*;", m.group(1)))
-        for name, value in modes[mode].items():
-            if found.get(name, "").lower() != value.lower():
-                problems.append(f"{CSS}: --{name} in the {mode} block is '{found.get(name, 'missing')}', palette.json has {value}")
+        for block in blocks:
+            found = dict(re.findall(r"--([a-z0-9]+):\s*(#[0-9a-fA-F]{6})\s*;", block))
+            for name, value in modes[mode].items():
+                if found.get(name, "").lower() != value.lower():
+                    problems.append(f"{CSS}: --{name} in the {mode} block is '{found.get(name, 'missing')}', palette.json has {value}")
     if "<script" in css or "@import" in css or "url(http" in css:
         problems.append(f"{CSS}: must not load anything from another site")
+
+
+def check_icon(root, problems):
+    """site/favicon.svg exists, is XML without script, foreignObject or an outside reference, and uses palette colours only."""
+    import xml.etree.ElementTree as ET
+    try:
+        text = read(root, ICON)
+        tree = ET.fromstring(text)
+        allowed = {v.lower() for mode in json.loads(read(root, PALETTE))["modes"].values() for v in mode.values()}
+    except (SourceError, ValueError, KeyError, ET.ParseError) as e:
+        problems.append(f"{ICON}: {e}")
+        return
+    for node in tree.iter():
+        name = node.tag.split("}")[-1].lower()
+        if name in ("script", "foreignobject", "image", "use", "style"):
+            problems.append(f"{ICON}: <{name}> is not allowed")
+        for k, v in node.attrib.items():
+            k = k.split("}")[-1].lower()
+            if k == "href" or k.startswith("on") or "url(" in v or "http" in v.lower() and k != "xmlns":
+                problems.append(f"{ICON}: attribute {k} must not reference anything")
+            if k in ("fill", "stroke") and v.lower() not in allowed and v.lower() != "none":
+                problems.append(f"{ICON}: colour {v} is not in {PALETTE}")
 
 
 def main(argv=None):
@@ -467,6 +544,9 @@ def main(argv=None):
         return 1
     problems = []
     check_css(root, problems)
+    check_icon(root, problems)
+    if not (root / JS).exists():
+        problems.append(f"{JS} is missing (the page loads it)")
     if a.check:
         for rel, text in outputs.items():
             p = root / rel

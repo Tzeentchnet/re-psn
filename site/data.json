@@ -22,7 +22,8 @@
    "since": "0.1.0",
    "evidence": "server/rooms.go, TestRooms",
    "note": "Upstream work. Kick (`KICK_MEMBER`) is in the server but no test covers it.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "rooms-data",
@@ -33,7 +34,8 @@
    "since": "0.2.0",
    "evidence": "server/rooms.go, TestRooms",
    "note": "External and internal data are upstream work (0.1.0). Room flags and member data are newer, so clients built against 0.1.0 no longer match.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "rooms-codes",
@@ -44,7 +46,8 @@
    "since": "0.2.0",
    "evidence": "server/codes_test.go, TestInviteOnlyRoom, TestCodeGuessesCloseTheConnection, TestCodeStaysOutOfLogAndStatus, #7",
    "note": "Protocol 0.4: `HELLO_ACK` flags bit 1 says the server has them. Codes are never logged.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "rooms-private",
@@ -55,7 +58,8 @@
    "since": "",
    "evidence": "ROADMAP.md",
    "note": "The relay-only variant is not designed yet.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "scores-boards",
@@ -66,7 +70,8 @@
    "since": "0.1.0",
    "evidence": "server/scores.go, TestScores",
    "note": "Upstream work. Kept in memory: a restart empties every board. Opt-in storage is planned (store-sqlite).",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "players-names",
@@ -77,7 +82,8 @@
    "since": "0.2.0",
    "evidence": "TestNameTakenFromAnotherAddress, TestSameAddressReconnectTakesOver",
    "note": "No passwords: a name is not authenticated.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "players-friends",
@@ -88,7 +94,8 @@
    "since": "",
    "evidence": "ROADMAP.md",
    "note": "Not in the server today.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "players-accounts",
@@ -99,7 +106,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. Needs the opt-in database (store-sqlite) first, and the scope in ROADMAP.md says no accounts or passwords, so that needs changing too. The default would stay a name per player.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "limits-requests",
@@ -110,7 +118,8 @@
    "since": "0.2.0",
    "evidence": "server/limits_test.go, TestBlobLimit, TestPlayerRoomLimit, TestConnLimitPerAddr, TestRequestRateLimit, TestLogHelloAndRefusals",
    "note": "TCP only. UDP rate limits are planned (net-guardrails).",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "logs-levels",
@@ -121,7 +130,8 @@
    "since": "0.2.0",
    "evidence": "server/logging.go, TestLogHelloAndRefusals, TestLogLevelAndFormat, TestLogStatusRefusalKeepsTokenOut, #4",
    "note": "Not checked: no test covers `-log-file`. The server does not rotate the file.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "status-page",
@@ -132,7 +142,8 @@
    "since": "0.2.0",
    "evidence": "server/api.go, TestStatusToken, TestReachable, TestStatusPageOff, TestStatusPageOn, docs/status.png",
    "note": "The page and /api/stats are upstream work (0.1.0); the token is the fork's.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "metrics-endpoint",
@@ -143,7 +154,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. Needs the counters from net-guardrails first.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "metrics-dashboard",
@@ -154,7 +166,8 @@
    "since": "",
    "evidence": "",
    "note": "After metrics-endpoint.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "proxy-support",
@@ -165,7 +178,8 @@
    "since": "0.2.0",
    "evidence": "server/proxy.go, TestReadProxyHeader, TestClientAddr, TestProxyHeaderFromUntrustedPeerIsJunk, TestTrustedPeerWithoutHeaderIsClosed, TestLimitUsesRealAddress, #9, #12",
    "note": "Off by default. UDP is not proxied. See docs/running.md.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "deploy-examples",
@@ -176,7 +190,8 @@
    "since": "0.2.0",
    "evidence": "deploy/re-psn.env.example, deploy/re-psn.service, deploy/traefik/dynamic.yml, scripts/check-deploy.sh, docs/running.md, #10",
    "note": "`scripts/check-deploy.sh` checks the env file and the unit against the server's flags. The Traefik run (Traefik 3.1 under Podman) is recorded in docs/running.md; no run of the systemd unit is recorded.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "deploy-nginx-haproxy",
@@ -187,7 +202,8 @@
    "since": "0.2.0",
    "evidence": "deploy/nginx/psnr.conf, deploy/haproxy/haproxy.cfg",
    "note": "Not checked: neither config has been run against the server (docs/running.md says so).",
-   "status_label": "not yet verified"
+   "status_label": "not yet verified",
+   "status_class": "warn"
   },
   {
    "id": "deploy-caddy",
@@ -198,7 +214,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "deploy-container",
@@ -209,7 +226,8 @@
    "since": "0.2.0",
    "evidence": "docker/Dockerfile, docker/docker-compose.yml, docker/docker-compose.host.yml, docker/docker-compose.test.yml, docker/README.md, lab/run.sh, #11",
    "note": "A Podman 6.1 run is recorded in docker/README.md, and the NAT lab builds the image with Docker in CI. The v0.2.0 image is pushed to ghcr.io (amd64 and arm64, unsigned; arm64 not run). The server runs as a non-root user and the bases are pinned by digest. Opt-in host-networking compose files, one hardened for a shared test host, are for Linux only. Compose under Podman is not tested.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "settings-env",
@@ -220,7 +238,8 @@
    "since": "0.2.0",
    "evidence": "server/config.go, TestEnvAlias, TestEnvNoticeHidesValue, TestFlagBeatsEnv, TestEnvBad, TestListenAddrs, #8, #17",
    "note": "No config file yet.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "store-interface",
@@ -231,7 +250,8 @@
    "since": "0.2.0",
    "evidence": "server/store/store.go, server/store/storetest/storetest.go, TestMemoryContract, TestDBSetting, TestDBNotLogged, TestScoreStoreFailure, TestScoresOutsideRoomLock, #22",
    "note": "Only `off` and `memory` exist, so scores are still kept in memory and lost on restart; other schemes stop the start. First step of opt-in storage (store-sqlite is next).",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "store-sqlite",
@@ -242,7 +262,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. The server's first third-party Go module. Player names and bans would follow with accounts.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "store-backup",
@@ -253,7 +274,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. Comes with store-sqlite.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "store-postgres",
@@ -264,7 +286,8 @@
    "since": "",
    "evidence": "",
    "note": "After store-sqlite.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "store-mariadb",
@@ -275,7 +298,8 @@
    "since": "",
    "evidence": "",
    "note": "After store-sqlite.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "ha-restart",
@@ -286,7 +310,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "ha-failover",
@@ -297,7 +322,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. After ha-restart; the shared database needs store-postgres or store-mariadb. Live rooms are lost on failover.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "ha-multi",
@@ -308,7 +334,8 @@
    "since": "",
    "evidence": "",
    "note": "On the back burner: revisited after ha-restart and ha-failover exist and one server is not enough.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "ha-handover",
@@ -319,7 +346,8 @@
    "since": "",
    "evidence": "",
    "note": "Needs replicated live state; out of scope for a server of this size.",
-   "status_label": "declined"
+   "status_label": "declined",
+   "status_class": "bad"
   },
   {
    "id": "net-punch",
@@ -330,7 +358,8 @@
    "since": "0.2.0",
    "evidence": "server/udp.go, TestProbeRecordsPublicEndpoint, TestEndpointPerViewer, lab/README.md",
    "note": "Upstream work. The NAT lab runs it in Docker in CI.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "net-relay",
@@ -341,7 +370,8 @@
    "since": "0.2.0",
    "evidence": "server/relay.go, TestUDPRelay, TestStreamRelay, TestRoutePushOnJoin, lab/run.sh",
    "note": "Upstream work. Uses the server's bandwidth; there is no per-player budget yet (net-guardrails).",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "net-udp-guard",
@@ -352,7 +382,8 @@
    "since": "0.2.0",
    "evidence": "TestProbeFromOtherAddressRefused, TestUDPRelayFromOtherAddress, TestProbeAnySource, TestProbeDropsPublicLocalIP, docker/README.md, #16",
    "note": "A Podman run is recorded in docker/README.md.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "net-guardrails",
@@ -363,7 +394,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. The 64-bit token changes the wire format and waits for a protocol version bump.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "net-checks",
@@ -374,7 +406,8 @@
    "since": "",
    "evidence": "",
    "note": "Not designed yet.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "net-upnp",
@@ -385,7 +418,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "client-c",
@@ -396,7 +430,8 @@
    "since": "0.1.0",
    "evidence": "client/psnr.c, client/test_psnr.c, TestCClient",
    "note": "Upstream work. `TestCClient` skips without a C compiler; CI runs it on Linux only.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "app-client",
@@ -407,7 +442,8 @@
    "since": "main",
    "evidence": "app/internal/client, TestConformanceRoomsAndScores, TestConformanceRelayRoute, TestConformanceErrors",
    "note": "Room data and messages, kicks, invite-only rooms, relay streams and UDP are not in it yet.",
-   "status_label": "partial"
+   "status_label": "partial",
+   "status_class": "warn"
   },
   {
    "id": "client-desktop",
@@ -418,7 +454,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. One executable per platform, with nothing else to install.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "client-gui",
@@ -429,7 +466,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. After client-desktop.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "app-themes",
@@ -440,7 +478,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. A preset ships only after its project's licence is read and credited in NOTICE.md. The terminal UI falls back to the terminal's own 16 colours and respects NO_COLOR.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "app-appearance",
@@ -451,7 +490,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. Whether the status page follows the browser's setting too is not decided.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "app-colours",
@@ -462,7 +502,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. A bad value falls back to the default preset.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "test-fuzz",
@@ -473,7 +514,8 @@
    "since": "0.2.0",
    "evidence": "server/fuzz_test.go, FuzzReadPacket, FuzzHandle, FuzzReadProxyHeader, #2",
    "note": "CI runs the seeds only; longer fuzzing runs are by hand. The UDP packets have no fuzz target yet.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "ci-checks",
@@ -484,7 +526,8 @@
    "since": "0.2.0",
    "evidence": ".github/workflows/ci.yml, .github/workflows/codeql.yml, .github/dependabot.yml, #1, #6",
    "note": "Dependabot proposes version updates.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "ci-more",
@@ -495,7 +538,8 @@
    "since": "",
    "evidence": ".github/workflows/ci.yml",
    "note": "The list is not settled. The header of ci.yml says what CI does not check today.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   },
   {
    "id": "release-archives",
@@ -506,7 +550,8 @@
    "since": "0.2.0",
    "evidence": "scripts/release-build.sh, .github/workflows/release.yml, .github/workflows/release-check.yml, #5",
    "note": "Published as the v0.2.0 pre-release (2026-11-06): the release workflow and the published-release check both passed. The Windows and arm64 binaries are cross-built and not run.",
-   "status_label": "partial"
+   "status_label": "partial",
+   "status_class": "warn"
   },
   {
    "id": "release-appimage",
@@ -517,7 +562,8 @@
    "since": "0.2.0",
    "evidence": "scripts/build-appimage.sh, scripts/appimage/AppRun, .github/workflows/release.yml, TestBuildAppImageRefuses, TestAppImagePinsAgree, docs/releasing.md",
    "note": "Published in the v0.2.0 pre-release (2026-11-06); the release workflow built it on a runner and passed its smoke test. It was also built and run on one x86_64 Linux machine, with FUSE and with `--appimage-extract-and-run`. x86_64 only, unsigned.",
-   "status_label": "partial"
+   "status_label": "partial",
+   "status_class": "warn"
   },
   {
    "id": "release-process",
@@ -528,7 +574,8 @@
    "since": "0.2.0",
    "evidence": "VERSION, scripts/bump-version.sh, scripts/release-notes.sh, docs/releasing.md, TestVersionAgrees",
    "note": "VERSION, the version check (TestVersionAgrees), scripts/bump-version.sh and scripts/release-notes.sh are built and docs/releasing.md has the steps; the release workflow builds its notes with the notes script and checks that a tag is v + VERSION, and the first tag, v0.2.0 (2026-11-06), ran the whole path: the dry run, the tag step and the draft job passed, and the draft was published by hand after its assets were read back. No fixed release day: while things are worked out, pre-releases (v0.x, marked pre-release) come whenever there is something worth trying.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "release-signing",
@@ -539,7 +586,8 @@
    "since": "",
    "evidence": ".github/workflows/release.yml",
    "note": "The exe and SHA256SUMS are unsigned today.",
-   "status_label": "later"
+   "status_label": "later",
+   "status_class": "dim"
   },
   {
    "id": "docs-features",
@@ -550,7 +598,8 @@
    "since": "0.2.0",
    "evidence": "docs/features.tsv, tools/features.py, tools/test_features.py, .github/workflows/ci.yml, #19",
    "note": "",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "docs-diagrams",
@@ -561,7 +610,8 @@
    "since": "0.2.0",
    "evidence": "docs/architecture.md, lab/README.md, #13",
    "note": "No generated images to keep in step.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "docs-markdown",
@@ -572,7 +622,8 @@
    "since": "0.2.0",
    "evidence": "deploy/README.md, docker/README.md, docs/running.md, #20",
    "note": "Links were checked once with a throwaway script; a CI link check is planned (repo-check).",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "docs-connecting",
@@ -583,7 +634,8 @@
    "since": "0.2.0",
    "evidence": "docs/connecting.md",
    "note": "Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "docs-readme",
@@ -594,7 +646,8 @@
    "since": "0.2.0",
    "evidence": "README.md",
    "note": "Example output comes from real local runs; the settings table was checked against the server flags. The banner comes from the art generator (docs-art).",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "docs-art",
@@ -605,18 +658,20 @@
    "since": "0.2.0",
    "evidence": "tools/art/make_art.py, tools/art/test_make_art.py, tools/art/art.json, tools/art/capture.sh, docs/art/palette.json, docs/img/banner.png, docs/img/social.png, .github/workflows/ci.yml",
    "note": "The README shows the banner; the social image is uploaded by hand in the repository settings; its example stays text, and the terminal images are kept for the site. Images are dark only; the light colours are in the palette for later. Fonts are not committed.",
-   "status_label": "available"
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "docs-website",
    "area": "Documentation",
    "feature": "Project website",
-   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. No script, no third-party loads, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
+   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, Tab completion, history, a dark and a light theme, and one-pane tappable chips on a phone; the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
    "status": "partial",
    "since": "main",
    "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml",
-   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and redeployed on a push to main that touches `site/`, while the repository variable PAGES_ENABLED is true. No terminal-style interface yet.",
-   "status_label": "partial"
+   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and redeployed on a push to main that touches `site/`, while the repository variable PAGES_ENABLED is true. The interface's commands are unit-tested with Node and driven in headless Chromium at 1200 and 390 px wide; no real keyboard, screen reader or phone has been tried, and the font is the visitor's own monospace (a self-hosted font is not added yet).",
+   "status_label": "partial",
+   "status_class": "warn"
   },
   {
    "id": "repo-check",
@@ -627,7 +682,8 @@
    "since": "",
    "evidence": "",
    "note": "Not started. After docs-markdown.",
-   "status_label": "planned"
+   "status_label": "planned",
+   "status_class": "plan"
   }
  ],
  "roadmap": {
@@ -833,6 +889,7 @@
     ],
     "Added": [
      "`site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table and this file (`--check` compares the committed files and the ...",
+     "`site/terminal.js`, the terminal-style interface of the project website: a menu, a content pane and a command line (`features [--status S] [id]`, `roadmap`, `settings [name]`, `install`, `connect`, `version`, ...",
      "`app/`, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT ...",
      "`docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities, read-only filesystem, resource limits).",
      "`.github/workflows/container.yml`: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to `ghcr.io/undecuple/re-psn` (tags `X.Y.Z`, plus `X.Y` and `latest` for a release that is ...",
@@ -841,7 +898,7 @@
    },
    "counts": {
     "Changed": 5,
-    "Added": 5
+    "Added": 6
    }
   },
   "latest": {
@@ -856,6 +913,74 @@
    }
   }
  },
+ "about": {
+  "paragraphs": [
+   "re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person's machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.",
+   "It is a fork of [psnr](https://github.com/sp00nznet/psnr) by sp00nz: a Go server and a one-file C client, with no accounts and no public instance."
+  ],
+  "notice": "Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own."
+ },
+ "install": {
+  "release_tag": "v0.2.0",
+  "release_url": "https://github.com/undecuple/re-psn/releases/tag/v0.2.0",
+  "archives": "Archives for Linux (amd64, arm64) and Windows (amd64), and a Linux x86_64 AppImage, all unsigned, with a `SHA256SUMS` file. Check a download on Linux:",
+  "verify_unix": [
+   "sha256sum -c SHA256SUMS --ignore-missing"
+  ],
+  "verify_windows": "On Windows, compare the output of `Get-FileHash <archive>` with the line in `SHA256SUMS`.",
+  "container": [
+   "docker pull ghcr.io/undecuple/re-psn:0.2.0",
+   "docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.2.0"
+  ],
+  "container_note": "Podman works the same way. See [docker/README.md](docker/README.md).",
+  "source_note": "You need Go 1.22 or newer; a C compiler only for the C client and its tests.",
+  "source": [
+   "go build -o re-psn ./server",
+   "./re-psn"
+  ]
+ },
+ "connect": {
+  "intro": "Players on one LAN or VPN need nothing forwarded. Otherwise the host forwards a port, runs a public server, or uses an overlay network such as Tailscale or ZeroTier; the relay is the fallback when two players cannot reach each other.",
+  "points": [
+   "Game connection and address probes: `:36100`, TCP and UDP, open to every player.",
+   "Status page: `none (off)`, for the host only; it lists every online ID.",
+   "Each player's P2P port (UDP and TCP) must be reachable by the other players; the game opens it."
+  ],
+  "client": "A game reaches the server through the C client in `client/psnr.c`, via ps3recomp's NP modules. That side is upstream's work; [docs/connecting.md](docs/connecting.md) covers each way to connect."
+ },
+ "credits": [
+  "sp00nz ([sp00nznet](https://github.com/sp00nznet)) wrote [psnr](https://github.com/sp00nznet/psnr): the server, the C client, the protocol, NAT traversal, the relay and the NAT lab.",
+  "undecuple ([undecuple](https://github.com/undecuple)) maintains re-psn and wrote everything added since the fork: the release and container tooling, the AppImage, hardening and limits, rooms and invite codes, the desktop app, this website, the documentation and the tests.",
+  "[ps3recomp](https://github.com/sp00nznet/ps3recomp) is the recompiler whose NP modules use the client.",
+  "Colours from [gruvbox-material](https://github.com/sainnhe/gruvbox-material) (MIT, Copyright (c) 2020 sainnhe)."
+ ],
+ "licence": "MIT, see [LICENSE](LICENSE); upstream's copyright line is kept and a line for the fork's changes is added. PlayStation, PS3 and PSN are trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.",
+ "links": [
+  {
+   "title": "Repository",
+   "url": "https://github.com/undecuple/re-psn"
+  },
+  {
+   "title": "Issues",
+   "url": "https://github.com/undecuple/re-psn/issues"
+  },
+  {
+   "title": "Releases",
+   "url": "https://github.com/undecuple/re-psn/releases"
+  },
+  {
+   "title": "Security policy",
+   "url": "https://github.com/undecuple/re-psn/blob/main/SECURITY.md"
+  },
+  {
+   "title": "Upstream psnr",
+   "url": "https://github.com/sp00nznet/psnr"
+  },
+  {
+   "title": "ps3recomp",
+   "url": "https://github.com/sp00nznet/ps3recomp"
+  }
+ ],
  "docs": [
   {
    "path": "docs/architecture.md",

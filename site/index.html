@@ -4,18 +4,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; style-src &#x27;self&#x27;; img-src &#x27;self&#x27; data:; connect-src &#x27;none&#x27;">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27;; img-src &#x27;self&#x27; data:; connect-src &#x27;self&#x27;">
 <meta name="color-scheme" content="dark light">
 <meta name="description" content="Matchmaking rooms and leaderboards for statically recompiled PS3 games, with NAT traversal and an optional relay. Unofficial; not affiliated with Sony.">
 <title>re-psn matchmaking server</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
+<script src="terminal.js" defer></script>
 </head>
-<body>
+<body id="top">
 <a class="skip" href="#overview">Skip to the content</a>
 <header class="bar">
-<p class="title"><strong>re-psn</strong> <span>v0.2.0 &middot; pre-release</span></p>
-<nav aria-label="Sections"><ul>
+<h1 class="title"><strong>re-psn</strong> <span>v0.2.0 &middot; pre-release</span></h1>
+</header>
+<nav class="bar sticky" aria-label="Sections"><ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#features">Features</a></li>
 <li><a href="#roadmap">Roadmap</a></li>
@@ -26,11 +28,10 @@
 <li><a href="#docs">Docs</a></li>
 <li><a href="#credits">Credits</a></li>
 </ul></nav>
-</header>
 <main>
 <section id="overview">
 <h2>Overview</h2>
-<p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person's machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
+<p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person&#x27;s machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
 <p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, with no accounts and no public instance.</p>
 <p class="status-line">Version 0.2.0 (pre-release). 56 features: 26 available, 1 not yet verified, 4 partial, 16 planned, 8 later, 1 declined.</p>
 <p class="notice">Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own.</p>
@@ -192,7 +193,7 @@
 <tr id="f-docs-connecting"><td data-label="Feature"><strong>Ways to connect</strong> <code>docs-connecting</code><br>A page on how players reach a server: same LAN, port forwarding, a public server with <code>-relay</code>, a VPN overlay (Tailscale, ZeroTier) or a reverse proxy, with what each needs, its limits, diagrams and links to the overlays&#x27; official documentation.<br><span class="note">Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-readme"><td data-label="Feature"><strong>README rewrite</strong> <code>docs-readme</code><br>A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream.<br><span class="note">Example output comes from real local runs; the settings table was checked against the server flags. The banner comes from the art generator (docs-art).</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-art"><td data-label="Feature"><strong>Art generator</strong> <code>docs-art</code><br><code>tools/art/make_art.py</code> draws the README banner, a social preview image and terminal images in the gruvbox-material palette (<code>docs/art/palette.json</code>), with JetBrains Mono fetched from its tagged release and pinned by SHA-256. Terminal images are drawn only from transcripts of real runs (<code>docs/art/transcripts/</code>, recorded by <code>tools/art/capture.sh</code>). CI renders again and fails when a byte differs.<br><span class="note">The README shows the banner; the social image is uploaded by hand in the repository settings; its example stays text, and the terminal images are kept for the site. Images are dark only; the light colours are in the palette for later. Fonts are not committed.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
-<tr id="f-docs-website"><td data-label="Feature"><strong>Project website</strong> <code>docs-website</code><br>A static page built from the features list, the version, the settings table and the changelog by <code>tools/site.py</code>: overview, features with status tags, roadmap, settings, install, connect, docs and credits. No script, no third-party loads, and the colours of the README art. <code>pages.yml</code> deploys <code>site/</code> to GitHub Pages.<br><span class="note">Partial: the page is published at https://undecuple.github.io/re-psn/ and redeployed on a push to main that touches <code>site/</code>, while the repository variable PAGES_ENABLED is true. No terminal-style interface yet.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">main</td></tr>
+<tr id="f-docs-website"><td data-label="Feature"><strong>Project website</strong> <code>docs-website</code><br>A static page built from the features list, the version, the settings table and the changelog by <code>tools/site.py</code>: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With <code>site/terminal.js</code> (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands <code>features</code>, <code>roadmap</code>, <code>settings</code>, <code>install</code>, <code>connect</code>, <code>changelog</code>, <code>docs</code> and more, Tab completion, history, a dark and a light theme, and one-pane tappable chips on a phone; the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. <code>pages.yml</code> deploys <code>site/</code> to GitHub Pages.<br><span class="note">Partial: the page is published at https://undecuple.github.io/re-psn/ and redeployed on a push to main that touches <code>site/</code>, while the repository variable PAGES_ENABLED is true. The interface&#x27;s commands are unit-tested with Node and driven in headless Chromium at 1200 and 390 px wide; no real keyboard, screen reader or phone has been tried, and the font is the visitor&#x27;s own monospace (a self-hosted font is not added yet).</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">main</td></tr>
 <tr id="f-repo-check"><td data-label="Feature"><strong>Repository layout check</strong> <code>repo-check</code><br>A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist.<br><span class="note">Not started. After docs-markdown.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
 </tbody>
 </table>
@@ -285,6 +286,7 @@
 <h4>Added</h4>
 <ul>
 <li><code>site/</code>, the project website: <code>tools/site.py</code> generates <code>site/index.html</code> and <code>site/data.json</code> from <code>docs/features.tsv</code>, <code>VERSION</code>, the README settings table and this file (<code>--check</code> compares the committed files and the ...</li>
+<li><code>site/terminal.js</code>, the terminal-style interface of the project website: a menu, a content pane and a command line (<code>features [--status S] [id]</code>, <code>roadmap</code>, <code>settings [name]</code>, <code>install</code>, <code>connect</code>, <code>version</code>, ...</li>
 <li><code>app/</code>, the start of the desktop app, as a Go module of its own with no dependencies outside the standard library: a client for the TCP protocol (HELLO, heartbeat, rooms, leaderboards, and the MEMBER_JOINED, MEMBER_LEFT ...</li>
 <li><code>docker/docker-compose.test.yml</code>: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities, read-only filesystem, resource limits).</li>
 <li><code>.github/workflows/container.yml</code>: builds the image for linux/amd64 and linux/arm64 and, when a release is published, pushes it to <code>ghcr.io/undecuple/re-psn</code> (tags <code>X.Y.Z</code>, plus <code>X.Y</code> and <code>latest</code> for a release that is ...</li>
@@ -345,9 +347,9 @@ docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.2.0
 <ul>
 <li>Game connection and address probes: <code>:36100</code>, TCP and UDP, open to every player.</li>
 <li>Status page: <code>none (off)</code>, for the host only; it lists every online ID.</li>
-<li>Each player's P2P port (UDP and TCP) must be reachable by the other players; the game opens it.</li>
+<li>Each player&#x27;s P2P port (UDP and TCP) must be reachable by the other players; the game opens it.</li>
 </ul>
-<p>A game reaches the server through the C client in <code>client/psnr.c</code>, via ps3recomp's NP modules. That side is upstream's work; <a href="https://github.com/undecuple/re-psn/blob/main/docs/connecting.md">docs/connecting.md</a> covers each way to connect.</p>
+<p>A game reaches the server through the C client in <code>client/psnr.c</code>, via ps3recomp&#x27;s NP modules. That side is upstream&#x27;s work; <a href="https://github.com/undecuple/re-psn/blob/main/docs/connecting.md">docs/connecting.md</a> covers each way to connect.</p>
 </section>
 <section id="docs">
 <h2>Docs</h2>
@@ -382,5 +384,6 @@ docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.2.0
 <footer>
 <p>Unofficial; not affiliated with Sony. Developed with AI agent assistance.</p>
 </footer>
+<a class="totop" href="#top"><span aria-hidden="true">&uarr;</span> Top</a>
 </body>
 </html>
