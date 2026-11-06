@@ -7,8 +7,9 @@ services:
     environment:
       # Any flag is RE_PSN_<FLAG> (the old PSNR_<FLAG> still works); see docs/running.md. Change a port here and in `ports`.
       RE_PSN_ADDR: ":36100"
-      # The status page lists every online ID. To reach it from the host, bind it inside the
-      # container and set a token, then publish it below (kept on this machine):
+      # The status page is off unless RE_PSN_HTTP is set. It lists every online ID. To reach it
+      # from the host, bind it inside the container and set a token, then publish it below (kept
+      # on this machine):
       #   RE_PSN_HTTP: "0.0.0.0:36101"
       #   RE_PSN_HTTP_TOKEN: "<a long random string>"
       # Relay is off by default. Turn it on to carry traffic between players who can't reach each
