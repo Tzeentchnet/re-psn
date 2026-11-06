@@ -157,6 +157,7 @@ a:focus-visible, summary:focus-visible {
   left: -999px;
   top: 0;
   background: var(--panel);
+  color: var(--strong);
   padding: 0.25em 1ch;
 }
 .skip:focus { left: 16px; top: 8px; z-index: 2; }
