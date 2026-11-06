@@ -35,7 +35,7 @@ func TestParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := Settings{
-		Mode: ModeBoth, Name: "alice_01", Server: "play.example.org:36100",
+		Mode: ModeBoth, Theme: ThemeDark, Name: "alice_01", Server: "play.example.org:36100",
 		StatusURL: "https://play.example.org/status", StatusTokenFile: "/etc/re-psn/status-token",
 	}
 	if f.Settings != want {
@@ -99,6 +99,7 @@ func TestBytesAddsMissingKeys(t *testing.T) {
 func TestParseErrors(t *testing.T) {
 	cases := []struct{ name, in, want string }{
 		{"bad mode", "[app]\nmode = spectate\n", "[app] mode"},
+		{"bad theme", "[app]\ntheme = blue\n", "[app] theme"},
 		{"short name", "[player]\nname = ab\n", "[player] name"},
 		{"name with a space", "[player]\nname = a b c\n", "[player] name"},
 		{"server without port", "[server]\nserver = example.org\n", "[server] server"},
