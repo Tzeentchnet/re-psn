@@ -13,6 +13,7 @@ behind a reverse proxy, logging, ports, firewall rules, and what state it keeps.
 - [Logging](#logging)
 - [Ports](#ports)
 - [Firewall](#firewall)
+- [Stopping and replacing](#stopping-and-replacing)
 - [State, backup, upgrade](#state-backup-upgrade)
 
 ## Run it
@@ -53,6 +54,7 @@ docker compose -f docker/docker-compose.yml up -d
 | `-log-format` | `text` | `text` or `json`, one line per event. |
 | `-log-file` | none | Also append the log to this file (created with mode 0600). |
 | `-v` | off | Same as `-log-level debug`. |
+| `-replace` | off | If the game port is already in use by an earlier instance of this server, ask it to stop, wait for the port, then start. Linux only; see [Stopping and replacing](#stopping-and-replacing). |
 
 ## UDP source address
 
@@ -145,7 +147,7 @@ is about them; it never holds the status page token, the UDP probe token, the `-
 
 | Level | Events |
 |---|---|
-| info | server start (and the storage backend), each HELLO (client, title, online ID, address), a reconnect that replaces a connection, each disconnect, a failed read |
+| info | server start (and the storage backend), a stop on SIGINT or SIGTERM, an earlier instance replaced (`-replace`), each HELLO (client, title, online ID, address), a reconnect that replaces a connection, each disconnect, a failed read |
 | warn | a connection refused (too many from one address), a UDP probe from another address than the player's TCP connection (once per player), a connection closed for its request rate, a HELLO refused (name taken), a room request refused (room limit, blob over limit), an unknown request type, a status page request refused (path only), a score request or status page that the score store failed |
 | debug | connects, requests before HELLO, room created, joined and closed, relay streams, UDP probe results |
 
@@ -205,6 +207,28 @@ backend is not built yet; anything else stops it as a bad setting. Because a con
 `-db-file` (or `RE_PSN_DB_FILE`) reads the setting from a file instead, and the server never prints the setting or the
 file's contents: errors name the variable, the scheme and the file's path only. If the score store fails, a score
 request gets ERROR 6 and the failure is logged at warn level.
+
+## Stopping and replacing
+
+SIGINT (Ctrl-C) or SIGTERM stops the server: it logs `stopping`, closes the game ports and the status page and exits 0.
+On Windows only Ctrl-C does.
+
+Once the game ports are bound, the server writes a pidfile, `<port>.pid` (the TCP port), mode 0600, in
+`$XDG_RUNTIME_DIR/re-psn/`, or in `re-psn-<uid>/` under the temp directory when that variable is not set. The file holds the
+pid, the process start time, the executable and the TCP address; a graceful stop removes it. If the directory is not owned
+by you, is open to other users or is a symlink, the server logs a warning and writes no pidfile. A file left by a process
+that is gone is replaced.
+
+When the port is busy, the server still exits 1, and if the pidfile names a running re-psn of yours the message says so:
+`port 36100 is in use by an earlier re-psn (pid 4242, started ...); stop it, or run with -replace`. With `-replace` it sends
+that process SIGTERM, waits up to 10 s for the port, and starts. It signals only a process that passes every check: the
+pidfile parses, the pid is running, it is yours, its start time matches the file's (so a reused pid is not signalled), and
+its program is named like this one or starts with `re-psn`. Anything else, or a port still busy after 10 s, stops the new
+server with a message naming what it found. It never sends SIGKILL. The same goes for the UDP port. `-replace` is Linux
+only: on Windows and macOS it exits with a message.
+
+The AppImage takes the same flag. Started twice from a file manager, the first copy keeps running without a terminal and
+the second cannot bind; `./re-psn-vX.Y.Z-x86_64.AppImage -replace` stops the first and takes its place.
 
 ## State, backup, upgrade
 

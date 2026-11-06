@@ -235,7 +235,7 @@ re-psn runs with no settings at all. [docs/running.md](docs/running.md) has the 
 
 ### Settings
 
-Each of the 19 flags can also be set as a `RE_PSN_<FLAG>` variable. A flag on the command line wins, then the variable; a value
+Each of the 20 flags can also be set as a `RE_PSN_<FLAG>` variable. A flag on the command line wins, then the variable; a value
 that does not parse stops the server at start.
 
 <details>
@@ -264,6 +264,7 @@ Variables are upper case, with dashes as underscores. Defaults are those of `./r
 | `-relay` | `RE_PSN_RELAY` | off | Carry traffic for players who cannot reach each other (uses the host's bandwidth) |
 | `-db` | `RE_PSN_DB` | `off` | Score storage: `off` or `memory` |
 | `-db-file` | `RE_PSN_DB_FILE` | none | Read the `-db` setting from this file instead |
+| `-replace` | `RE_PSN_REPLACE` | off | If an earlier re-psn of this user holds the game port, stop it (SIGTERM) and start in its place (Linux only) |
 
 </details>
 
