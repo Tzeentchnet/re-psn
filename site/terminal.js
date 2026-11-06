@@ -401,7 +401,7 @@
     tui.setAttribute('data-view', 'content');
 
     var title = el('div', 'tui-title');
-    title.appendChild(el('span', 'tui-name', 're-psn'));
+    title.appendChild(el('span', 'tui-name', 're:psn'));
     title.appendChild(el('span', 'tui-ver', 'v' + data.version + ' · ' + data.stage));
     var plain = el('button', 'tui-plain', 'plain view');
     plain.type = 'button';

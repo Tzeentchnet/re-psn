@@ -35,7 +35,7 @@ JS = "site/terminal.js"
 ICON = "site/favicon.svg"
 PALETTE = "docs/art/palette.json"
 REPO_URL = features.REPO_URL
-TITLE = "re-psn matchmaking server"
+TITLE = "re:psn by undecuple"
 CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'"
 UNOFFICIAL = "Unofficial; not affiliated with Sony."
 AI_LINE = "Developed with AI agent assistance."
@@ -401,7 +401,7 @@ def render_page(data):
     w('<link rel="icon" href="favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="style.css">\n<script src="terminal.js" defer></script>\n</head>\n<body id="top">\n')
     w('<a class="skip" href="#overview">Skip to the content</a>\n')
     w('<header class="bar">\n')
-    w(f'<h1 class="title"><strong>re-psn</strong> <span>v{esc(v)} &middot; {esc(data["stage"])}</span></h1>\n')
+    w(f'<h1 class="title"><strong>re:psn</strong> <span>by undecuple &middot; v{esc(v)} &middot; {esc(data["stage"])}</span></h1>\n')
     w(THEME_CONTROL)
     w('</header>\n')
     w('<nav class="bar sticky" aria-label="Sections"><ul>\n')
