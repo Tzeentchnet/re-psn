@@ -17,20 +17,20 @@ func startTCPUDPWith(t *testing.T, setup func(*Server)) (*Server, string) {
 	if setup != nil {
 		setup(s)
 	}
-	// TCP picks a free port; the same number must also be free for UDP. On some systems (Windows runners reserve ranges
-	// for UDP) it is not, so try again with another port instead of failing.
+	// UDP picks the port, because that is the protocol with excluded ranges (Windows runners reserve some); the same number
+	// must then be free for TCP, so try again with another port when it is not.
 	var ln net.Listener
 	var pc net.PacketConn
 	var err error
 	for try := 0; try < 20; try++ {
-		ln, err = net.Listen("tcp", "127.0.0.1:0")
+		pc, err = net.ListenPacket("udp", "127.0.0.1:0")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if pc, err = net.ListenPacket("udp", ln.Addr().String()); err == nil {
+		if ln, err = net.Listen("tcp", pc.LocalAddr().String()); err == nil {
 			break
 		}
-		ln.Close()
+		pc.Close()
 	}
 	if err != nil {
 		t.Fatal(err)
