@@ -8,12 +8,12 @@ What re-psn does today and what is planned, one row per feature. Each status res
 |---|---|---|
 | available | merged, with a test or a recorded run | 26 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
-| partial | merged in part, or with known gaps | 3 |
+| partial | merged in part, or with known gaps | 4 |
 | in progress | an open pull request or branch | 0 |
 | planned | wanted and intended, not started | 16 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
-| all | | 55 |
+| all | | 56 |
 
 ## Rooms and matchmaking
 
