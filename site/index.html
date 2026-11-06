@@ -277,6 +277,7 @@
 <h3>Unreleased</h3>
 <h4>Changed</h4>
 <ul>
+<li>Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE keeps upstream&#x27;s copyright line with a second line for the fork&#x27;s changes.</li>
 <li>The status page and <code>/api/stats</code> are off unless <code>-http</code> / <code>RE_PSN_HTTP</code> names an address; they used to listen on <code>127.0.0.1:36101</code> by default.</li>
 <li>The release carries one <code>SHA256SUMS</code> instead of a <code>.sha256</code> file per download: five assets instead of nine, from the next release.</li>
 <li>A shorter README: its long reference parts fold into dropdowns, and a short list linking to <code>docs/features.md</code> replaces the features table.</li>
@@ -373,10 +374,11 @@ docker run --rm -p 36100:36100 -p 36100:36100/udp ghcr.io/undecuple/re-psn:0.2.0
 <h2>Credits and licence</h2>
 <ul>
 <li><strong>sp00nz</strong> (<a href="https://github.com/sp00nznet">sp00nznet</a>) wrote <a href="https://github.com/sp00nznet/psnr">psnr</a>: the server, the C client, the protocol, NAT traversal, the relay and the NAT lab.</li>
+<li><strong>undecuple</strong> (<a href="https://github.com/undecuple">undecuple</a>) maintains re-psn and wrote everything added since the fork: the release and container tooling, the AppImage, hardening and limits, rooms and invite codes, the desktop app, this website, the documentation and the tests.</li>
 <li><a href="https://github.com/sp00nznet/ps3recomp">ps3recomp</a> is the recompiler whose NP modules use the client.</li>
 <li>Colours from <a href="https://github.com/sainnhe/gruvbox-material">gruvbox-material</a> (MIT, Copyright (c) 2020 sainnhe).</li>
 </ul>
-<p>MIT, see <a href="https://github.com/undecuple/re-psn/blob/main/LICENSE">LICENSE</a>; upstream's copyright line is kept. PlayStation, PS3 and PSN are trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.</p>
+<p>MIT, see <a href="https://github.com/undecuple/re-psn/blob/main/LICENSE">LICENSE</a>; upstream's copyright line is kept and a line for the fork's changes is added. PlayStation, PS3 and PSN are trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.</p>
 </section>
 </main>
 <footer>

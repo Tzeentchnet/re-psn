@@ -881,6 +881,7 @@
    "date": "",
    "sections": {
     "Changed": [
+     "Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE keeps upstream's copyright line with a second line for the fork's changes.",
      "The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on `127.0.0.1:36101` by default.",
      "The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.",
      "A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.",
@@ -896,7 +897,7 @@
     ]
    },
    "counts": {
-    "Changed": 4,
+    "Changed": 5,
     "Added": 6
    }
   },
@@ -949,10 +950,11 @@
  },
  "credits": [
   "sp00nz ([sp00nznet](https://github.com/sp00nznet)) wrote [psnr](https://github.com/sp00nznet/psnr): the server, the C client, the protocol, NAT traversal, the relay and the NAT lab.",
+  "undecuple ([undecuple](https://github.com/undecuple)) maintains re-psn and wrote everything added since the fork: the release and container tooling, the AppImage, hardening and limits, rooms and invite codes, the desktop app, this website, the documentation and the tests.",
   "[ps3recomp](https://github.com/sp00nznet/ps3recomp) is the recompiler whose NP modules use the client.",
   "Colours from [gruvbox-material](https://github.com/sainnhe/gruvbox-material) (MIT, Copyright (c) 2020 sainnhe)."
  ],
- "licence": "MIT, see [LICENSE](LICENSE); upstream's copyright line is kept. PlayStation, PS3 and PSN are trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.",
+ "licence": "MIT, see [LICENSE](LICENSE); upstream's copyright line is kept and a line for the fork's changes is added. PlayStation, PS3 and PSN are trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.",
  "links": [
   {
    "title": "Repository",
