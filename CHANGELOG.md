@@ -11,7 +11,7 @@ All notable changes to this project are documented here. The format follows
   Check a download with `sha256sum -c SHA256SUMS --ignore-missing`.
 - A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.
 - The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server
-  runs as the non-root user 10001. Tested with Podman only; the NAT lab was not run.
+  runs as the non-root user 10001. Tested with Podman and in the NAT lab on CI.
 
 ### Added
 - `docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities,
@@ -23,7 +23,7 @@ All notable changes to this project are documented here. The format follows
 - A Linux x86_64 AppImage of the server in the release, `re-psn-vX.Y.Z-x86_64.AppImage`, beside the archives: the same binary and
   examples as one runnable file, built by `scripts/build-appimage.sh` with appimagetool 1.9.1 and the type-2 runtime 20251108
   (both downloaded by the release workflow and checked against pinned SHA-256 hashes), smoke-tested in the workflow, listed in
-  `SHA256SUMS`. Unsigned; needs FUSE or `--appimage-extract-and-run`. A manual run of the release workflow built and smoke-tested it on a runner; no release has been published. See `docs/releasing.md`.
+  `SHA256SUMS`. Unsigned; needs FUSE or `--appimage-extract-and-run`. See `docs/releasing.md`.
 - `docs/img/social.png` (1280x640), drawn by the art generator for the repository's social preview. It is uploaded by hand in the
   repository settings and no page uses it.
 - `tools/art/make_art.py` draws the README banner and terminal images (`docs/img/`) in the gruvbox-material palette

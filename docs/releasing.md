@@ -3,10 +3,10 @@
 How a maintainer cuts a re-psn pre-release: where the version lives, the bump, the tag, the draft release and what is
 checked on the way. Pre-releases come often and on no schedule, whenever there is something worth trying.
 
-> [!IMPORTANT]
-> Not run yet: nothing has been published and no tag exists. A manual run of the release workflow (the dry run) has
-> built everything and passed its checks on a runner; the tag step and the draft job have not run (see
-> [Not checked yet](#not-checked-yet)).
+> [!NOTE]
+> The first release, v0.2.0, was cut by this process on 2026-11-06 as a pre-release. The tag step and the draft job ran on that
+> tag and passed; the draft was published by hand after its assets were read back. What has still not been checked is listed in
+> [Not checked yet](#not-checked-yet).
 
 ## Contents
 
@@ -170,8 +170,6 @@ How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), ru
 
 ## Not checked yet
 
-- The tag step ("Tag is v + VERSION") and the draft job of the release workflow: a manual run skips both, so the first tag
-  is their first run. A wrong tag fails at the tag step before anything is built; the draft job never publishes.
 - That the Windows and arm64 binaries run; they are cross-built. The exe, the AppImage and `SHA256SUMS` are unsigned.
 - The AppImage on other distributions: it was built and run (with FUSE and with `--appimage-extract-and-run`) on one
   x86_64 Linux machine only.

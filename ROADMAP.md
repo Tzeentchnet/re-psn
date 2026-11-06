@@ -23,7 +23,7 @@ It is **not** a public PSN replacement, and won't grow into one:
 
 ## Done
 
-Merged into main. Most of it is not in a release yet.
+Merged into main and released in v0.2.0, unless a line says otherwise.
 
 [Rooms and matchmaking](docs/features.md#rooms-and-matchmaking)
 - [rooms-basic] Create, search, join and leave rooms, with room messages and owner handoff.
@@ -56,8 +56,9 @@ Merged into main. Most of it is not in a release yet.
 [Testing and CI](docs/features.md#testing-and-ci), [release](docs/features.md#release) and [documentation](docs/features.md#documentation)
 - [test-fuzz] Fuzz tests for the frame parser, the request handlers and the PROXY header.
 - [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning.
-- [release-archives] Release archives with checksums, built by a workflow; partial, as nothing has been released yet.
-- [release-appimage] A Linux x86_64 AppImage beside the archives; partial: a manual run of the release workflow built it on a runner, but the tag step and the draft job have not run.
+- [release-archives] Release archives with checksums, built by a workflow; partial: published in the v0.2.0 pre-release; the Windows and arm64 binaries are cross-built and not run.
+- [release-process] Written release steps and a dry run, then the first tag (v0.2.0, a pre-release); further pre-releases come with no fixed release day.
+- [release-appimage] A Linux x86_64 AppImage beside the archives; partial: published in the v0.2.0 pre-release, unsigned, and run on one machine.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
@@ -83,7 +84,6 @@ Nothing is in progress at the moment; the items under Next come first.
 In about this order.
 
 ### Releases and docs
-- [release-process] Written release steps and a dry run (done), then the first tag and frequent pre-releases with no fixed release day.
 - [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
 
 ### Storage, off unless a host turns it on
