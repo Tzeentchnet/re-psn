@@ -42,9 +42,14 @@ AI_LINE = "Developed with AI agent assistance."
 
 # status -> colour class (see the .tag rules in site/style.css)
 TAG_CLASS = {
-    "available": "ok", "unverified": "warn", "partial": "warn", "in-progress": "info",
+    "available": "ok", "unverified": "unv", "partial": "warn", "in-progress": "info",
     "planned": "plan", "later": "dim", "declined": "bad",
 }
+# The theme switch. Hidden by the stylesheet until site/terminal.js runs (html.js), because it does nothing without script.
+THEME_CONTROL = ('<div class="theme" role="group" aria-label="Theme"><span class="theme-label">Theme</span>'
+                 + "".join(f'<button type="button" class="theme-btn" data-theme-set="{k}" aria-pressed="false">{label}</button>'
+                           for k, label in (("system", "System"), ("light", "Light"), ("dark", "Dark")))
+                 + '</div>\n')
 # roadmap group -> the statuses in it, in the order the page shows them
 ROADMAP = (
     ("Done", ("available", "unverified", "partial")),
@@ -396,7 +401,9 @@ def render_page(data):
     w('<link rel="icon" href="favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="style.css">\n<script src="terminal.js" defer></script>\n</head>\n<body id="top">\n')
     w('<a class="skip" href="#overview">Skip to the content</a>\n')
     w('<header class="bar">\n')
-    w(f'<h1 class="title"><strong>re-psn</strong> <span>v{esc(v)} &middot; {esc(data["stage"])}</span></h1>\n</header>\n')
+    w(f'<h1 class="title"><strong>re-psn</strong> <span>v{esc(v)} &middot; {esc(data["stage"])}</span></h1>\n')
+    w(THEME_CONTROL)
+    w('</header>\n')
     w('<nav class="bar sticky" aria-label="Sections"><ul>\n')
     for slug, label in (("overview", "Overview"), ("features", "Features"), ("roadmap", "Roadmap"), ("changes", "Changes"),
                         ("settings", "Settings"), ("install", "Install"), ("connect", "Connect"), ("docs", "Docs"),

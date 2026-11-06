@@ -19,6 +19,7 @@ All notable changes to this project are documented here. The format follows
   runs as the non-root user 10001. Tested with Podman and in the NAT lab on CI.
 
 ### Added
+- Website: a visible System / Light / Dark switch in the page header and in the terminal interface (without script it is hidden and the page follows the system), kept in step with the `theme` command and remembered in the browser; and colour from the whole gruvbox-material palette for headings, status tags, command names, the prompt, flags, ids, links and the bars. Every text colour is checked at 4.5:1 or more against its background in both modes; where an accent is too faint as text on the light page it is a border or an underline and the text keeps a passing colour.
 - `site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table
   and this file (`--check` compares the committed files and the colour tokens of `site/style.css` with the sources), and `site/style.css` is hand-written in the
   gruvbox-material palette, dark by default and light with the system. No script and no third-party loads (a CSP says so). `.github/workflows/pages.yml`

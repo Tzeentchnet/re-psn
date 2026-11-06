@@ -65,7 +65,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
 - [docs-readme] A rewritten README with an example from real runs, the features, the settings and credit to upstream.
 - [docs-art] A generator for the README banner and terminal images from real runs, in one palette, checked in CI.
-- [docs-website] A static project website built from the features list, version, settings table and changelog; partial: published at https://undecuple.github.io/re-psn/ with a terminal-style interface (commands, one-pane phone layout, themes) that is tested in a headless browser only, not yet with a real keyboard, a screen reader or a phone; a self-hosted font and ASCII diagrams are not done.
+- [docs-website] A static project website built from the features list, version, settings table and changelog; partial: published at https://undecuple.github.io/re-psn/ with a terminal-style interface (commands, one-pane phone layout, a System / Light / Dark switch) that is tested in a headless browser only, not yet with a real keyboard, a screen reader or a phone; a self-hosted font and ASCII diagrams are not done.
 
 On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`
