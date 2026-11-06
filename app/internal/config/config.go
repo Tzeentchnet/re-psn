@@ -285,7 +285,9 @@ func pathFor(goos string, getenv func(string) string, home string) (string, erro
 		}
 		return filepath.Join(dir, "re-psn", FileName), nil
 	}
-	if dir := getenv("XDG_CONFIG_HOME"); filepath.IsAbs(dir) {
+	// Not filepath.IsAbs: this branch is for non-Windows systems, where absolute means a leading slash, whatever
+	// system the code runs on (the tests run it on Windows too).
+	if dir := getenv("XDG_CONFIG_HOME"); strings.HasPrefix(dir, "/") {
 		return filepath.Join(dir, "re-psn", FileName), nil
 	}
 	if home == "" {
