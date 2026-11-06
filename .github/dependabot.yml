@@ -1,5 +1,5 @@
 # Dependabot version updates, weekly and grouped. The Go module has no dependencies today (the server uses the standard
-# library), so gomod only matters if one is added. The Go version in go.mod and the Dockerfile base image tags (docker/ and lab/) are bumped by hand
+# library), so gomod only matters if one is added; the desktop app module in /app is watched separately. The Go version in go.mod and the Dockerfile base image tags (docker/ and lab/) are bumped by hand
 # unless Dependabot proposes the image. Security updates are a repository setting and are already on.
 version: 2
 updates:
@@ -20,6 +20,15 @@ updates:
       prefix: deps
     groups:
       go:
+        patterns: ["*"]
+  - package-ecosystem: gomod
+    directory: /app
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: deps
+    groups:
+      go-app:
         patterns: ["*"]
   - package-ecosystem: docker
     directories: [/docker, /lab]
