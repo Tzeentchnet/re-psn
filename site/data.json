@@ -6,7 +6,7 @@
  "status_counts": {
   "available": 26,
   "unverified": 1,
-  "partial": 4,
+  "partial": 5,
   "in-progress": 0,
   "planned": 16,
   "later": 8,
@@ -446,6 +446,18 @@
    "status_class": "warn"
   },
   {
+   "id": "app-tui",
+   "area": "Client",
+   "feature": "Desktop app, terminal UI",
+   "detail": "`re-psn-app` with no arguments: a first-run choice of Play, Host or Both with the online ID and the server, a menu and content pane (one at a time under 70 columns), a Status screen with Rooms and Leaderboards tabs filled over the game protocol only, a Settings screen that saves `re-psn.ini`, and a dark or light theme in the website colours. Built on Bubble Tea and Lip Gloss.",
+   "status": "partial",
+   "since": "main",
+   "evidence": "app/internal/tui, TestFirstRunChooser, TestStatusTabs, TestConnectionErrorsAreText, TestNarrowLayout, TestThemeToggle, TestSettings",
+   "note": "Partial: no Host screen, room joining, launch profiles or theme presets yet, and it does not open a terminal window when started without one. The server version, uptime, connection counts, room age and the list of boards are not available over the protocol. Driven in tmux on Linux; not tried on Windows or macOS terminals.",
+   "status_label": "partial",
+   "status_class": "warn"
+  },
+  {
    "id": "client-desktop",
    "area": "Client",
    "feature": "Desktop client, terminal UI",
@@ -707,6 +719,7 @@
    "net-udp-guard",
    "client-c",
    "app-client",
+   "app-tui",
    "test-fuzz",
    "ci-checks",
    "release-archives",
@@ -890,6 +903,7 @@
      "The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server runs as the non-root user 10001."
     ],
     "Added": [
+     "`re-psn-app` starts a terminal UI when run with no arguments, built on Bubble Tea v2.1.1 and Lip Gloss v2.0.6 (MIT; the app module's first dependencies, pinned in `app/go.mod` and `app/go.sum`; the server module still ...",
      "Website: autocomplete in the terminal interface.",
      "Website: a visible System / Light / Dark switch in the page header and in the terminal interface (without script it is hidden and the page follows the system), kept in step with the `theme` command and remembered in the ...",
      "`site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table and this file (`--check` compares the committed files and the ...",
@@ -902,7 +916,7 @@
    },
    "counts": {
     "Changed": 7,
-    "Added": 8
+    "Added": 9
    }
   },
   "latest": {

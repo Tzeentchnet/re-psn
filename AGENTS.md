@@ -12,7 +12,7 @@ C client, for statically recompiled PS3 games.
 |---|---|
 | `server/` | The Go server (`package main`); `server/store/` holds storage backends and the contract tests they share |
 | `client/` | The C client (`psnr.c`, `psnr.h`) and its test |
-| `app/` | The desktop app, a Go module of its own: the protocol client, the settings file and `cmd/re-psn-app` |
+| `app/` | The desktop app, a Go module of its own: the protocol client, the settings file, the terminal UI and `cmd/re-psn-app` |
 | `docs/` | Markdown docs; `features.tsv` is the source of `features.md` |
 | `deploy/`, `docker/` | Settings example, systemd unit, proxy examples; container files |
 | `lab/` | The NAT lab (Docker) |
@@ -42,7 +42,11 @@ sh scripts/check-deploy.sh       # when deploy/ or the flags changed
 ## Rules
 
 - **Wire format:** a change bumps the protocol version and updates [docs/api.md](docs/api.md) in the same commit.
-- **Dependencies:** the server and `app/` have none outside the standard library. Adding one is its own change, with a stated reason.
+- **Dependencies:** the server module has none outside the standard library and keeps it that way (the root `go.mod` has no
+  `require` line). `app/` has the ones listed in [app/README.md](app/README.md#dependencies). Adding or bumping one is its own
+  change, with a stated reason, pinned in `go.mod` and `go.sum`, its licence (and its new transitive modules' licences) named,
+  and `go mod verify` and `govulncheck` clean. A new dependency version must have been published at least 14 days earlier, unless
+  the maintainer has waived that for the named module. Waived: `charm.land/bubbletea/v2` v2.1.1 only (published 2026-10-28), and no other module.
 - **Settings:** a new flag also gets a `RE_PSN_` variable, a line in `deploy/re-psn.env.example`, and a row in
   [docs/running.md](docs/running.md). Never log a setting's value, only its name.
 - **Features list:** edit `docs/features.tsv` and `ROADMAP.md`, then run `python3 tools/features.py` to regenerate

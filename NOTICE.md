@@ -12,6 +12,7 @@ Colour palette from gruvbox-material (https://github.com/sainnhe/gruvbox-materia
 | Component | Use | Licence |
 |---|---|---|
 | Go standard library | the server (`server/`) uses nothing else | BSD-3-Clause (Go) |
+| [Bubble Tea](https://github.com/charmbracelet/bubbletea) v2.1.1, [Lip Gloss](https://github.com/charmbracelet/lipgloss) v2.0.6, `github.com/charmbracelet/x/term` and the modules they need ([list](app/README.md#dependencies)) | the desktop app's terminal UI, built into `re-psn-app` (`app/`); not in the server | MIT (Charmbracelet, Inc. and the authors of each module); `golang.org/x/sync` and `golang.org/x/sys`: BSD-3-Clause (Go) |
 | `client/psnr.c`, `client/psnr.h` | the C client, one file with no dependencies, written for upstream psnr | MIT |
 | [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) | the font in the images in `docs/img/`; fetched by `tools/art/make_art.py`, not committed or shipped | SIL Open Font License 1.1, JetBrains |
 | [Pillow](https://python-pillow.org/) | runs `tools/art/make_art.py`; in CI only, not shipped | MIT-CMU |

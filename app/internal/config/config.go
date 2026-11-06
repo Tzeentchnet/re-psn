@@ -32,9 +32,18 @@ const (
 	ModeBoth Mode = "both"
 )
 
+// Theme is the app's colour mode: dark or light. Unset means dark.
+type Theme string
+
+const (
+	ThemeDark  Theme = "dark"
+	ThemeLight Theme = "light"
+)
+
 // Settings are the keys this package knows. An empty value means unset.
 type Settings struct {
 	Mode            Mode   // [app] mode
+	Theme           Theme  // [app] theme
 	Name            string // [player] name: the online ID
 	Server          string // [server] server: host:port
 	StatusURL       string // [server] status_url
@@ -50,6 +59,7 @@ type key struct {
 
 var keys = []key{
 	{"app", "mode", func(s *Settings) *string { return (*string)(&s.Mode) }, checkMode},
+	{"app", "theme", func(s *Settings) *string { return (*string)(&s.Theme) }, checkTheme},
 	{"player", "name", func(s *Settings) *string { return &s.Name }, checkName},
 	{"server", "server", func(s *Settings) *string { return &s.Server }, checkServer},
 	{"server", "status_url", func(s *Settings) *string { return &s.StatusURL }, checkURL},
@@ -164,6 +174,14 @@ func checkMode(v string) error {
 		return nil
 	}
 	return fmt.Errorf("%q: want play, host or both", v)
+}
+
+func checkTheme(v string) error {
+	switch Theme(v) {
+	case ThemeDark, ThemeLight:
+		return nil
+	}
+	return fmt.Errorf("%q: want dark or light", v)
 }
 
 // checkName follows PSN online IDs: 3-16 letters, digits, - or _.

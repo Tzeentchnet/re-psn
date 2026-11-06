@@ -166,10 +166,14 @@ desktop apps and more) is in [ROADMAP.md](ROADMAP.md) too.
 
 ## Desktop app
 
-[app/](app/README.md) holds the start of the desktop app, a separate Go module with no dependencies yet: a Go client for the
-protocol, tested against the real server, a settings file reader, and `re-psn-app check HOST:PORT`, which connects, says HELLO and
-reports what the server answered. The terminal UI comes next. The app module needs Go 1.26 or newer; the server and
-the C client keep their own requirements.
+[app/](app/README.md) holds the start of the desktop app, a separate Go module: a Go client for the protocol, tested against the
+real server, a settings file reader, `re-psn-app check HOST:PORT`, which connects, says HELLO and reports what the server answered,
+and a terminal UI (`re-psn-app` with no arguments). The UI asks on first start whether this machine plays, hosts or both, then
+shows the server's rooms and one leaderboard at a time over the game protocol, and edits the settings; dark or light theme in the
+website's colours. The server's version, uptime and connection counts are not available over the protocol, so the UI says so.
+The terminal UI uses [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lip Gloss](https://github.com/charmbracelet/lipgloss)
+(MIT); the server module stays standard-library only. The app module needs Go 1.26 or newer; the server and the C client keep
+their own requirements.
 
 ## Install
 

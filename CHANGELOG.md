@@ -21,6 +21,14 @@ All notable changes to this project are documented here. The format follows
   runs as the non-root user 10001. Tested with Podman and in the NAT lab on CI.
 
 ### Added
+- `re-psn-app` starts a terminal UI when run with no arguments, built on Bubble Tea v2.1.1 and Lip Gloss v2.0.6 (MIT; the app module's
+  first dependencies, pinned in `app/go.mod` and `app/go.sum`; the server module still has none). On first start it asks whether
+  this machine plays, hosts or both, then for the online ID and the server, and saves `re-psn.ini`. The home screen has a menu
+  (Overview, Rooms, Leaderboards, Settings, Help) beside the content, or one at a time under 70 columns. Rooms and Leaderboards
+  are the tabs of a Status screen filled over the game protocol only (HELLO, SEARCH_ROOMS, GET_RANKING for a typed board id);
+  the server's version, uptime and connection counts read "not available over the protocol". Settings edits mode, name, server,
+  status URL and theme (`[app] theme`, new) and saves with mode 0600. Dark by default, `t` for light, in the website's colours;
+  `NO_COLOR` turns colour off. Without a terminal, or with `--no-tui`, it prints one line and exits 2. See `app/README.md`.
 - Website: autocomplete in the terminal interface. While you type, the command line shows the rest of the best match dimmed and a list of up to eight matches (command names, `--status` and its values, feature ids, setting names, `theme` values) with a one-line description each. Tab or Right arrow takes the match, Up and Down choose from the list, Enter takes a chosen item, Esc closes the list, and a click or tap takes an item. The input is an ARIA combobox and the list a listbox, with a polite count of the suggestions. Nothing new is requested or stored.
 - Website: a visible System / Light / Dark switch in the page header and in the terminal interface (without script it is hidden and the page follows the system), kept in step with the `theme` command and remembered in the browser; and colour from the whole gruvbox-material palette for headings, status tags, command names, the prompt, flags, ids, links and the bars. Every text colour is checked at 4.5:1 or more against its background in both modes; where an accent is too faint as text on the light page it is a border or an underline and the text keeps a passing colour.
 - `site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table

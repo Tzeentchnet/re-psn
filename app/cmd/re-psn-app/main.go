@@ -1,5 +1,6 @@
-// re-psn-app: the desktop app for players and hosts of a re-psn server. For
-// now it has two subcommands: check (the first connection check) and version.
+// re-psn-app: the desktop app for players and hosts of a re-psn server. With
+// no arguments it starts the terminal UI; check (the first connection check)
+// and version are subcommands.
 package main
 
 import (
@@ -13,7 +14,12 @@ import (
 	"os"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/term"
+
 	"github.com/undecuple/re-psn/app/internal/client"
+	"github.com/undecuple/re-psn/app/internal/config"
+	"github.com/undecuple/re-psn/app/internal/tui"
 )
 
 var version = "0.2.0"
@@ -26,12 +32,26 @@ func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
+// isTerminal reports whether stdin and stdout are both a terminal; tests replace it.
+var isTerminal = func() bool { return term.IsTerminal(os.Stdin.Fd()) && term.IsTerminal(os.Stdout.Fd()) }
+
+// startTUI runs the terminal UI; tests replace it.
+var startTUI = runTUI
+
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		usage(stderr)
-		return 2
+		if !isTerminal() {
+			// No terminal, as when started by a double-click from a file manager: say why and stop. Opening a
+			// terminal window for the UI is not done yet.
+			fmt.Fprintln(stderr, "re-psn-app: stdin and stdout are not a terminal, so the terminal UI cannot start; run re-psn-app in a terminal, or use re-psn-app check HOST:PORT")
+			return 2
+		}
+		return startTUI(stderr)
 	}
 	switch args[0] {
+	case "--no-tui", "-no-tui":
+		fmt.Fprintln(stderr, "re-psn-app: the terminal UI is off (--no-tui); use re-psn-app check HOST:PORT or re-psn-app version")
+		return 2
 	case "version":
 		fmt.Fprintln(stdout, "re-psn-app", version)
 		return 0
@@ -48,9 +68,33 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 func usage(w io.Writer) {
 	fmt.Fprint(w, `usage:
+  re-psn-app                                 start the terminal UI (needs a terminal)
+  re-psn-app --no-tui                        do not start it: print a note and exit 2
   re-psn-app check [-timeout 5s] HOST:PORT   connect, say HELLO and report what the server answers
   re-psn-app version                         print the version
 `)
+}
+
+// runTUI loads the settings file (none yet means the first-run chooser) and runs the UI until it quits.
+func runTUI(stderr io.Writer) int {
+	path, err := config.Path()
+	if err != nil {
+		fmt.Fprintln(stderr, "re-psn-app:", err)
+		return 1
+	}
+	f, err := config.Load(path)
+	first := errors.Is(err, os.ErrNotExist)
+	if err != nil && !first {
+		fmt.Fprintln(stderr, "re-psn-app:", err)
+		return 1
+	}
+	_, noColor := os.LookupEnv("NO_COLOR")
+	m := tui.New(tui.Options{Path: path, File: f, FirstRun: first, NoColor: noColor})
+	if _, err := tea.NewProgram(m).Run(); err != nil {
+		fmt.Fprintln(stderr, "re-psn-app:", err)
+		return 1
+	}
+	return 0
 }
 
 func check(args []string, stdout, stderr io.Writer) int {

@@ -1,15 +1,18 @@
 # re-psn desktop app
 
 The start of the desktop app for players and hosts of a re-psn server. It is a Go module of its own,
-`github.com/undecuple/re-psn/app`, next to the server; the server's module is not changed by it. It has no dependencies outside
-the Go standard library yet. There is no terminal UI yet; that comes next.
+`github.com/undecuple/re-psn/app`, next to the server; the server's module is not changed by it and stays standard-library only.
+The app has a terminal UI built on [Bubble Tea](https://github.com/charmbracelet/bubbletea); its dependencies are listed under
+[Dependencies](#dependencies).
 
 ## Contents
 
 - [What is here](#what-is-here)
 - [Build and test](#build-and-test)
+- [The terminal UI](#the-terminal-ui)
 - [The check command](#the-check-command)
 - [Settings file](#settings-file)
+- [Dependencies](#dependencies)
 - [What the client does not do yet](#what-the-client-does-not-do-yet)
 
 ## What is here
@@ -19,7 +22,8 @@ the Go standard library yet. There is no terminal UI yet; that comes next.
 | `internal/client/` | A Go client for the server's TCP protocol ([docs/api.md](../docs/api.md)), with no UI |
 | `internal/client/conformance_test.go` | Builds the real server from `../server`, starts it on free loopback ports and drives the client against it |
 | `internal/config/` | Reads and writes the per-user settings file, `re-psn.ini` |
-| `cmd/re-psn-app/` | The program: `check` and `version` for now |
+| `internal/tui/` | The terminal UI: a Bubble Tea model whose Update and View are tested with messages and a fake server, no terminal |
+| `cmd/re-psn-app/` | The program: the terminal UI with no arguments, `check` and `version` |
 
 The client speaks only the game protocol. It does not need the server's HTTP status page.
 
@@ -36,6 +40,62 @@ go build ./cmd/re-psn-app
 
 The conformance test needs the `go` command to build the server; it skips, saying why, when the server cannot be built. It runs
 the server with `-http ""`, so no status page is started.
+
+## The terminal UI
+
+```sh
+re-psn-app            # start the terminal UI
+re-psn-app --no-tui   # do not: print a note and exit 2
+```
+
+The UI needs a terminal on stdin and stdout. Without one (for example when a file manager starts the program by a double-click)
+it prints one line to stderr saying so and exits 2; it does not open a terminal window by itself yet.
+
+**First start.** With no settings file yet, the app asks what it is for on this machine: **Play** (join servers), **Host** (run a
+server; the Host screen comes later, Status works now) or **Both**. Then the online ID (not for Host) and the server as
+`host:port`, each checked with the settings file's own rules. Enter saves `re-psn.ini`; Esc quits without saving, as does `q` on
+the first question; backspace in an empty field goes back one step.
+
+**Home.** A menu (Overview, Rooms, Leaderboards, Settings, Help), the chosen item's content beside it, and a line of keys at the
+bottom. Under 70 columns the menu and the content are shown one at a time.
+
+- **Overview:** mode, name, server and the connection in words: connected or not, the HELLO round trip, relay and invite-only
+  rooms on or off, the address the server sees.
+- **Rooms** and **Leaderboards** are the two tabs of the Status screen. Rooms belong to one title, so the screen asks for the
+  title's communication ID (such as `NPWR00860_00`) first. Rooms shows ID, owner, members as current/max and the room flags.
+  Leaderboards shows one board, whose id you type: rank, player, score and when it was recorded.
+- **Settings:** mode, name, server, status URL and theme. Enter changes the selected row; `s` saves to `re-psn.ini` (mode 0600).
+  A refused value says which rule it broke. The status URL is only stored; nothing uses it yet.
+- **Help:** the keys and what the screens can show.
+
+| Key | What it does |
+|---|---|
+| ↑ / ↓, `k` / `j`, `1`-`5` | move in the menu or a list; the digits jump to a menu item |
+| Enter | open the item; change a setting; finish typing |
+| Esc | back to the menu; cancel typing |
+| Tab | switch between Rooms and Leaderboards |
+| `e`, `b` | type the title, the board id |
+| `r` | ask the server again |
+| `s` | save the settings |
+| `t` | dark or light theme (saved with the settings) |
+| `q`, Ctrl+C | quit (Ctrl+C also while typing) |
+
+**Where the data comes from.** Only the game protocol, through `internal/client`: each refresh connects to the configured server,
+says HELLO under a throwaway name (`view-` and 10 random hex digits) for the title on screen, sends SEARCH_ROOMS (up to 50 rooms)
+and, with a board id, GET_RANKING (the top 20), and closes the connection. Every refresh has a 5-second timeout. A failure is
+shown as text on the screen, with the error, and the app keeps running. The HTTP status page is never used.
+
+**What the protocol cannot show.** The server's status page shows some things the game protocol has no message for. The UI says
+"not available over the protocol" in those places:
+
+- the server's version, uptime and connection counts (Overview and the Status header);
+- a room's age (the Age column of Rooms);
+- which boards exist, for one title or across titles (so you type the title and a board id);
+- full rooms and invite-only rooms, which SEARCH_ROOMS leaves out.
+
+**Theme.** Dark by default, light with `t`; the colours are the gruvbox-material values the website uses
+([docs/art/palette.json](../docs/art/palette.json)). In light mode the accents that are too faint as text are replaced by the
+strong text colour in bold. No state is shown by colour alone. With `NO_COLOR` set the UI uses no colour, only bold and reverse.
 
 ## The check command
 
@@ -66,6 +126,7 @@ in `%AppData%\re-psn\`. It is written atomically (a temporary file, then a renam
 # Comments are whole lines starting with # or ;
 [app]
 mode = play
+theme = dark
 
 [player]
 name = alice_01
@@ -79,6 +140,7 @@ status_token_file = /etc/re-psn/status-token
 | Section | Key | Value |
 |---|---|---|
 | `[app]` | `mode` | `play`, `host` or `both` |
+| `[app]` | `theme` | `dark` or `light`; unset means dark |
 | `[player]` | `name` | the online ID: 3 to 16 letters, digits, `-` or `_` |
 | `[server]` | `server` | `host:port`, port 1 to 65535 |
 | `[server]` | `status_url` | an `http://` or `https://` URL |
@@ -92,6 +154,24 @@ The rules:
 - There are no includes, quotes, escapes or variables (`~` and `$HOME` are not expanded).
 - Other keys, other sections and comment lines are kept and written back as they were.
 - An invalid value is an error that names the section and key, such as `re-psn.ini: [app] mode: "watch": want play, host or both`.
+
+## Dependencies
+
+The server module has none. The app module has these, pinned in `go.mod` and `go.sum` (`go mod verify` checks them, CI builds
+with `-mod=readonly`, and `govulncheck` runs on the module):
+
+| Module | Version | Why | Licence |
+|---|---|---|---|
+| [charm.land/bubbletea/v2](https://github.com/charmbracelet/bubbletea) | v2.1.1 | the terminal UI's event loop and renderer | MIT |
+| [charm.land/lipgloss/v2](https://github.com/charmbracelet/lipgloss) | v2.0.6 | colours, frames and layout | MIT |
+| [github.com/charmbracelet/x/term](https://github.com/charmbracelet/x) | v0.2.2 | the "is this a terminal" check (already needed by the two above) | MIT |
+
+The program also links the modules those three need: `github.com/charmbracelet/colorprofile`, `ultraviolet`, `x/ansi`, `x/termios`
+and `x/windows` (MIT), `github.com/clipperhouse/displaywidth` and `uax29/v2` (MIT), `github.com/lucasb-eyer/go-colorful` (MIT),
+`github.com/mattn/go-runewidth` (MIT), `github.com/muesli/cancelreader` (MIT), `github.com/rivo/uniseg` (MIT),
+`github.com/xo/terminfo` (MIT), and `golang.org/x/sync` and `golang.org/x/sys` (BSD-3-Clause). The module graph (`go list -m all`)
+also has modules that only their tests or their own dependencies' tests use (`aymanbagabas/go-udiff`, `bits-and-blooms/bitset`,
+`charmbracelet/x/exp/golden`, `clipperhouse/stringish`, `golang.org/x/exp`); they are not built into the program. None needs cgo. Bubbles is not used.
 
 ## What the client does not do yet
 
