@@ -6,7 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server
+  runs as the non-root user 10001. Tested with Podman only; the NAT lab was not run.
+
 ### Added
+- `docker/docker-compose.test.yml`: an opt-in hardened host-network compose file for a shared test host (non-root, no capabilities,
+  read-only filesystem, resource limits). It refuses to start without an explicit `RE_PSN_BIND` address.
 - A Linux x86_64 AppImage of the server in the release, `re-psn-vX.Y.Z-x86_64.AppImage`, beside the archives: the same binary and
   examples as one runnable file, built by `scripts/build-appimage.sh` with appimagetool 1.9.1 and the type-2 runtime 20251108
   (both downloaded by the release workflow and checked against pinned SHA-256 hashes), smoke-tested in the workflow, listed in

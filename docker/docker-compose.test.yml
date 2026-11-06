@@ -1,0 +1,44 @@
+# Opt-in: a hardened re-psn for a test host that is not your own laptop, for example a shared
+# server with VPN links.
+#
+#   RE_PSN_BIND=192.0.2.10:36100 docker compose -f docker/docker-compose.test.yml up --build
+#   docker compose -f docker/docker-compose.test.yml down
+#
+# 192.0.2.10 is a documentation address: use the address of the interface the players reach.
+#
+# Same build and host networking as docker-compose.host.yml (Linux only; every player's real
+# source address is visible, so the UDP source check works), plus:
+#   - a non-root user, all capabilities dropped, no new privileges
+#   - a read-only root filesystem with a small tmpfs for /tmp
+#   - limits on memory, CPU and processes
+#   - no volumes, no published ports, no container socket
+#   - restart "no": a test does not stay up unattended
+#
+# RE_PSN_BIND is required; there is no default. A wildcard address (":36100" or "0.0.0.0:36100")
+# would also answer on every VPN interface the host has, so name one address.
+# The firewall must allow 36100/tcp and 36100/udp to the players you intend.
+services:
+  re-psn:
+    build:
+      context: ..                 # the repository root; the Dockerfile copies go.mod and server/
+      dockerfile: docker/Dockerfile
+    network_mode: host
+    restart: "no"
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128
+    environment:
+      # Refuses to start without an explicit address; never defaults to a wildcard.
+      RE_PSN_ADDR: "${RE_PSN_BIND:?set RE_PSN_BIND to the address to listen on, for example the LAN address and :36100}"
+      # The test wants the relay on. It carries traffic between any two clients that can reach
+      # this server, and it uses this server's bandwidth. Set RE_PSN_RELAY=false to turn it off.
+      RE_PSN_RELAY: "${RE_PSN_RELAY:-true}"
+      # The status page stays on its default, 127.0.0.1:36101, which on the host network is the
+      # host's own localhost. If you ever bind it wider, set RE_PSN_HTTP_TOKEN as well.
