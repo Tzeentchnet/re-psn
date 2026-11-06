@@ -355,19 +355,22 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 ## Website
 
 The project page is built from `site/` by [tools/site.py](tools/site.py) out of the features list, `VERSION`, the settings table above and
-[CHANGELOG.md](CHANGELOG.md), with no script and nothing loaded from another site. It is published to GitHub Pages only after review.
+[CHANGELOG.md](CHANGELOG.md), with no script and nothing loaded from another site. It is published at <https://undecuple.github.io/re-psn/>.
 
 ## Credits
 
 - **sp00nz** ([sp00nznet](https://github.com/sp00nznet)) wrote [psnr](https://github.com/sp00nznet/psnr): the server, the C client,
   the protocol, NAT traversal, the relay and the NAT lab. Thanks to everyone in
   [upstream's contributors](https://github.com/sp00nznet/psnr/graphs/contributors).
+- **undecuple** ([undecuple](https://github.com/undecuple)) maintains re-psn and wrote everything added since the fork, listed in
+  [CHANGELOG.md](CHANGELOG.md): the release and container tooling, the AppImage, hardening and limits, rooms and invite codes, the
+  desktop app, the website, the documentation and the tests.
 - [ps3recomp](https://github.com/sp00nznet/ps3recomp) is the recompiler whose NP modules use the client, and re-psn follows the
   model of [xlive](https://github.com/sp00nznet/xlive): the server handles discovery, game traffic goes peer to peer.
 
 ## Licence
 
-MIT, see [LICENSE](LICENSE); upstream's copyright line is kept. PlayStation, PS3 and PSN are trademarks of Sony Interactive
+MIT, see [LICENSE](LICENSE); upstream's copyright line is kept and a line for the fork's changes is added. PlayStation, PS3 and PSN are trademarks of Sony Interactive
 Entertainment, used only to say what the server stands in for.
 
 ## How AI was used
