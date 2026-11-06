@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- The release carries one `SHA256SUMS` instead of a `.sha256` file per download: five assets instead of nine, from the next release.
+  Check a download with `sha256sum -c SHA256SUMS --ignore-missing`.
 - A shorter README: its long reference parts fold into dropdowns, and a short list linking to `docs/features.md` replaces the features table.
 - The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server
   runs as the non-root user 10001. Tested with Podman and in the NAT lab on CI.

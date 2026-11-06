@@ -72,12 +72,12 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 6. The tag starts [`.github/workflows/release.yml`](../.github/workflows/release.yml). It first runs
    `scripts/check-release.sh --tag <tag>`, which fails unless the tag is `v` + `VERSION` at the tagged commit and the
    version checks pass; nothing is built after a failure. Then vet and tests, the archives for windows/amd64, linux/amd64
-   and linux/arm64 and the x86_64 [AppImage](#the-appimage), with a `.sha256` file each and `SHA256SUMS` (LF, no BOM),
+   and linux/arm64 and the x86_64 [AppImage](#the-appimage), and one `SHA256SUMS` listing all four files (LF, no BOM),
    the notes, and a **draft** pre-release
    titled with the tag. The notes are `scripts/release-notes.sh` for `VERSION` (the CHANGELOG.md entries under that
    version's heading, which the bump filled) with the list of files, the checksums and the closing line
    `Next release: when ready` added. The job fails if a release for the tag exists already.
-7. Check the draft: the notes, the assets (three archives, the AppImage, their `.sha256` files, `SHA256SUMS`), and a download checked
+7. Check the draft: the notes, the assets (three archives, the AppImage, `SHA256SUMS`: five in all), and a download checked
    with `sha256sum -c SHA256SUMS`. A bad draft is deleted before it is published; then re-run the workflow for the same
    tag, or, if the tagged commit is wrong, bump to the next version.
 8. Publishing is the maintainer's. Publishing starts
@@ -122,10 +122,10 @@ like `re-psn -h`, and any other arguments go to the server the same way.
 - **x86_64 only.** The arm64 binary is cross-built, and an aarch64 AppImage could not be run once on the x86_64 runner
   before it ships; arm64 hosts take the tarball.
 - **Unsigned,** like the rest of the release (signing is planned later, with Windows signing; see
-  [ROADMAP.md](../ROADMAP.md)). Check a download against `SHA256SUMS` or its own `.sha256` file:
+  [ROADMAP.md](../ROADMAP.md)). Check a download against `SHA256SUMS`:
 
   ```sh
-  sha256sum -c re-psn-vX.Y.Z-x86_64.AppImage.sha256
+  sha256sum -c SHA256SUMS --ignore-missing
   ```
 
 How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), run by `scripts/release-build.sh` with
@@ -150,7 +150,7 @@ How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), ru
 4. Smoke test: the files in the AppImage equal the AppDir, its binary equals the archive's, `--appimage-extract-and-run -h`
    prints what the binary's `-h` prints (apart from the program path on the first line), and the server it starts on
    loopback reports the tag's version.
-5. It writes the `.sha256` file, adds the AppImage to `SHA256SUMS`, and `sha256sum -c SHA256SUMS` runs on the lot.
+5. It adds the AppImage to `SHA256SUMS`, and `sha256sum -c SHA256SUMS` runs on the lot.
 
 ## Checked automatically
 
