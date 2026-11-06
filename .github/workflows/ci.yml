@@ -63,7 +63,7 @@ jobs:
           "$RUNNER_TEMP/art/bin/python" tools/art/make_art.py --check
           "$RUNNER_TEMP/art/bin/python" -m unittest -v tools.art.test_make_art
 
-  # The desktop app: a separate Go module in app/ (Go 1.26), with no dependencies outside the standard library today. The
+  # The desktop app: a separate Go module in app/ (Go 1.26) whose dependencies are the ones listed in app/README.md. The
   # conformance test builds ../server and runs it on loopback ports. A new dependency has to show up as a go.mod change
   # that a person reads: the root module must keep no `require` lines, and the app builds with -mod=readonly.
   app:
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
           go-version: '1.26'
-          cache-dependency-path: app/go.mod
+          cache-dependency-path: app/go.sum
       - name: gofmt
         if: runner.os == 'Linux'
         run: test -z "$(gofmt -l .)"
