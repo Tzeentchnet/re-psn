@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64,
+  PowerShell 5.1 and 7) install the server for the current user from a GitHub release, the newest one (pre-releases included)
+  or a pinned `--version` / `-Version`. They check the download against `SHA256SUMS` and stop before installing anything on a
+  mismatch or a missing line, need no sudo or administrator rights, edit no shell profile, and change the user PATH only with
+  `-AddToPath` on Windows. macOS is refused (there are no macOS builds). `--dry-run` / `-DryRun` downloads nothing. Tested
+  with `scripts/test-install.sh` and `scripts/test-install.ps1` against a fake release. See `docs/installing.md`; the scripts
+  are not release assets yet.
+
 ## [0.3.0] - 2026-11-06
 
 ### Changed

@@ -179,6 +179,8 @@ their own requirements.
 
 Releases are pre-releases for now: the newest, [v0.3.0](https://github.com/undecuple/re-psn/releases/tag/v0.3.0), is on the [releases page](https://github.com/undecuple/re-psn/releases) (see [Release archives](#release-archives)). Its container image is `ghcr.io/undecuple/re-psn:0.3.0` (see [Container](#container)).
 
+Optional install scripts for Linux and Windows download a release and check it against `SHA256SUMS`: see [docs/installing.md](docs/installing.md).
+
 ### From source
 
 Prerequisites: Go 1.22 or newer (as in `go.mod`); a C compiler only for the C client and its tests. The quick way is `Setup.cmd`
