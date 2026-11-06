@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build the release archives into dist/: static server binaries (no cgo) for the three targets, a .sha256 file per
-# archive and one SHA256SUMS (LF, no BOM). With --appimage-tools DIR it also builds re-psn-vX.Y.Z-x86_64.AppImage with
+# Build the release archives into dist/: static server binaries (no cgo) for the three targets and one
+# SHA256SUMS (LF, no BOM). With --appimage-tools DIR it also builds re-psn-vX.Y.Z-x86_64.AppImage with
 # scripts/build-appimage.sh (DIR holds the pinned files from `scripts/build-appimage.sh fetch DIR`), and SHA256SUMS
 # lists it too. Used by .github/workflows/release.yml and runnable locally.
 # usage: scripts/release-build.sh vX.Y.Z [--appimage-tools DIR]
@@ -43,7 +43,6 @@ for target in windows/amd64 linux/amd64 linux/arm64; do
 done
 
 cd "$dist"
-for f in re-psn-*; do sha256sum "$f" > "$f.sha256"; done
 sha256sum re-psn-*.zip re-psn-*.tar.gz > SHA256SUMS
 [ -z "$tools" ] || "$root/scripts/build-appimage.sh" build "$tag" "$tools"
 sha256sum -c SHA256SUMS

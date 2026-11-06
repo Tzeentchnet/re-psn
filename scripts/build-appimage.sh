@@ -10,7 +10,7 @@
 # AppDir with sorted contents, fixed modes and mtimes (SOURCE_DATE_EPOCH, default 0), packs it with appimagetool and the
 # pinned type-2 runtime (--runtime-file, so appimagetool fetches nothing), then smoke-tests the result: the files in the
 # AppImage equal the AppDir, the binary equals the archive's, `--appimage-extract-and-run -h` prints what the binary's -h
-# prints, and the server it starts reports the tag's version. It writes the AppImage's .sha256 file, adds it to
+# prints, and the server it starts reports the tag's version. It adds the AppImage to
 # dist/SHA256SUMS and runs `sha256sum -c SHA256SUMS`. Called by scripts/release-build.sh with --appimage-tools DIR.
 set -euo pipefail
 
@@ -101,10 +101,9 @@ build() {
   smoke "$stage" "$src" "$app" "$dist/$name" "$version"
 
   cd "$dist"
-  sha256sum "$name" > "$name.sha256"
   touch SHA256SUMS
   awk -v n="$name" '$2 != n' SHA256SUMS > "$stage/sums"
-  cat "$name.sha256" >> "$stage/sums"
+  sha256sum "$name" >> "$stage/sums"
   cat "$stage/sums" > SHA256SUMS
   sha256sum -c SHA256SUMS
 }

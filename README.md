@@ -209,12 +209,12 @@ It is configured only by `RE_PSN_*` variables.
 
 Each release will carry `re-psn-vX.Y.Z-windows-amd64.zip`, `re-psn-vX.Y.Z-linux-amd64.tar.gz` and
 `re-psn-vX.Y.Z-linux-arm64.tar.gz` (built by [scripts/release-build.sh](scripts/release-build.sh)): a static `re-psn` binary
-(`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. Each archive has a `.sha256` file, and
-`SHA256SUMS` lists them all. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
+(`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. `SHA256SUMS` lists them
+and the AppImage. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
 `Get-FileHash <archive>` with the line in `SHA256SUMS` on Windows.
 
 Linux x86_64 also gets `re-psn-vX.Y.Z-x86_64.AppImage`, the same binary as one runnable file (unsigned): check it with
-`sha256sum -c re-psn-vX.Y.Z-x86_64.AppImage.sha256`, then `chmod +x` it and run it like the binary. It needs FUSE to mount;
+`sha256sum -c SHA256SUMS --ignore-missing`, then `chmod +x` it and run it like the binary. It needs FUSE to mount;
 without it, add `--appimage-extract-and-run` as the first argument. The tarball needs neither. See
 [docs/releasing.md](docs/releasing.md#the-appimage).
 
