@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- Credits: README, NOTICE.md and the website name undecuple as the maintainer of re-psn and author of the changes since the fork, and LICENSE
+  keeps upstream's copyright line with a second line for the fork's changes.
 - The status page and `/api/stats` are off unless `-http` / `RE_PSN_HTTP` names an address; they used to listen on
   `127.0.0.1:36101` by default. To keep the old behaviour, set `RE_PSN_HTTP=127.0.0.1:36101` (or `-http 127.0.0.1:36101`).
   `-http-token` and the warning for a page reachable beyond localhost without a token are unchanged.

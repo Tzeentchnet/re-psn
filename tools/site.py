@@ -410,10 +410,13 @@ def render_page(data):
     w('<li><strong>sp00nz</strong> (<a href="https://github.com/sp00nznet">sp00nznet</a>) wrote '
       '<a href="https://github.com/sp00nznet/psnr">psnr</a>: the server, the C client, the protocol, NAT traversal, the relay and '
       'the NAT lab.</li>\n')
+    w('<li><strong>undecuple</strong> (<a href="https://github.com/undecuple">undecuple</a>) maintains re-psn and wrote everything '
+      'added since the fork: the release and container tooling, the AppImage, hardening and limits, rooms and invite codes, '
+      'the desktop app, this website, the documentation and the tests.</li>\n')
     w('<li><a href="https://github.com/sp00nznet/ps3recomp">ps3recomp</a> is the recompiler whose NP modules use the client.</li>\n')
     w('<li>Colours from <a href="https://github.com/sainnhe/gruvbox-material">gruvbox-material</a> (MIT, Copyright (c) 2020 sainnhe).</li>\n')
     w('</ul>\n')
-    w(f'<p>MIT, see <a href="{esc(doc_url("LICENSE"))}">LICENSE</a>; upstream\'s copyright line is kept. PlayStation, PS3 and PSN are '
+    w(f'<p>MIT, see <a href="{esc(doc_url("LICENSE"))}">LICENSE</a>; upstream\'s copyright line is kept and a line for the fork\'s changes is added. PlayStation, PS3 and PSN are '
       'trademarks of Sony Interactive Entertainment, used only to say what the server stands in for.</p>\n')
     w('</section>\n')
 
