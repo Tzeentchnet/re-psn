@@ -5,7 +5,7 @@
    and the only thing stored is the theme choice (localStorage, optional). Text is built with textContent and DOM nodes,
    never HTML strings, and a link is made only for a github.com address or a path in this repository.
 
-   The first half is pure (run, complete) and is tested with `node --test tools/terminal.test.js`. The second half touches the page. */
+   The first half is pure (run, complete, suggest) and is tested with `node --test tools/terminal.test.js`. The second half touches the page. */
 (function (root) {
   'use strict';
 
@@ -83,7 +83,7 @@
   function cmdHelp() {
     var lines = ['Commands', ''];
     HELP.forEach(function (h) { lines.push([{ t: h[0], c: 'cmd' }, '  ' + h[1]]); });
-    lines.push('', 'Keys: arrows move, Enter opens, Tab switches pane, / jumps to the command line, Esc goes back, F1 to F4 are shortcuts for help, features, install and settings (F5 still reloads the page).');
+    lines.push('', 'Keys: arrows move, Enter opens, Tab switches pane, / jumps to the command line, Esc goes back, F1 to F4 are shortcuts for help, features, install and settings (F5 still reloads the page). While you type, matches are listed above the prompt: Tab or Right accepts, Up and Down choose, Esc closes.');
     return lines;
   }
 
@@ -299,7 +299,64 @@
     return { value: (head ? head + ' ' : '') + pre, candidates: c.length > 1 ? c : [] };
   }
 
-  var api = { run: run, complete: complete, md: md, hrefFor: hrefFor, COMMANDS: COMMANDS, HINT: HINT };
+  // Suggestions while typing: {ghost, items:[{text, replace, desc}]}. ghost is the rest of the best match when it starts with what is
+  // typed (else ''); items are up to LIMIT matches, prefix matches first and then substring matches, case-insensitive. replace is the
+  // whole new text of the input. Nothing is offered when the cursor is not at the end (pass its position as `cursor`), when the input
+  // is empty, or when nothing matches. The page only draws what this returns.
+  var LIMIT = 8;
+  var CMD_DESC = {};
+  HELP.forEach(function (h) {
+    h[0].split(', ').forEach(function (n) { CMD_DESC[n.split(' ')[0]] = h[1]; });
+  });
+  CMD_DESC.license = CMD_DESC.licence;
+  var THEME_DESC = { dark: 'dark colours', light: 'light colours', system: 'follow the system setting' };
+
+  function plain(text) { return String(text).replace(/`/g, '').replace(/\[([^\]]+)\]\([^)\s]+\)/g, '$1').replace(/\s+/g, ' ').trim(); }
+
+  function pick(pool, cur, head) {
+    var q = cur.toLowerCase();
+    var starts = [];
+    var inside = [];
+    pool.forEach(function (x) {
+      var t = x.text.toLowerCase();
+      if (t === q) { return; }
+      if (t.indexOf(q) === 0) { starts.push(x); } else if (q && t.indexOf(q) > 0) { inside.push(x); }
+    });
+    var items = starts.concat(inside).slice(0, LIMIT).map(function (x) {
+      return { text: x.text, replace: (head ? head + ' ' : '') + x.text + ' ', desc: x.desc || '' };
+    });
+    return { ghost: starts.length ? starts[0].text.slice(cur.length) : '', items: items };
+  }
+
+  function suggest(input, data, cursor) {
+    var none = { ghost: '', items: [] };
+    input = String(input);
+    if (!input.trim() || (cursor !== undefined && cursor < input.length)) { return none; }
+    var tokens = input.split(/\s+/).filter(Boolean);
+    var cur = /\s$/.test(input) ? '' : tokens.pop();
+    var head = tokens.join(' ');
+    var pool = [];
+    if (!tokens.length) {
+      pool = COMMANDS.filter(function (c) { return c !== 'license'; }).map(function (c) { return { text: c, desc: CMD_DESC[c] }; });
+    } else {
+      var word = CANONICAL[tokens[0]] || tokens[0];
+      var prev = tokens[tokens.length - 1];
+      if (word === 'features') {
+        if (prev === '--status') {
+          pool = statusList(data).map(function (k) { return { text: k, desc: data.status_counts[k] + ' features' }; });
+        } else {
+          pool = [{ text: '--status', desc: 'only features with this status' }].concat(data.features.map(function (f) { return { text: f.id, desc: f.feature }; }));
+        }
+      } else if (word === 'settings' && tokens.length === 1) {
+        pool = data.settings.map(function (s) { return { text: s.flag, desc: plain(s.description) }; });
+      } else if (word === 'theme' && tokens.length === 1) {
+        pool = THEMES.map(function (t) { return { text: t, desc: THEME_DESC[t] }; });
+      }
+    }
+    return pick(pool, cur, head);
+  }
+
+  var api = { run: run, complete: complete, suggest: suggest, md: md, hrefFor: hrefFor, COMMANDS: COMMANDS, HINT: HINT };
   if (typeof module !== 'undefined' && module.exports) { module.exports = api; }
   root.rePsnTerminal = api;
 
@@ -470,13 +527,37 @@
     input.setAttribute('autocorrect', 'off');
     input.setAttribute('autocomplete', 'off');
     input.setAttribute('aria-describedby', 'tui-hint');
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'both');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-controls', 'tui-list');
+    // The input sits in a field with the ghost text behind it: the typed text (invisible) and the rest of the best match (dimmed).
+    var field = el('div', 'tui-field');
+    var ghost = el('span', 'tui-ghost');
+    ghost.setAttribute('aria-hidden', 'true');
+    var ghostPad = el('span', 'tui-ghost-pad');
+    var ghostRest = el('span', 'tui-ghost-rest');
+    ghost.appendChild(ghostPad);
+    ghost.appendChild(ghostRest);
+    field.appendChild(ghost);
+    field.appendChild(input);
     var cursor = el('span', 'cursor', '█');
     cursor.setAttribute('aria-hidden', 'true');
     row.appendChild(ps);
     row.appendChild(label);
-    row.appendChild(input);
+    row.appendChild(field);
     row.appendChild(cursor);
+    var list = el('ul', 'tui-list');
+    list.id = 'tui-list';
+    list.setAttribute('role', 'listbox');
+    list.setAttribute('aria-label', 'Suggestions');
+    list.hidden = true;
+    row.appendChild(list);
     form.appendChild(row);
+    var status = el('div', 'vh');
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    form.appendChild(status);
     tui.appendChild(form);
 
     var chips = el('ul', 'tui-chips');
@@ -538,6 +619,69 @@
       tui.classList.toggle('empty', empty);
     }
 
+    // Autocomplete: suggest() decides, this only draws. sel is the item chosen with the arrows (-1 for none).
+    var sug = { ghost: '', items: [] };
+    var sel = -1;
+    var shown = false;
+    var announce = 0;
+
+    function say(text) {
+      root.clearTimeout(announce);
+      announce = root.setTimeout(function () { status.textContent = text; }, 600);
+    }
+
+    function drawGhost() {
+      var fits = sug.ghost && input.scrollWidth <= input.clientWidth && sel < 0;
+      ghostPad.textContent = fits ? input.value : '';
+      ghostRest.textContent = fits ? sug.ghost : '';
+    }
+
+    function drawList() {
+      list.textContent = '';
+      sug.items.forEach(function (it, i) {
+        var li = el('li', 'ac-item');
+        li.id = 'tui-opt-' + i;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', i === sel ? 'true' : 'false');
+        li.setAttribute('data-i', String(i));
+        li.appendChild(el('span', 'ac-name', it.text));
+        if (it.desc) { li.appendChild(el('span', 'ac-desc', it.desc)); }
+        list.appendChild(li);
+      });
+      list.hidden = !shown;
+      input.setAttribute('aria-expanded', shown ? 'true' : 'false');
+      if (shown && sel >= 0) { input.setAttribute('aria-activedescendant', 'tui-opt-' + sel); } else { input.removeAttribute('aria-activedescendant'); }
+      drawGhost();
+    }
+
+    function closeList() {
+      shown = false;
+      sel = -1;
+      sug = { ghost: '', items: [] };
+      drawList();
+      say('');
+    }
+
+    function refresh() {
+      var atEnd = input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
+      sug = atEnd && document.activeElement === input ? suggest(input.value, data) : { ghost: '', items: [] };
+      sel = -1;
+      var was = shown;
+      shown = sug.items.length > 0;
+      drawList();
+      if (shown) { say(sug.items.length + (sug.items.length === 1 ? ' suggestion' : ' suggestions')); } else if (was) { say(''); }
+    }
+
+    function accept(i) {
+      var it = sug.items[i];
+      if (!it) { return false; }
+      input.value = it.replace;
+      input.setSelectionRange(input.value.length, input.value.length);
+      syncCursor();
+      refresh();
+      return true;
+    }
+
     tui.addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('button[data-cmd]') : null;
       if (b && tui.contains(b)) { exec(b.getAttribute('data-cmd'), true); }
@@ -557,25 +701,58 @@
       var v = input.value;
       input.value = '';
       syncCursor();
+      closeList();
       exec(v, false);
     });
 
-    input.addEventListener('input', syncCursor);
+    input.addEventListener('input', function () { syncCursor(); refresh(); });
+    input.addEventListener('focus', refresh);
+    input.addEventListener('blur', closeList);
+    input.addEventListener('click', refresh);
+    input.addEventListener('keyup', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') { refresh(); }
+    });
+    // A tap or click on a suggestion accepts it; the mousedown is stopped so the input keeps its focus (and the phone keyboard).
+    list.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    list.addEventListener('click', function (e) {
+      var li = e.target.closest ? e.target.closest('li[data-i]') : null;
+      if (li) { accept(Number(li.getAttribute('data-i'))); input.focus(); }
+    });
     input.addEventListener('keydown', function (e) {
       if (e.altKey || e.ctrlKey || e.metaKey) { return; }
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      var atEnd = input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
+      if (shown && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+        var n = sug.items.length;
+        sel = e.key === 'ArrowDown' ? (sel + 1) % n : (sel < 0 ? n - 1 : (sel + n - 1) % n);
+        drawList();
+      } else if (shown && e.key === 'Enter' && sel >= 0) {
+        e.preventDefault();
+        accept(sel);
+      } else if (shown && e.key === 'ArrowRight' && atEnd && (sel >= 0 || sug.ghost)) {
+        e.preventDefault();
+        accept(sel >= 0 ? sel : 0);
+      } else if (shown && e.key === 'Tab' && !e.shiftKey && (sel >= 0 || sug.ghost)) {
+        e.preventDefault();
+        accept(sel >= 0 ? sel : 0);
+      } else if (shown && e.key === 'Escape') {
+        e.preventDefault();
+        closeList();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         if (!history.length) { return; }
         e.preventDefault();
         histPos += e.key === 'ArrowUp' ? -1 : 1;
         histPos = Math.max(0, Math.min(history.length, histPos));
         input.value = history[histPos] || '';
         syncCursor();
+        closeList();
       } else if (e.key === 'Tab' && !e.shiftKey && input.value.trim() !== '') {
         var c = complete(input.value, data);
         if (c.value !== input.value || c.candidates.length) {
           e.preventDefault();
           input.value = c.value;
           syncCursor();
+          refresh();
           if (c.candidates.length) { paint({ lines: [c.candidates.join('  ')] }, null); }
         }
       } else if (e.key === 'Escape') {

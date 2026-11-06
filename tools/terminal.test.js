@@ -1,4 +1,4 @@
-// Tests for site/terminal.js (the pure part: run and complete). Run from the repository root:
+// Tests for site/terminal.js (the pure part: run, complete and suggest). Run from the repository root:
 //   node --test tools/terminal.test.js
 // They live in tools/, not site/, because the Pages workflow publishes everything under site/.
 'use strict';
@@ -97,6 +97,86 @@ test('tab completion', () => {
   assert.strictEqual(T.complete('theme d', data).value, 'theme dark ');
   assert.ok(T.complete('c', data).candidates.includes('connect'));
   assert.deepStrictEqual(T.complete('zzz', data).candidates, []);
+});
+
+const texts = (r) => r.items.map((i) => i.text);
+
+test('suggest: command prefix, ghost and description', () => {
+  const r = T.suggest('fea', data);
+  assert.strictEqual(r.ghost, 'tures');
+  assert.deepStrictEqual(texts(r), ['features']);
+  assert.strictEqual(r.items[0].replace, 'features ');
+  assert.match(r.items[0].desc, /status/);
+  const c = T.suggest('c', data);
+  assert.ok(texts(c).includes('connect') && texts(c).includes('changelog'));
+  assert.strictEqual(c.ghost, c.items[0].text.slice(1));
+  assert.strictEqual(T.suggest('FEA', data).ghost, 'tures');
+  assert.ok(c.items.every((i) => i.desc));
+});
+
+test('suggest: flags and flag values', () => {
+  assert.deepStrictEqual(texts(T.suggest('features --st', data)), ['--status']);
+  const v = T.suggest('features --status ', data);
+  assert.deepStrictEqual(texts(v), Object.keys(data.status_counts));
+  assert.strictEqual(v.items[0].replace, 'features --status ' + v.items[0].text + ' ');
+  const p = T.suggest('features --status pl', data);
+  assert.deepStrictEqual(texts(p), ['planned']);
+  assert.strictEqual(p.ghost, 'anned');
+  assert.match(p.items[0].desc, /^\d+ features$/);
+});
+
+test('suggest: feature ids, settings names, theme values', () => {
+  const id = data.features[0].id;
+  const f = T.suggest('features ' + id.slice(0, 3), data);
+  assert.ok(texts(f).includes(id));
+  assert.strictEqual(f.items.find((i) => i.text === id).desc, data.features[0].feature);
+  const s = T.suggest('settings -ad', data);
+  assert.ok(texts(s).includes('-addr'));
+  assert.ok(s.items.every((i) => i.desc));
+  assert.deepStrictEqual(texts(T.suggest('theme ', data)), ['dark', 'light', 'system']);
+  assert.deepStrictEqual(texts(T.suggest('theme d', data)), ['dark']);
+  assert.strictEqual(T.suggest('theme d', data).items[0].replace, 'theme dark ');
+  assert.deepStrictEqual(T.suggest('theme dark ', data).items, []);
+});
+
+test('suggest: nothing for unknown, empty, exact or finished input', () => {
+  assert.deepStrictEqual(T.suggest('zzz', data), { ghost: '', items: [] });
+  assert.deepStrictEqual(T.suggest('', data), { ghost: '', items: [] });
+  assert.deepStrictEqual(T.suggest('   ', data), { ghost: '', items: [] });
+  assert.deepStrictEqual(T.suggest('roadmap', data).items, []);
+  assert.deepStrictEqual(T.suggest('roadmap ', data).items, []);
+  assert.deepStrictEqual(T.suggest('features --status zzz', data).items, []);
+});
+
+test('suggest: substring fallback after prefix matches, with no ghost for it', () => {
+  const r = T.suggest('ange', data);
+  assert.deepStrictEqual(texts(r), ['changelog']);
+  assert.strictEqual(r.ghost, '');
+  const m = T.suggest('s', data);
+  const first = m.items.findIndex((i) => !i.text.startsWith('s'));
+  assert.ok(first > 0 && m.items.slice(0, first).every((i) => i.text.startsWith('s')));
+  assert.ok(m.items.slice(first).every((i) => i.text.includes('s')));
+  assert.ok(m.ghost !== '');
+});
+
+test('suggest: at most 8 items', () => {
+  assert.ok(data.features.length > 8);
+  assert.strictEqual(T.suggest('features ', data).items.length, 8);
+  assert.ok(T.suggest('', data).items.length <= 8);
+  assert.ok(T.suggest('e', data).items.length <= 8);
+});
+
+test('suggest: only when the cursor is at the end', () => {
+  assert.deepStrictEqual(T.suggest('fea', data, 1), { ghost: '', items: [] });
+  assert.strictEqual(T.suggest('fea', data, 3).ghost, 'tures');
+  assert.strictEqual(T.suggest('fea', data, undefined).ghost, 'tures');
+});
+
+test('the autocomplete markup is built with DOM calls and carries the combobox attributes', () => {
+  for (const needle of ["'role', 'combobox'", "'aria-autocomplete', 'both'", "'aria-expanded'", "'aria-controls', 'tui-list'",
+    "'aria-activedescendant'", "'role', 'listbox'", "'role', 'option'", "'role', 'status'", "'aria-live', 'polite'"]) {
+    assert.ok(source.includes(needle), needle);
+  }
 });
 
 test('the script has no dynamic code, no HTML strings, one network call and no other storage', () => {

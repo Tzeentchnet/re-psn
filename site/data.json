@@ -665,7 +665,7 @@
    "id": "docs-website",
    "area": "Documentation",
    "feature": "Project website",
-   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and one-pane tappable chips on a phone; the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
+   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and one-pane tappable chips on a phone; the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
    "status": "partial",
    "since": "main",
    "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml",
@@ -888,6 +888,7 @@
      "The container image moves from Alpine 3.20 (end of life) to Alpine 3.24 and Go 1.26, both bases pinned by digest, and the server runs as the non-root user 10001."
     ],
     "Added": [
+     "Website: autocomplete in the terminal interface.",
      "Website: a visible System / Light / Dark switch in the page header and in the terminal interface (without script it is hidden and the page follows the system), kept in step with the `theme` command and remembered in the ...",
      "`site/`, the project website: `tools/site.py` generates `site/index.html` and `site/data.json` from `docs/features.tsv`, `VERSION`, the README settings table and this file (`--check` compares the committed files and the ...",
      "`site/terminal.js`, the terminal-style interface of the project website: a menu, a content pane and a command line (`features [--status S] [id]`, `roadmap`, `settings [name]`, `install`, `connect`, `version`, ...",
@@ -899,7 +900,7 @@
    },
    "counts": {
     "Changed": 5,
-    "Added": 7
+    "Added": 8
    }
   },
   "latest": {
