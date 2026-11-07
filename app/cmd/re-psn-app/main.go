@@ -19,6 +19,7 @@ import (
 
 	"github.com/undecuple/re-psn/app/internal/client"
 	"github.com/undecuple/re-psn/app/internal/config"
+	"github.com/undecuple/re-psn/app/internal/desktop"
 	"github.com/undecuple/re-psn/app/internal/tui"
 )
 
@@ -38,13 +39,17 @@ var isTerminal = func() bool { return term.IsTerminal(os.Stdin.Fd()) && term.IsT
 // startTUI runs the terminal UI; tests replace it.
 var startTUI = runTUI
 
+// launchDesktop opens a Linux desktop terminal; tests replace it.
+var launchDesktop = desktop.Launch
+
 func run(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 0 {
+	if len(args) == 0 || len(args) == 1 && args[0] == "--" {
 		if !isTerminal() {
-			// No terminal, as when started by a double-click from a file manager: say why and stop. Opening a
-			// terminal window for the UI is not done yet.
-			fmt.Fprintln(stderr, "re-psn-app: stdin and stdout are not a terminal, so the terminal UI cannot start; run re-psn-app in a terminal, or use re-psn-app check HOST:PORT")
-			return 2
+			if err := launchDesktop(); err != nil {
+				fmt.Fprintln(stderr, "re-psn-app: not a terminal:", err)
+				return 2
+			}
+			return 0
 		}
 		return startTUI(stderr)
 	}
@@ -68,7 +73,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 func usage(w io.Writer) {
 	fmt.Fprint(w, `usage:
-  re-psn-app                                 start the terminal UI (needs a terminal)
+  re-psn-app                                 start the terminal UI (Linux desktops can open a terminal)
   re-psn-app --no-tui                        do not start it: print a note and exit 2
   re-psn-app check [-timeout 5s] HOST:PORT   connect, say HELLO and report what the server answers
   re-psn-app version                         print the version
