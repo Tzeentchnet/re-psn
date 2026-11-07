@@ -62,7 +62,9 @@ flowchart LR
 **`client/`** (C, one `.c` and one `.h`)
 - Written in C because ps3recomp's HLE libraries are C17 and will vendor it.
 - **Has no threads.** `psnr_send` returns a request id, and replies and pushes
-  come out of `psnr_poll`, which never blocks.
+  come out of `psnr_poll`. Receiving does not wait for new data, but sends and
+  automatic heartbeat writes can wait for socket writability. See the
+  [integration guide](integrating.md#own-the-client-and-every-returned-message) for owner/callback scheduling.
 - The design follows how ps3recomp already delivers asynchronous events. For
   example, `cellSysutilCheckCallback` drains a queue on the guest thread that
   calls it. An NP module sends when the title starts a request, and drains

@@ -31,7 +31,7 @@ build may need more time. The command can be invoked by its absolute path from a
 
 | Phase | Existing tests | Coverage |
 |---|---|---|
-| Native client | `TestCClient` | Builds `client/psnr.c` and `client/test_psnr.c` and runs the C client against the in-process TCP/UDP server |
+| Native client | `TestCClient` | Builds/runs `client/test_psnr.c` and `client/examples/minimal.c` against the in-process TCP/UDP server, including example argument validation and empty/populated searches |
 | Go app client | `TestConformanceRoomsAndScores`, `TestConformanceRelayRoute`, `TestConformanceErrors` | Builds the server, starts it on free loopback ports, and exercises two-client room/score operations, route notifications and protocol errors |
 
 The runner uses `tools/check_conformance.py` to require the exact package/test names, disables Go's result cache with

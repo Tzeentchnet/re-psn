@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.
+  A minimal C HELLO/search example runs in the required native-client check; C API comments now clarify blocking
+  writes, diagnostic state and reply-wait timeout limits without changing implementation or the wire protocol.
 - Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and
   leaderboard summaries, using a local Bearer-token file. Requests and displayed data are bounded, redirects/proxies
   are disabled and failures fall back to the game protocol. Initial refresh and changed-source sequencing are corrected.

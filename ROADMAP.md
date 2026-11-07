@@ -67,6 +67,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
+- [docs-integration] A recomp developer guide covering ps3recomp and direct C integration, a required-tested minimal example, ownership/lifecycle and peer-transport checks; on main, not released.
 - [repo-check] An offline CI guard for tracked root/top-level layout, local Markdown links/anchors and static workflow/Dependabot input paths; available on main.
 - [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
 - [docs-readme] A rewritten README with an example from real runs, the features, the settings and credit to upstream.

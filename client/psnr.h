@@ -2,15 +2,16 @@
  * psnr.h - client for the psnr server (docs/api.md), in C for ps3recomp's
  * sceNp modules to vendor.
  *
- * No threads. psnr_send() queues a request and returns its id; the reply and
- * any server pushes come back out of psnr_poll(), which never blocks. That is
- * the shape NP's async APIs already have: the HLE module sends when the title
- * starts a request, and drains psnr_poll() on a guest thread (the title's own
- * poll or callback-check call), so callbacks run where the title expects them.
- * psnr_call() is the blocking form, for setup and tests.
+ * No threads. psnr_send() transmits a request and returns its id; the reply and
+ * any server pushes come back out of psnr_poll(). Its receive path does not
+ * wait for new data, but automatic heartbeat writes may wait for writability.
+ * An adapter owns transport calls serially and delivers completions through
+ * the title's guest callback queue. Keep potentially blocking transport work
+ * away from timing-sensitive guest execution. psnr_call() is the blocking
+ * form, for setup and tests.
  *
- * psnr_poll() also sends the heartbeat, so a client that stops polling for
- * 90 seconds is dropped, which is the right outcome for a hung title.
+ * Poll regularly for replies and idle heartbeats. The server drops a
+ * connection that sends nothing for 90 seconds.
  *
  * Not thread-safe: one thread per psnr_client at a time.
  */
@@ -63,7 +64,8 @@ typedef struct {
     uint32_t len;
 } psnr_msg;
 
-/* Connect and say HELLO. comm_id is the title's NP communication ID
+/* Blocking connect and HELLO setup (DNS/connect/send are not bounded by a
+ * caller deadline). comm_id is the title's NP communication ID
  * ("NPWR00860_00"), online_id the player's name, p2p_port the UDP port the
  * title takes peer traffic on (0 if none). Fills the id the server assigned
  * and the address it sees this client at. NULL on failure. */
@@ -106,21 +108,23 @@ int     psnr_relay_unwrap(const void* buf, size_t len, uint32_t* from_user,
 int64_t psnr_stream_connect(const psnr_client* c, uint32_t to_user, uint16_t vport, int timeout_ms);
 int64_t psnr_stream_accept(const psnr_client* c, uint32_t stream_id, int timeout_ms);
 
-/* After psnr_connect returned NULL: the ERROR code the server refused the
- * HELLO with (PSNR_E_NAME_TAKEN: another player on the server has that
- * name), or 0 if it never answered. */
+/* Last HELLO refusal diagnostic, process-global (PSNR_E_NAME_TAKEN: another
+ * player has that name). An earlier DNS/TCP failure may retain a prior code;
+ * do not treat it as the definitive cause of every NULL connect result. */
 int psnr_connect_error(void);
 void psnr_close(psnr_client* c);
 
-/* Queue a request. body excludes the request id. Returns the id, or 0 if
- * the connection is gone. */
+/* Transmit a request synchronously; may wait for socket writability. body
+ * excludes the request id. Returns the id, or 0 on failure. */
 uint32_t psnr_send(psnr_client* c, uint8_t type, const void* body, uint32_t len);
 
-/* 1: *out holds the next reply or push. 0: nothing yet. -1: disconnected. */
+/* 1: *out holds the next reply or push. 0: nothing yet. -1: disconnected after
+ * queued messages drain. Automatic heartbeat sends may wait for writability. */
 int psnr_poll(psnr_client* c, psnr_msg* out);
 
-/* Send and wait up to timeout_ms for that request's reply. Pushes and other
- * replies that arrive meanwhile stay queued for psnr_poll. 1 / 0 (timeout) / -1. */
+/* Send, then wait up to timeout_ms for that request's reply (not a full-operation
+ * deadline). Timeout does not cancel the request; a late reply can still arrive.
+ * Pushes and other replies stay queued for psnr_poll. 1 / 0 (timeout) / -1. */
 int psnr_call(psnr_client* c, uint8_t type, const void* body, uint32_t len,
               psnr_msg* reply, int timeout_ms);
 
