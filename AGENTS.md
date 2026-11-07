@@ -32,6 +32,7 @@ wire format. Settings are `RE_PSN_<FLAG>`; `PSNR_<FLAG>` is a deprecated alias t
 gofmt -l server                  # prints nothing when formatted
 go vet ./...
 go test -race ./...
+python3 tools/repo_check.py
 python3 tools/features.py --check && python3 tools/site.py --check && python3 -m unittest
 sh scripts/check-deploy.sh       # when deploy/ or the flags changed
 (cd app && test -z "$(gofmt -l .)" && go vet ./... && go test -race ./...)   # when app/ changed
