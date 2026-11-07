@@ -78,7 +78,7 @@ func (s *Server) serveUDP(pc net.PacketConn, now func() time.Time) error {
 			s.udpDrops.sourceCapacity.Add(1)
 			continue
 		}
-		if ua.IP.To4() == nil || n < 17 || string(buf[:4]) != udpMagic || (buf[4] != udpRelay && buf[4] != udpProbe) {
+		if n < 17 || string(buf[:4]) != udpMagic || (buf[4] != udpRelay && buf[4] != udpProbe) {
 			s.udpDrops.malformed.Add(1)
 			continue
 		}
@@ -87,6 +87,10 @@ func (s *Server) serveUDP(pc net.PacketConn, now func() time.Time) error {
 			continue
 		}
 		ip := ua.IP.To4()
+		if ip == nil {
+			s.udpDrops.malformed.Add(1)
+			continue
+		}
 		id, token := binary.BigEndian.Uint32(buf[5:]), binary.BigEndian.Uint32(buf[9:])
 
 		local := usableLocalIP([4]byte(buf[13:17]), [4]byte(ip))

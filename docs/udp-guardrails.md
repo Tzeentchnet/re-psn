@@ -16,7 +16,8 @@ The deprecated `PSNR_MAX_UDP_RATE` alias follows the [usual precedence rules](ru
 Each source starts with a burst allowance equal to one second of its rate. Tokens refill continuously up to that
 allowance; a packet consumes one token. Changing the source port does not create a fresh allowance. All players
 behind one public NAT address share it, including their probes and server-relayed datagrams. IPv4-mapped addresses
-use the same source identity as IPv4 addresses. The existing game UDP protocol supports IPv4 only.
+use the same source identity as IPv4 addresses. Probes and forwarded endpoints use IPv4. Incoming RELAY packets may
+also arrive from IPv6 when `-udp-any-source` is enabled, preserving that existing source-check opt-out.
 
 The default is an initial operational choice, not a measured capacity recommendation. Monitor the counters under your
 normal relay workload and raise the rate when a shared NAT needs more packets. For example:
@@ -50,7 +51,7 @@ The rest of the status response still contains the usual room/player data and ne
 |---|---|
 | `rate_limit` | The source has no packet token available. |
 | `source_capacity` | The source table is full and this source has no entry. |
-| `malformed` | Unsupported source address, short packet, wrong magic or unknown UDP message type. A short RELAY is malformed even when relay is off. |
+| `malformed` | An unusable source address, an IPv6 probe, short packet, wrong magic or unknown UDP message type. A short RELAY is malformed even when relay is off. |
 | `relay_disabled` | A well-formed RELAY arrived while `-relay` is off. |
 | `unauthorized` | A missing client, bad token, unready target endpoint or missing shared room prevents acceptance. |
 | `source_mismatch` | An otherwise authorized packet's source differs from the player's TCP source and `-udp-any-source` is off. |

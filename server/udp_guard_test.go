@@ -246,6 +246,37 @@ type udpGuardPacketConn struct {
 	address func(int) *net.UDPAddr
 }
 
+// RELAY has always allowed an IPv6 source when the host opts out of source
+// matching. Its target endpoint still comes from an IPv4 probe. Exercise the
+// full UDP dispatch so admission/parse changes cannot silently remove this.
+func TestUDPRelayIPv6SourceOptOut(t *testing.T) {
+	for _, allow := range []bool{false, true} {
+		t.Run(map[bool]string{false: "source check", true: "opt out"}[allow], func(t *testing.T) {
+			s := NewServer(10, false)
+			s.relay, s.udpAnySource = true, allow
+			a := &client{id: 1, token: 42, rooms: map[uint64]*room{}}
+			b := &client{id: 2, udpIP: [4]byte{127, 0, 0, 1}, udpPort: 9000, rooms: map[uint64]*room{}}
+			r := &room{}
+			a.rooms[1], b.rooms[1] = r, r
+			s.clients[1], s.clients[2] = a, b
+			pc := &udpGuardPacketConn{udpWriteResult: udpWriteResult{n: 13}, packets: 1,
+				packet:  relayPkt(player{id: 1}, 42, 2, "data"),
+				address: func(int) *net.UDPAddr { return &net.UDPAddr{IP: net.ParseIP("::1")} }}
+			if err := s.ServeUDP(pc); !errors.Is(err, io.EOF) {
+				t.Fatal(err)
+			}
+			want := udpDropStats{SourceMismatch: 1}
+			var bytes uint64
+			if allow {
+				want, bytes = udpDropStats{}, 4
+			}
+			if got := s.udpDrops.snapshot(); got != want || atomic.LoadUint64(&s.relayed) != bytes {
+				t.Fatalf("IPv6 relay opt-out %v: drops %+v, bytes %d", allow, got, atomic.LoadUint64(&s.relayed))
+			}
+		})
+	}
+}
+
 func (p *udpGuardPacketConn) ReadFrom(buf []byte) (int, net.Addr, error) {
 	if p.packets == 0 {
 		return 0, nil, io.EOF
