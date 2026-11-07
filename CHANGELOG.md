@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours
+  and wrapped continuation rows with an empty gutter. Headers and numbers are excluded from text selection. A pager
+  trial shows long output by page, with a line-range status, keyboard shortcuts and buttons; `pager off` shows all lines.
+  Command typing stays independent of pager shortcuts, and pages remeasure after viewport and theme changes. See
+  `docs/website.md` for controls and browser-test instructions.
 - Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64;
   written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from a GitHub release, the newest one (pre-releases included)
   or a pinned `--version` / `-Version`. They check the download against `SHA256SUMS` and stop before installing anything on a

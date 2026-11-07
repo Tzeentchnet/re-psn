@@ -363,6 +363,9 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 The project page is built from `site/` by [tools/site.py](tools/site.py) out of the features list, `VERSION`, the settings table above and
 [CHANGELOG.md](CHANGELOG.md). It works without script; `site/terminal.js` (no dependencies) adds a terminal-style interface with commands such as `features`, `settings` and `install`, and the `plain view` link switches it off. Nothing is loaded from another site, and the only request is for `data.json` on the same site. It is published at <https://undecuple.github.io/re-psn/>.
 
+Command output has a file header, line-number gutter and syntax-style colours. A pager trial offers keys and buttons for
+long output; `pager off` shows it all. See [docs/website.md](docs/website.md) for controls and contributor browser checks.
+
 ## Credits
 
 - **sp00nz** ([sp00nznet](https://github.com/sp00nznet)) wrote [psnr](https://github.com/sp00nznet/psnr): the server, the C client,
