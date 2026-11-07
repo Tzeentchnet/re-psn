@@ -58,7 +58,9 @@ type Server struct {
 	maxReqRate     int            // requests per second per connection
 	addrConns      map[string]int // open connections by remote host
 
-	udpAnySource   bool           // accept UDP probes and relay packets from an address other than the player's TCP address (udp.go)
+	udpAnySource   bool // accept UDP probes and relay packets from an address other than the player's TCP address (udp.go)
+	maxUDPRate     int  // datagrams per second per source IP; zero disables admission limiting
+	udpDrops       udpDropCounters
 	trustedProxies []netip.Prefix // peers allowed to name the real client (proxy.go)
 	proxyProto     bool           // require a PROXY header from a trusted peer
 
@@ -106,6 +108,7 @@ func NewServer(maxRooms int, verbose bool) *Server {
 		maxPlayerRooms: 8,
 		maxPerAddr:     32,
 		maxReqRate:     200,
+		maxUDPRate:     defaultUDPRate,
 		addrConns:      map[string]int{},
 		stopped:        make(chan struct{}),
 		owned:          map[*ownedConn]struct{}{},
