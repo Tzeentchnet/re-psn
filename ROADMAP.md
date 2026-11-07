@@ -53,6 +53,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [net-punch] Address discovery and hole punching over UDP, reproduced in the NAT lab.
 - [net-relay] An optional relay for players who cannot reach each other directly.
 - [net-udp-guard] UDP packets accepted only from the address of the player's TCP connection.
+- [net-guardrails] Partial: bounded per-source UDP rate limits and aggregate drop counters on main, not released. Per-player relay byte/stream budgets, failed-token blocking and UDP fuzz coverage remain planned.
 - [client-c] A one-file C client with no dependencies.
 - [app-tui] The desktop app's terminal UI: first-run choice, Status with Rooms and Leaderboards tabs over the game protocol, Settings, dark and light. Linux desktop starts can open a supported terminal; Windows uses its console. Partial: no Host screen or joining yet.
 
@@ -95,7 +96,7 @@ In about this order.
 
 ### Running a server
 - [ha-failover] Docs and examples for a standby server that takes over the address.
-- [net-guardrails] UDP rate limits, relay budgets and counters of dropped packets.
+- Finish relay budgets and remaining UDP guardrails; see [Network](docs/features.md#network).
 - [ci-more] More CI checks, such as the C client outside Linux.
 
 ### Apps

@@ -34,7 +34,7 @@
 <h2>Overview</h2>
 <p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person&#x27;s machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
 <p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, with no accounts and no public instance.</p>
-<p class="status-line">Version 0.3.0 (pre-release). 58 features: 28 available, 2 not yet verified, 6 partial, 13 planned, 8 later, 1 declined.</p>
+<p class="status-line">Version 0.3.0 (pre-release). 58 features: 28 available, 2 not yet verified, 7 partial, 12 planned, 8 later, 1 declined.</p>
 <p class="notice">Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own.</p>
 </section>
 <section id="features">
@@ -70,14 +70,14 @@
 <table class="stack feat">
 <thead><tr><th>Feature</th><th>Status</th><th>Since</th></tr></thead>
 <tbody>
-<tr id="f-limits-requests"><td data-label="Feature"><strong>Request and connection limits</strong> <code>limits-requests</code><br><code>-max-rooms</code>, <code>-max-player-rooms</code>, <code>-max-conns-per-addr</code>, <code>-max-req-rate</code> (requests per second per connection) and a size cap on room data. A request over a limit is refused; a connection over the rate is closed. Each refusal is logged at warn level.<br><span class="note">TCP only. UDP rate limits are planned (net-guardrails).</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-limits-requests"><td data-label="Feature"><strong>Request and connection limits</strong> <code>limits-requests</code><br><code>-max-rooms</code>, <code>-max-player-rooms</code>, <code>-max-conns-per-addr</code>, <code>-max-req-rate</code> (requests per second per connection) and a size cap on room data. A request over a limit is refused; a connection over the rate is closed. Each refusal is logged at warn level.<br><span class="note">These limits cover TCP. Main also has bounded UDP admission and drop counters; see the partial net-guardrails row.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 </tbody>
 </table>
 <h3 id="area-logging">Logging</h3>
 <table class="stack feat">
 <thead><tr><th>Feature</th><th>Status</th><th>Since</th></tr></thead>
 <tbody>
-<tr id="f-logs-levels"><td data-label="Feature"><strong>Log levels and formats</strong> <code>logs-levels</code><br><code>-log-level</code> (debug, info, warn, error), <code>-v</code> as debug, <code>-log-format</code> text or json, and <code>-log-file</code> to append to a file (mode 0600). Every refusal is logged at warn level; tokens and query strings are never logged.<br><span class="note">Not checked: no test covers <code>-log-file</code>. The server does not rotate the file.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-logs-levels"><td data-label="Feature"><strong>Log levels and formats</strong> <code>logs-levels</code><br><code>-log-level</code> (debug, info, warn, error), <code>-v</code> as debug, <code>-log-format</code> text or json, and <code>-log-file</code> to append to a file (mode 0600). Connection and room refusals are logged at warn level; UDP drops use aggregate counters, with one warning per player for a mismatched probe. Tokens and query strings are never logged.<br><span class="note">Not checked: no test covers <code>-log-file</code>. The server does not rotate the file.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 </tbody>
 </table>
 <h3 id="area-status-page">Status page</h3>
@@ -147,7 +147,7 @@
 <tr id="f-net-punch"><td data-label="Feature"><strong>Address discovery and hole punching</strong> <code>net-punch</code><br>A player&#x27;s P2P socket sends the server a UDP PROBE. The server records the public endpoint and gives each viewer the address that works from where they are: the public one from another network, the LAN address from the same one.<br><span class="note">Upstream work. The NAT lab runs it in Docker in CI.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-net-relay"><td data-label="Feature"><strong>Relay</strong> <code>net-relay</code><br><code>-relay</code>, off by default: streams into a player behind a router go through the server, and datagrams go through the server&#x27;s UDP port when punching does not get through (as with a symmetric NAT).<br><span class="note">Upstream work. Uses the server&#x27;s bandwidth; there is no per-player budget yet (net-guardrails).</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-net-udp-guard"><td data-label="Feature"><strong>UDP source address check</strong> <code>net-udp-guard</code><br>PROBE and RELAY packets are accepted only from the IP address of the player&#x27;s TCP connection. A probe&#x27;s <code>local_ip</code> is kept only if it is private, carrier-grade NAT, link-local or the probe&#x27;s own source. <code>-udp-any-source</code> turns the check off.<br><span class="note">A Podman run is recorded in docker/README.md.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
-<tr id="f-net-guardrails"><td data-label="Feature"><strong>More UDP and relay guardrails</strong> <code>net-guardrails</code><br>Per-source UDP rate limits and a failed-token counter, relay budgets (datagram size, per-player rates, idle streams), a 64-bit token, the limits written down, counters of dropped packets on /api/stats, and a test for each, with a fuzz test for the UDP packets.<br><span class="note">Not started. The 64-bit token changes the wire format and waits for a protocol version bump.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
+<tr id="f-net-guardrails"><td data-label="Feature"><strong>More UDP and relay guardrails</strong> <code>net-guardrails</code><br>Bounded per-source-IP UDP packet admission shared by probes, relay and invalid traffic, plus aggregate drop-reason counters in /api/stats. The token bucket tracks at most 4096 sources, expires idle entries and rejects new sources at capacity.<br><span class="note">Initial packet limiter only: default 1000 packets/second with the same burst, configurable with -max-udp-rate and 0 for off; players behind one NAT share it. Per-player relay byte/datagram budgets, payload and TCP stream limits, failed-token blocking and UDP fuzz coverage remain planned. A larger token needs a protocol version bump.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">main</td></tr>
 <tr id="f-net-checks"><td data-label="Feature"><strong>Connection checks</strong> <code>net-checks</code><br>A check for players and hosts that says where a connection fails (server reachable, HELLO accepted, UDP probe answered, NAT behaviour, peer reachable, relay available) and shows round trip, loss and whether each peer is up.<br><span class="note">Not designed yet.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
 <tr id="f-net-upnp"><td data-label="Feature"><strong>UPnP</strong> <code>net-upnp</code><br>Open a player&#x27;s P2P port on their router automatically.<br><span class="note">Not started.</span></td><td data-label="Status"><span class="tag dim">later</span></td><td data-label="Since">not released</td></tr>
 </tbody>
@@ -205,7 +205,7 @@
 <h2>Roadmap</h2>
 <p>The same list grouped by status. No dates are promised; <a href="https://github.com/undecuple/re-psn/blob/main/ROADMAP.md">ROADMAP.md</a> has the order and the scope.</p>
 <div class="cols">
-<div><h3>Done <span class="count">(36)</span></h3>
+<div><h3>Done <span class="count">(37)</span></h3>
 <ul>
 <li><a href="#f-rooms-basic">Rooms and search</a></li>
 <li><a href="#f-rooms-data">Room and member data</a></li>
@@ -226,6 +226,7 @@
 <li><a href="#f-net-punch">Address discovery and hole punching</a></li>
 <li><a href="#f-net-relay">Relay</a></li>
 <li><a href="#f-net-udp-guard">UDP source address check</a></li>
+<li><a href="#f-net-guardrails">More UDP and relay guardrails</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-client-c">C client</a></li>
 <li><a href="#f-app-client">Go client package</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-app-tui">Desktop app, terminal UI</a> <span class="tag warn">partial</span></li>
@@ -244,14 +245,13 @@
 <li><a href="#f-docs-website">Project website</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-repo-check">Repository layout check</a></li>
 </ul></div>
-<div><h3>Next <span class="count">(13)</span></h3>
+<div><h3>Next <span class="count">(12)</span></h3>
 <ul>
 <li><a href="#f-rooms-private">Private rooms</a></li>
 <li><a href="#f-players-friends">Friends, presence and invites</a></li>
 <li><a href="#f-store-sqlite">SQLite storage (opt-in)</a></li>
 <li><a href="#f-store-backup">Backup and restore</a></li>
 <li><a href="#f-ha-failover">Active/passive failover</a></li>
-<li><a href="#f-net-guardrails">More UDP and relay guardrails</a></li>
 <li><a href="#f-net-checks">Connection checks</a></li>
 <li><a href="#f-client-desktop">Desktop client, terminal UI</a></li>
 <li><a href="#f-client-gui">Desktop client, graphical UI</a></li>
@@ -283,6 +283,7 @@
 <h4>Added</h4>
 <ul>
 <li>Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal arguments and a recursion guard.</li>
+<li>Bounded per-source-IP UDP admission with <code>-max-udp-rate</code> / <code>RE_PSN_MAX_UDP_RATE</code> (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.</li>
 <li><code>/healthz</code> on the opt-in status listener, protected by the existing HTTP token.</li>
 <li>A stock Caddy 2 example for the HTTP status page, included with the deployment examples.</li>
 <li>The opt-in server status page now matches the website and terminal app&#x27;s gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...</li>
@@ -301,7 +302,7 @@
 </section>
 <section id="settings">
 <h2>Settings</h2>
-<p>Each of the 20 flags can also be set as a <code>RE_PSN_&lt;FLAG&gt;</code> variable. A flag on the command line wins, then the variable; a value that does not parse stops the server at start. It runs with no settings at all. <a href="https://github.com/undecuple/re-psn/blob/main/docs/running.md">docs/running.md</a> has the full text.</p>
+<p>Each of the 21 flags can also be set as a <code>RE_PSN_&lt;FLAG&gt;</code> variable. A flag on the command line wins, then the variable; a value that does not parse stops the server at start. It runs with no settings at all. <a href="https://github.com/undecuple/re-psn/blob/main/docs/running.md">docs/running.md</a> has the full text.</p>
 <table class="stack set">
 <thead><tr><th>Flag</th><th>Variable</th><th>Default</th><th>What it does</th></tr></thead>
 <tbody>
@@ -314,6 +315,7 @@
 <tr><td data-label="Flag"><code>-max-player-rooms</code></td><td data-label="Variable"><code>RE_PSN_MAX_PLAYER_ROOMS</code></td><td data-label="Default"><code>8</code></td><td data-label="What it does">Rooms one player may be in at once (0: no limit)</td></tr>
 <tr><td data-label="Flag"><code>-max-conns-per-addr</code></td><td data-label="Variable"><code>RE_PSN_MAX_CONNS_PER_ADDR</code></td><td data-label="Default"><code>32</code></td><td data-label="What it does">Open connections per remote address (0: no limit)</td></tr>
 <tr><td data-label="Flag"><code>-max-req-rate</code></td><td data-label="Variable"><code>RE_PSN_MAX_REQ_RATE</code></td><td data-label="Default"><code>200</code></td><td data-label="What it does">Requests per second per connection before it is closed (0: no limit)</td></tr>
+<tr><td data-label="Flag"><code>-max-udp-rate</code></td><td data-label="Variable"><code>RE_PSN_MAX_UDP_RATE</code></td><td data-label="Default"><code>1000</code></td><td data-label="What it does">UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit)</td></tr>
 <tr><td data-label="Flag"><code>-v</code></td><td data-label="Variable"><code>RE_PSN_V</code></td><td data-label="Default"><code>off</code></td><td data-label="What it does">Same as -log-level debug</td></tr>
 <tr><td data-label="Flag"><code>-log-level</code></td><td data-label="Variable"><code>RE_PSN_LOG_LEVEL</code></td><td data-label="Default"><code>info</code></td><td data-label="What it does">debug (room events), info, warn or error</td></tr>
 <tr><td data-label="Flag"><code>-log-format</code></td><td data-label="Variable"><code>RE_PSN_LOG_FORMAT</code></td><td data-label="Default"><code>text</code></td><td data-label="What it does">text or json</td></tr>

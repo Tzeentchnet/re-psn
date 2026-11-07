@@ -25,6 +25,10 @@ See [docs/running.md](docs/running.md) for the flags.
 - Room blobs are capped at 4096 bytes, a player can be in 8 rooms at once, one address can hold 32 connections, and a
   connection that sends more than 200 requests a second is closed (`-max-player-rooms`, `-max-conns-per-addr`,
   `-max-req-rate`; 0 turns a limit off).
+- UDP admission defaults to 1000 packets/second per source IP with the same burst, shared by valid and invalid probes
+  and relay datagrams. A bounded table holds at most 4096 sources and expires idle entries. Players behind one NAT
+  share the allowance; `-max-udp-rate 0` disables it. Aggregate drop counters add no source labels. This does not
+  bound relay bytes/streams or protect a saturated network link; see [UDP guardrails](docs/udp-guardrails.md).
 - `-http-token` protects the status page and `/api/stats`.
 - A UDP probe or relayed datagram must come from the player's TCP address, so a stolen token or a forged source can't
   point other players' traffic at a third party. It can't stop someone who sends from the player's own address, and it

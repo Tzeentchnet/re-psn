@@ -9,6 +9,7 @@ behind a reverse proxy, logging, ports, firewall rules, and what state it keeps.
 - [Flags](#flags)
 - [Status page appearance](#status-page-appearance)
 - [UDP source address](#udp-source-address)
+- [UDP rate limits and counters](udp-guardrails.md)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
 - [Health checks and restarts](restarts.md)
 - [Environment variables](#environment-variables)
@@ -47,11 +48,12 @@ docker compose -f docker/docker-compose.yml up -d
 | `-trusted-proxies` | none | Reverse proxies allowed to name the real client: CIDRs or addresses, comma-separated. See [Behind a reverse proxy](#behind-a-reverse-proxy). |
 | `-proxy-protocol` | off | Require a PROXY protocol v1 or v2 header on the game TCP port from a trusted proxy. Needs `-trusted-proxies`. |
 | `-max-rooms` | `1000` | Room limit across all titles |
+| `-max-udp-rate` | `1000` | UDP packets per second per source IP, including invalid packets, with the same-size burst allowance. Probes and UDP relay traffic share it; 0 disables the limiter, negative values stop startup. Players behind one NAT share one allowance. See [UDP guardrails](udp-guardrails.md). |
 | `-udp-any-source` | off | Accept UDP probes and relay packets from an address other than the player's TCP address. By default they must match; turn this on only for players whose UDP leaves from another public address (some multi-WAN or carrier NAT setups). It weakens the check, and the server warns at start. See [UDP source address](#udp-source-address). |
 | `-relay` | off | Carry traffic between players who can't reach each other directly: streams into a player behind a router, and datagrams when a router won't let punched traffic through. Uses this server's bandwidth. |
 | `-db` | `off` | Score storage: `off` or `memory`, which both keep scores in memory. See [Storage](#storage). |
 | `-db-file` | none | Read the `-db` setting from this file instead. Set `-db` or `-db-file`, not both. |
-| `-log-level` | `info` | `debug` (room and relay events), `info` (connects, hellos, disconnects), `warn` (every refusal) or `error`. |
+| `-log-level` | `info` | `debug` (room and relay events), `info` (connects, hellos, disconnects), `warn` (refusals and warnings) or `error`. UDP drops use aggregate counters; see [UDP guardrails](udp-guardrails.md#drop-counters). |
 | `-log-format` | `text` | `text` or `json`, one line per event. |
 | `-log-file` | none | Also append the log to this file (created with mode 0600). |
 | `-v` | off | Same as `-log-level debug`. |
@@ -63,7 +65,7 @@ With `-http 127.0.0.1:36101`, open `http://127.0.0.1:36101/`. The read-only stat
 gruvbox-material palette and monospace framing as the project website and terminal app. Rooms and Leaderboards
 are tabs; Overview shows both tables together. Use the arrow keys while a tab is focused, or click one.
 Invite-only rooms remain counted without names.
-`/api/stats` keeps its existing JSON fields and token rules.
+`/api/stats` keeps its existing JSON fields and token rules, and adds aggregate [`udp_drops` counters](udp-guardrails.md#drop-counters).
 
 The header offers System, Light and Dark; System follows the browser and responds to changes while the page is open.
 Appearance offers 14/16/18 px text, comfortable/compact spacing and eight custom colour slots for each light or dark mode.
