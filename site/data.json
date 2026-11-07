@@ -4,11 +4,11 @@
  "repository": "https://github.com/undecuple/re-psn",
  "go": "1.22",
  "status_counts": {
-  "available": 27,
-  "unverified": 1,
+  "available": 28,
+  "unverified": 2,
   "partial": 6,
   "in-progress": 0,
-  "planned": 15,
+  "planned": 13,
   "later": 8,
   "declined": 1
  },
@@ -137,10 +137,10 @@
    "id": "status-page",
    "area": "Status page",
    "feature": "Status page and /api/stats, with a token",
-   "detail": "A read-only page and JSON on a separate listener, off unless `-http` names an address (`127.0.0.1:36101` keeps it on localhost). `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one.",
+   "detail": "A read-only page and JSON on a separate listener, off unless `-http` names an address (`127.0.0.1:36101` keeps it on localhost). `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one. On main the page uses gruvbox-material, Rooms/Leaderboards tabs, System/Light/Dark and browser-local text size, spacing and contrast-checked custom colours.",
    "status": "available",
    "since": "0.2.0",
-   "evidence": "server/api.go, TestStatusToken, TestReachable, TestStatusPageOff, TestStatusPageOn, docs/status.png",
+   "evidence": "server/api.go, TestStatusToken, TestReachable, TestStatusPageOff, TestStatusPageOn, docs/status.png, server/status_theme_test.go, TestStatusTerminalPage, TestStatusThemeAuthenticationAndHeaders, tools/status_browser_check.mjs, docs/running.md",
    "note": "The page and /api/stats are upstream work (0.1.0); the token is the fork's.",
    "status_label": "available",
    "status_class": "ok"
@@ -208,14 +208,14 @@
   {
    "id": "deploy-caddy",
    "area": "Deployment",
-   "feature": "Caddy example",
-   "detail": "A Caddy config next to the other examples in `deploy/`.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "feature": "Caddy status-page example",
+   "detail": "A stock Caddy 2 HTTP reverse-proxy example in `deploy/caddy/`, copied into future release archives with the other deployment examples. Defaults to loopback and leaves game TCP/UDP direct.",
+   "status": "unverified",
+   "since": "main",
+   "evidence": "deploy/caddy/Caddyfile, deploy/caddy/README.md, scripts/check-deploy.sh, docs/running.md",
+   "note": "Written from the official Caddy documentation; not run or validated with Caddy. No layer-4 plugin is included. The existing HTTP token check is preserved and client-supplied CF-Connecting-IP is removed before forwarding.",
+   "status_label": "not yet verified",
+   "status_class": "unv"
   },
   {
    "id": "deploy-container",
@@ -501,7 +501,7 @@
    "status": "planned",
    "since": "",
    "evidence": "",
-   "note": "Not started. Whether the status page follows the browser's setting too is not decided.",
+   "note": "Desktop presets and system-following remain planned. The server status page supports browser System/Light/Dark and local appearance controls; see status-page.",
    "status_label": "planned",
    "status_class": "plan"
   },
@@ -645,7 +645,7 @@
    "status": "available",
    "since": "0.2.0",
    "evidence": "deploy/README.md, docker/README.md, docs/running.md, #20",
-   "note": "Links were checked once with a throwaway script; a CI link check is planned (repo-check).",
+   "note": "The offline repo-check guard validates tracked local Markdown links and anchors in CI.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -701,13 +701,13 @@
    "id": "repo-check",
    "area": "Documentation",
    "feature": "Repository layout check",
-   "detail": "A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. After docs-markdown.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "An offline CI check of tracked root filenames and top-level directories, local Markdown links and heading/explicit anchors, and static repository input paths in workflows and Dependabot.",
+   "status": "available",
+   "since": "main",
+   "evidence": "tools/repo_check.py, tools/test_repo_check.py, tools/repo_layout.json, .github/workflows/ci.yml, CONTRIBUTING.md",
+   "note": "Python standard library and Git only. Does not fetch external links, evaluate arbitrary shell/YAML expressions or validate generated artifact paths.",
+   "status_label": "available",
+   "status_class": "ok"
   }
  ],
  "roadmap": {
@@ -723,6 +723,7 @@
    "proxy-support",
    "deploy-examples",
    "deploy-nginx-haproxy",
+   "deploy-caddy",
    "deploy-container",
    "settings-env",
    "store-interface",
@@ -745,13 +746,13 @@
    "docs-connecting",
    "docs-readme",
    "docs-art",
-   "docs-website"
+   "docs-website",
+   "repo-check"
   ],
   "Now": [],
   "Next": [
    "rooms-private",
    "players-friends",
-   "deploy-caddy",
    "store-sqlite",
    "store-backup",
    "ha-failover",
@@ -762,8 +763,7 @@
    "app-themes",
    "app-appearance",
    "app-colours",
-   "ci-more",
-   "repo-check"
+   "ci-more"
   ],
   "Later": [
    "players-accounts",
@@ -908,6 +908,9 @@
    "sections": {
     "Added": [
      "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
+     "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
+     "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",
+     "An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static workflow/Dependabot input paths.",
      "A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.",
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
@@ -917,7 +920,7 @@
     ]
    },
    "counts": {
-    "Added": 4,
+    "Added": 7,
     "Changed": 1
    }
   },

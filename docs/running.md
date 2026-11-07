@@ -7,6 +7,7 @@ behind a reverse proxy, logging, ports, firewall rules, and what state it keeps.
 
 - [Run it](#run-it)
 - [Flags](#flags)
+- [Status page appearance](#status-page-appearance)
 - [UDP source address](#udp-source-address)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
 - [Health checks and restarts](restarts.md)
@@ -56,6 +57,42 @@ docker compose -f docker/docker-compose.yml up -d
 | `-v` | off | Same as `-log-level debug`. |
 | `-replace` | off | If the game port is already in use by an earlier instance of this server, ask it to stop, wait for the port, then start. Linux only; see [Stopping and replacing](#stopping-and-replacing). |
 
+## Status page appearance
+
+With `-http 127.0.0.1:36101`, open `http://127.0.0.1:36101/`. The read-only status page uses the same
+gruvbox-material palette and monospace framing as the project website and terminal app. Rooms and Leaderboards
+are tabs; Overview shows both tables together. Use the arrow keys while a tab is focused, or click one.
+Invite-only rooms remain counted without names.
+`/api/stats` keeps its existing JSON fields and token rules.
+
+The header offers System, Light and Dark; System follows the browser and responds to changes while the page is open.
+Appearance offers 14/16/18 px text, comfortable/compact spacing and eight custom colour slots for each light or dark mode.
+Enter six-digit hex colours and choose Apply colours. Text, muted, accent and status colours must have at least 4.5:1
+contrast on both backgrounds; invalid changes leave the current colours intact. Reset appearance restores the defaults.
+Choices stay in this browser's storage for the server origin; they change no server flags or other visitors' settings.
+If storage is unavailable, choices work for the current page and a message explains that they cannot be saved.
+
+With JavaScript, status data refreshes every five seconds while the page is visible. Pause refresh keeps a snapshot;
+Refresh now still works while paused. A failed refresh retains the previous snapshot and shows an error. Theme, focus
+and tabs stay in place during updates. The browser fetches only this server's `/api/stats`; nothing loads from other sites.
+Without JavaScript both tables are visible, the system colour scheme applies, and the page reloads every five seconds.
+The existing `-http-token` protects both views: browser links may use `?token=...`, which the refresh request preserves
+without saving it in appearance settings. Responses disable caching and referrer forwarding.
+
+Assets are embedded in the binary with `embed` and `html/template`; there is no frontend build or runtime dependency.
+The HTML response uses hashes for its embedded CSS and script in its Content Security Policy. `go test ./...` checks
+line-ending normalization, so CRLF checkouts produce the same rendered assets and hashes. Polling retains exact decimal
+text for integers beyond JavaScript's safe range, including signed 64-bit scores; `/api/stats` still returns JSON numbers.
+The same suite checks
+escaping, authentication and the actual rendered hashes. `python3 -m unittest tools.test_status` checks palette parity;
+`node --test tools/status.test.js` checks custom colour validation and stored settings. The optional
+`tools/status_browser_check.mjs` uses the existing Chromium DevTools helper against an owned loopback
+`TestStatusBrowserFixture` (set `RE_PSN_STATUS_BROWSER_READY` to a fresh ready-file path). This fixture creates a room
+and score over real loopback TCP, writes its ephemeral HTTP URL to that file, and exits when the file is removed or after
+two minutes. Its token is the public synthetic string `synthetic-status-token`, never a deployment credential.
+The check takes a Chromium debug port, that URL with the synthetic token, and an artifact directory. Do not aim it at
+a deployed server: it changes browser preferences and tests deliberate refresh failures in its isolated browser profile.
+
 ## UDP source address
 
 A UDP PROBE (and a datagram sent through `-relay`) is accepted only from the same IP address as the player's TCP
@@ -79,7 +116,8 @@ on the same network, who send UDP to it.
 
 The release archives carry an `examples/` folder (in this repository, [deploy/](../deploy/README.md)): `re-psn.env.example` (every setting, commented, with its
 default; copy it to `re-psn.env`), `re-psn.service` (a systemd unit, reading `/etc/psnr/psnr.env` then `/etc/re-psn/re-psn.env`) and configs for Traefik, nginx
-and HAProxy. Only the Traefik one has been run (see below).
+and HAProxy. A [Caddy status-page example](../deploy/caddy/README.md) is on main for inclusion in the next release;
+existing archives do not contain it. Only the Traefik one has been run (see below).
 
 Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
 (`-max-conns-per-addr` trips for everyone, and the address other players receive is wrong).
@@ -115,6 +153,10 @@ re-psn listen behind Traefik on `127.0.0.1:36200` instead, so both fit on one ho
 nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
 (`send-proxy-v2` on the server line; a health check to re-psn needs `check-send-proxy` as well) work the same way but have not been run here. re-psn
 accepts v1 and v2. A v2 header must describe a TCP stream: a datagram or unassigned family or transport is refused and the connection closed.
+
+The [Caddy example](../deploy/caddy/README.md) uses stock Caddy 2 for HTTP only and starts on loopback. It keeps game TCP
+and UDP direct; leave `-proxy-protocol` off for that setup. It removes the client-supplied `CF-Connecting-IP` header
+before forwarding and uses the status page's existing token check. It has not been run or validated with Caddy.
 
 > [!NOTE]
 > **Cloudflare:** the ordinary proxy carries only HTTP and HTTPS, so it can front the status page but not the game port. Cloudflare Spectrum can send

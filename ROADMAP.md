@@ -38,13 +38,14 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 [Limits](docs/features.md#limits), [logging](docs/features.md#logging) and the [status page](docs/features.md#status-page)
 - [limits-requests] Limits on rooms, connections, request rate and room data size, each refusal logged.
 - [logs-levels] Log levels, text or JSON output, and an optional log file.
-- [status-page] A status page and `/api/stats`, off unless `-http` is set, with an optional token.
+- [status-page] A terminal-style status page and `/api/stats`, off unless `-http` is set, with an optional token. Main adds Rooms/Leaderboards tabs, System/Light/Dark and browser-local text size, spacing and custom colours; see docs/running.md.
 
 [Reverse proxy](docs/features.md#reverse-proxy), [deployment](docs/features.md#deployment) and [settings](docs/features.md#settings)
 - [proxy-support] PROXY protocol v1 and v2 and trusted proxies, so the real client address counts.
 - [ha-restart] A data-free health endpoint and bounded shutdown of client/relay sockets, with restart documentation; on main, not released. Rooms and scores remain in memory.
 - [deploy-examples] A settings file, a systemd unit and a Traefik example, shipped in the release archives.
 - [deploy-nginx-haproxy] nginx and HAProxy examples, not yet run against the server.
+- [deploy-caddy] A stock Caddy 2 status-page example on main, not released or run/validated with Caddy; game TCP and UDP stay direct.
 - [deploy-container] A Dockerfile and compose file, run under Podman.
 - [settings-env] Every flag as a `RE_PSN_*` variable, with the old `PSNR_*` names as aliases.
 
@@ -65,6 +66,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
+- [repo-check] An offline CI guard for tracked root/top-level layout, local Markdown links/anchors and static workflow/Dependabot input paths; available on main.
 - [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
 - [docs-readme] A rewritten README with an example from real runs, the features, the settings and credit to upstream.
 - [docs-art] A generator for the README banner and terminal images from real runs, in one palette, checked in CI.
@@ -87,9 +89,6 @@ Nothing is in progress at the moment; the items under Next come first.
 
 In about this order.
 
-### Releases and docs
-- [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
-
 ### Storage, off unless a host turns it on
 - [store-sqlite] SQLite storage, so leaderboards survive a restart.
 - [store-backup] Backup and restore steps for each database.
@@ -97,7 +96,6 @@ In about this order.
 ### Running a server
 - [ha-failover] Docs and examples for a standby server that takes over the address.
 - [net-guardrails] UDP rate limits, relay budgets and counters of dropped packets.
-- [deploy-caddy] A Caddy example next to the other proxy examples.
 - [ci-more] More CI checks, such as the C client outside Linux.
 
 ### Apps

@@ -3,6 +3,7 @@
 // PUPPETEER_DIR is the directory of an installed puppeteer package (the one mermaid-cli ships works).
 const [dir, url, out] = process.argv.slice(2);
 const puppeteer = require(dir);
+const {prepareStatusScreenshot} = require('./status-frame.js');
 (async () => {
   const browser = await puppeteer.launch({
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
@@ -13,6 +14,11 @@ const puppeteer = require(dir);
     await page.setViewport({ width: 1000, height: 420, deviceScaleFactor: 1 });
     await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
     await page.goto(url, { waitUntil: 'load' });
+    await page.waitForFunction(() => !document.querySelector('#toolbar').hidden);
+    await prepareStatusScreenshot({
+      evaluate: expression => page.evaluate(expression),
+      viewport: (width, height) => page.setViewport({width, height, deviceScaleFactor:1}),
+    });
     await page.screenshot({ path: out });
   } finally {
     await browser.close();
