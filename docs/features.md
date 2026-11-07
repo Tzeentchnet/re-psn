@@ -6,11 +6,11 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | Status | Meaning | Features |
 |---|---|---|
-| available | merged, with a test or a recorded run | 26 |
+| available | merged, with a test or a recorded run | 27 |
 | not yet verified | merged, but nothing in the repository checks it | 1 |
 | partial | merged in part, or with known gaps | 6 |
 | in progress | an open pull request or branch | 0 |
-| planned | wanted and intended, not started | 16 |
+| planned | wanted and intended, not started | 15 |
 | later | after the planned items, or after a decision | 8 |
 | declined | will not be done | 1 |
 | all | | 58 |
@@ -98,7 +98,7 @@ What re-psn does today and what is planned, one row per feature. Each status res
 
 | ID | Feature | Status | Since | Evidence | Note |
 |---|---|---|---|---|---|
-| `ha-restart` | **Health check and clean restarts**: A `/healthz` endpoint on the status listener (200 when the server accepts connections, no player data), a graceful shutdown that closes connections so players reconnect at once, and a page on restart settings and what players see. | planned |  |  | Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart. |
+| `ha-restart` | **Health check and clean restarts**: A data-free `/healthz` endpoint on the opt-in status listener, guarded by the existing HTTP token, and bounded shutdown that closes listeners and accepted client/relay sockets. A guide covers probe results, supervisors and what players lose on restart. | available | main | [`server/lifecycle.go`](../server/lifecycle.go), [`server/lifecycle_test.go`](../server/lifecycle_test.go), [`server/api.go`](../server/api.go), [`server/main.go`](../server/main.go), [`docs/restarts.md`](restarts.md) | Health is 200 only while both game serving loops are active, 503 during startup/shutdown or after a loop exits. Loopback and subprocess tests cover shutdown; systemd/container restarts and remote failover are not run. Rooms and scores remain in memory and are lost on restart. No database retry is needed until a network backend exists. |
 | `ha-failover` | **Active/passive failover**: Docs and example files for a standby server: a floating address (keepalived) or a proxy's health checks, both servers on the same database, one active at a time. No election or replication inside the server. | planned |  |  | Not started. After ha-restart; the shared database needs store-postgres or store-mariadb. Live rooms are lost on failover. |
 | `ha-multi` | **Several servers**: Several servers behind one address, each room wholly on one server, with a routing layer that sends a new room or a join to the right one. | later |  |  | On the back burner: revisited after ha-restart and ha-failover exist and one server is not enough. |
 | `ha-handover` | **Live room handover**: Rooms that survive the loss of a server. | declined |  |  | Needs replicated live state; out of scope for a server of this size. |

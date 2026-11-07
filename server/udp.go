@@ -29,6 +29,21 @@ const (
 )
 
 func (s *Server) ServeUDP(pc net.PacketConn) error {
+	s.lifeMu.Lock()
+	if s.stopping || s.udp != nil {
+		s.lifeMu.Unlock()
+		pc.Close()
+		return net.ErrClosed
+	}
+	s.udp, s.udpReady = pc, true
+	s.handlers.Add(1)
+	s.lifeMu.Unlock()
+	defer func() {
+		s.lifeMu.Lock()
+		s.udpReady = false
+		s.lifeMu.Unlock()
+		s.handlers.Done()
+	}()
 	buf := make([]byte, 65536)
 	for {
 		n, addr, err := pc.ReadFrom(buf)

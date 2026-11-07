@@ -40,7 +40,7 @@ func main() {
 	addr := flag.String("addr", envStr("addr", ":36100"), "TCP and UDP address for game clients")
 	tcpAddr := flag.String("tcp-addr", envStr("tcp-addr", ""), "TCP address for game clients (default: -addr)")
 	udpAddr := flag.String("udp-addr", envStr("udp-addr", ""), "UDP address for game clients (default: -addr)")
-	httpAddr := flag.String("http", envStr("http", ""), "HTTP status page and /api/stats, off unless set (for example 127.0.0.1:36101)")
+	httpAddr := flag.String("http", envStr("http", ""), "HTTP status page, /api/stats and /healthz, off unless set (for example 127.0.0.1:36101)")
 	httpToken := flag.String("http-token", envStr("http-token", ""), "require this token (Authorization: Bearer, or ?token=) on the status page; set it when -http is not on localhost")
 	maxRooms := num("max-rooms", 1000, "room limit across all titles")
 	playerRooms := num("max-player-rooms", 8, "rooms one player may be in at once (0 for no limit)")
@@ -130,6 +130,7 @@ func main() {
 	// an error. Anything else a serving goroutine returns is fatal.
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, stopSignals()...)
+	defer signal.Stop(stop)
 	errc := make(chan error, 3)
 	go func() { errc <- s.ServeUDP(pc) }()
 	logger.Info("started", "version", version, "clients", ln.Addr().String(), "udp", pc.LocalAddr().String(), "relay", *relay)
@@ -146,21 +147,30 @@ func main() {
 		logger.Debug("status page off (set -http to turn it on)")
 	}
 	go func() { errc <- s.Serve(ln) }()
+	var serveErr error
 	select {
-	case err := <-errc:
-		removePidFile(pidPath)
-		fatal(err)
+	case serveErr = <-errc:
 	case <-stop:
 	}
 	logger.Info("stopping")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := s.Shutdown(ctx); err != nil {
+		logger.Warn("game shutdown deadline", "err", err)
+	}
+	// A serving goroutine may not have registered its listener before a
+	// startup failure, so also close the descriptors opened by main.
 	ln.Close()
 	pc.Close()
 	if hs != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		hs.Shutdown(ctx)
-		cancel()
+		if err := hs.Shutdown(ctx); err != nil {
+			hs.Close()
+		}
 	}
 	removePidFile(pidPath)
+	if serveErr != nil {
+		fatal(serveErr)
+	}
 }
 
 // stopSignals are the signals that stop the server: Windows has only Ctrl-C.

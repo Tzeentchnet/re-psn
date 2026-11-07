@@ -4,11 +4,11 @@
  "repository": "https://github.com/undecuple/re-psn",
  "go": "1.22",
  "status_counts": {
-  "available": 26,
+  "available": 27,
   "unverified": 1,
   "partial": 6,
   "in-progress": 0,
-  "planned": 16,
+  "planned": 15,
   "later": 8,
   "declined": 1
  },
@@ -305,13 +305,13 @@
    "id": "ha-restart",
    "area": "High availability",
    "feature": "Health check and clean restarts",
-   "detail": "A `/healthz` endpoint on the status listener (200 when the server accepts connections, no player data), a graceful shutdown that closes connections so players reconnect at once, and a page on restart settings and what players see.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "A data-free `/healthz` endpoint on the opt-in status listener, guarded by the existing HTTP token, and bounded shutdown that closes listeners and accepted client/relay sockets. A guide covers probe results, supervisors and what players lose on restart.",
+   "status": "available",
+   "since": "main",
+   "evidence": "server/lifecycle.go, server/lifecycle_test.go, server/api.go, server/main.go, docs/restarts.md",
+   "note": "Health is 200 only while both game serving loops are active, 503 during startup/shutdown or after a loop exits. Loopback and subprocess tests cover shutdown; systemd/container restarts and remote failover are not run. Rooms and scores remain in memory and are lost on restart. No database retry is needed until a network backend exists.",
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "ha-failover",
@@ -726,6 +726,7 @@
    "deploy-container",
    "settings-env",
    "store-interface",
+   "ha-restart",
    "net-punch",
    "net-relay",
    "net-udp-guard",
@@ -753,7 +754,6 @@
    "deploy-caddy",
    "store-sqlite",
    "store-backup",
-   "ha-restart",
    "ha-failover",
    "net-guardrails",
    "net-checks",
@@ -907,6 +907,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
      "A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.",
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
@@ -916,7 +917,7 @@
     ]
    },
    "counts": {
-    "Added": 3,
+    "Added": 4,
     "Changed": 1
    }
   },

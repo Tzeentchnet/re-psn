@@ -9,6 +9,7 @@ behind a reverse proxy, logging, ports, firewall rules, and what state it keeps.
 - [Flags](#flags)
 - [UDP source address](#udp-source-address)
 - [Behind a reverse proxy](#behind-a-reverse-proxy)
+- [Health checks and restarts](restarts.md)
 - [Environment variables](#environment-variables)
 - [Logging](#logging)
 - [Ports](#ports)
@@ -211,6 +212,11 @@ request gets ERROR 6 and the failure is logged at warn level.
 
 SIGINT (Ctrl-C) or SIGTERM stops the server: it logs `stopping`, closes the game ports and the status page and exits 0.
 On Windows only Ctrl-C does.
+
+`/healthz` on the opt-in status listener reports whether both game serving loops are active; it uses the same token
+check as the status page. Shutdown first marks the server unready, then closes accepted connections as well as the
+listeners within a bounded cleanup period. Rooms and scores are still lost on restart. See [Health checks and restarts](restarts.md)
+for probe responses, supervisor settings and the limits of this check.
 
 Once the game ports are bound, the server writes a pidfile, `<port>.pid` (the TCP port), mode 0600, in
 `$XDG_RUNTIME_DIR/re-psn/`, or in `re-psn-<uid>/` under the temp directory when that variable is not set. The file holds the

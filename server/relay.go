@@ -140,6 +140,11 @@ func (s *Server) streamLeg(conn net.Conn, t byte, p []byte) (handedOff bool) {
 	var other net.Conn
 	select {
 	case other = <-st.accept:
+	case <-s.stopped:
+		s.mu.Lock()
+		delete(s.streams, st.id)
+		s.mu.Unlock()
+		return false
 	case <-time.After(streamAcceptTimeout):
 		s.mu.Lock()
 		delete(s.streams, st.id)
