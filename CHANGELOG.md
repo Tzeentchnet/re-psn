@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A stock Caddy 2 example for the HTTP status page, included with the deployment examples. It defaults to loopback;
+  game TCP and UDP stay direct. The example has not been run or validated with Caddy.
 - The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace
   framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked custom colours.
   Appearance is local to each browser. Live refresh can be paused and retains the last snapshot on failure; without

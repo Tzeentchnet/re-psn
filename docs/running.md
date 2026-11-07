@@ -115,7 +115,8 @@ on the same network, who send UDP to it.
 
 The release archives carry an `examples/` folder (in this repository, [deploy/](../deploy/README.md)): `re-psn.env.example` (every setting, commented, with its
 default; copy it to `re-psn.env`), `re-psn.service` (a systemd unit, reading `/etc/psnr/psnr.env` then `/etc/re-psn/re-psn.env`) and configs for Traefik, nginx
-and HAProxy. Only the Traefik one has been run (see below).
+and HAProxy. A [Caddy status-page example](../deploy/caddy/README.md) is on main for inclusion in the next release;
+existing archives do not contain it. Only the Traefik one has been run (see below).
 
 Without a proxy nothing changes. With one, the server must learn the real player address, or every player looks like the proxy
 (`-max-conns-per-addr` trips for everyone, and the address other players receive is wrong).
@@ -151,6 +152,10 @@ re-psn listen behind Traefik on `127.0.0.1:36200` instead, so both fit on one ho
 nginx (`proxy_protocol on;` in a `stream` block, which sends PROXY protocol **v1**) and HAProxy
 (`send-proxy-v2` on the server line; a health check to re-psn needs `check-send-proxy` as well) work the same way but have not been run here. re-psn
 accepts v1 and v2. A v2 header must describe a TCP stream: a datagram or unassigned family or transport is refused and the connection closed.
+
+The [Caddy example](../deploy/caddy/README.md) uses stock Caddy 2 for HTTP only and starts on loopback. It keeps game TCP
+and UDP direct; leave `-proxy-protocol` off for that setup. It removes the client-supplied `CF-Connecting-IP` header
+before forwarding and uses the status page's existing token check. It has not been run or validated with Caddy.
 
 > [!NOTE]
 > **Cloudflare:** the ordinary proxy carries only HTTP and HTTPS, so it can front the status page but not the game port. Cloudflare Spectrum can send
