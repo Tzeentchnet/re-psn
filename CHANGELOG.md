@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and
+  leaderboard summaries, using a local Bearer-token file. Requests and displayed data are bounded, redirects/proxies
+  are disabled and failures fall back to the game protocol. Initial refresh and changed-source sequencing are corrected.
 - Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal
   arguments and a recursion guard. A desktop entry and the site's favicon artwork are provided as installation inputs;
   no release assets are added, and the Windows build retains its normal console behavior.

@@ -175,6 +175,9 @@ real server, a settings file reader, `re-psn-app check HOST:PORT`, which connect
 and a terminal UI (`re-psn-app` with no arguments). The UI asks on first start whether this machine plays, hosts or both, then
 shows the server's rooms and one leaderboard at a time over the game protocol, and edits the settings; dark or light theme in the
 website's colours. The server's version, uptime and connection counts are not available over the protocol, so the UI says so.
+An explicitly configured [HTTP status source](app/README.md#optional-native-http-status) adds uptime, connection totals,
+public-room members and board summaries natively, with the existing token rules and no browser. It falls back to the
+game protocol when HTTP is unavailable; the server version remains unshared.
 On Linux desktops, starting without a terminal can open a supported terminal; the Windows build uses its console.
 See the [desktop startup instructions](app/README.md#starting-from-the-desktop) and the limits of local testing.
 The terminal UI uses [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lip Gloss](https://github.com/charmbracelet/lipgloss)

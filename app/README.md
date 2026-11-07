@@ -10,6 +10,7 @@ The app has a terminal UI built on [Bubble Tea](https://github.com/charmbracelet
 - [What is here](#what-is-here)
 - [Build and test](#build-and-test)
 - [The terminal UI](#the-terminal-ui)
+- [Optional native HTTP status](#optional-native-http-status)
 - [Starting from the desktop](#starting-from-the-desktop)
 - [The check command](#the-check-command)
 - [Settings file](#settings-file)
@@ -26,7 +27,8 @@ The app has a terminal UI built on [Bubble Tea](https://github.com/charmbracelet
 | `internal/tui/` | The terminal UI: a Bubble Tea model whose Update and View are tested with messages and a fake server, no terminal |
 | `cmd/re-psn-app/` | The program: the terminal UI with no arguments, `check` and `version` |
 
-The client speaks only the game protocol. It does not need the server's HTTP status page.
+The client can use the game protocol alone. An explicitly configured status URL adds native HTTP status data without
+opening a browser; see [Optional native HTTP status](#optional-native-http-status).
 
 ## Build and test
 
@@ -64,9 +66,11 @@ bottom. Under 70 columns the menu and the content are shown one at a time.
   rooms on or off, the address the server sees.
 - **Rooms** and **Leaderboards** are the two tabs of the Status screen. Rooms belong to one title, so the screen asks for the
   title's communication ID (such as `NPWR00860_00`) first. Rooms shows ID, owner, members as current/max and the room flags.
-  Leaderboards shows one board, whose id you type: rank, player, score and when it was recorded.
+  Leaderboards shows one board, whose id you type: rank, player, score and when it was recorded. With a configured HTTP
+  status source, these screens instead show public room/member/age data and board leader summaries across titles.
 - **Settings:** mode, name, server, status URL and theme. Enter changes the selected row; `s` saves to `re-psn.ini` (mode 0600).
-  A refused value says which rule it broke. The status URL is only stored; nothing uses it yet.
+  A refused value says which rule it broke. The optional status URL takes effect on refresh. Its token-file path is
+  set in `re-psn.ini`; the UI does not display or edit the token itself.
 - **Help:** the keys and what the screens can show.
 
 | Key | What it does |
@@ -81,10 +85,10 @@ bottom. Under 70 columns the menu and the content are shown one at a time.
 | `t` | dark or light theme (saved with the settings) |
 | `q`, Ctrl+C | quit (Ctrl+C also while typing) |
 
-**Where the data comes from.** Only the game protocol, through `internal/client`: each refresh connects to the configured server,
+**Where the data comes from without a status URL.** The game protocol, through `internal/client`: each refresh connects to the configured server,
 says HELLO under a throwaway name (`view-` and 10 random hex digits) for the title on screen, sends SEARCH_ROOMS (up to 50 rooms)
 and, with a board id, GET_RANKING (the top 20), and closes the connection. Every refresh has a 5-second timeout. A failure is
-shown as text on the screen, with the error, and the app keeps running. The HTTP status page is never used.
+shown as text on the screen, with the error, and the app keeps running. No HTTP request is made while the status URL is unset.
 
 **What the protocol cannot show.** The server's status page shows some things the game protocol has no message for. The UI says
 "not available over the protocol" in those places:
@@ -97,6 +101,47 @@ shown as text on the screen, with the error, and the app keeps running. The HTTP
 **Theme.** Dark by default, light with `t`; the colours are the gruvbox-material values the website uses
 ([docs/art/palette.json](../docs/art/palette.json)). In light mode the accents that are too faint as text are replaced by the
 strong text colour in bold. No state is shown by colour alone. With `NO_COLOR` set the UI uses no colour, only bold and reverse.
+
+## Optional native HTTP status
+
+On Windows and Linux, the same terminal app can display the server's existing `/api/stats` directly. The server must
+already have its opt-in HTTP listener enabled; setting the app's URL does not start a server, enable that listener or
+open a browser. In `re-psn.ini`, for example:
+
+```ini
+[server]
+server = 127.0.0.1:36100
+status_url = http://127.0.0.1:36101
+status_token_file = /path/to/status-token
+```
+
+The token-file key is optional when that server requires no HTTP token. Use an absolute local path where practical;
+paths are otherwise used exactly as written, without `~` expansion. The file is read on each refresh, up to 4096 bytes,
+with surrounding whitespace removed. Empty, oversized, non-regular or control-containing token files are refused.
+The token is sent only as an `Authorization: Bearer` header, and never displayed in an error. Use HTTPS for remote
+token-bearing connections. The existing local HTTP example remains useful for loopback or a host-managed private path.
+
+Give the status page's base URL: `/api/stats` is appended, including after a reverse proxy's prefix, so
+`https://relay.example.org/status` becomes `https://relay.example.org/status/api/stats`. An explicit URL ending in
+`/api/stats` is also accepted. URLs with user credentials, a query string or fragment are refused. Requests go directly
+to the configured host; redirects and environment HTTP proxies are not used.
+
+An HTTP refresh has a two-second request deadline inside the existing five-second refresh budget. A successful
+response opens no game-protocol session. If it fails, the app attempts the existing game-protocol view within the
+remaining budget and shows a generic HTTP-unavailable note. A failed source does not terminate the app. Press `r`
+after changing the URL or token file; clearing the URL returns to protocol-only behavior.
+
+| Screen | HTTP data |
+|---|---|
+| Overview | Uptime, current client count and total connections; the server version remains unshared. |
+| Rooms | Public-room IDs, titles, current/max members, names and age, including full rooms; invite-only rooms are counted without names. |
+| Leaderboards | Existing boards, entry counts, leader and best score. These are board summaries; HTTP does not provide full rankings. |
+
+Leave title/board filters empty to show all shared entries, or use the existing `e`/`b` controls to filter. Up to 100
+matching rows are displayed with a count. Room IDs, connection totals and scores retain their full integer precision.
+Remote text is stripped of terminal controls and bounded for display. A response is limited to 4 MiB, 32 KiB of
+headers and 5000 rooms/boards; over-limit or malformed data uses the fallback. Additional JSON fields are ignored for
+compatibility, including the UDP drop counters. No account verification or administrative writes are added.
 
 ## Starting from the desktop
 
@@ -168,8 +213,8 @@ status_token_file = /etc/re-psn/status-token
 | `[app]` | `theme` | `dark` or `light`; unset means dark |
 | `[player]` | `name` | the online ID: 3 to 16 letters, digits, `-` or `_` |
 | `[server]` | `server` | `host:port`, port 1 to 65535 |
-| `[server]` | `status_url` | an `http://` or `https://` URL |
-| `[server]` | `status_token_file` | a path, used exactly as written |
+| `[server]` | `status_url` | optional HTTP(S) status base or `/api/stats` URL, without credentials, query or fragment |
+| `[server]` | `status_token_file` | optional local Bearer-token file path, used exactly as written |
 
 The rules:
 
@@ -203,4 +248,5 @@ also has modules that only their tests or their own dependencies' tests use (`ay
 The client implements HELLO, HEARTBEAT, CREATE_ROOM, SEARCH_ROOMS, JOIN_ROOM, LEAVE_ROOM, RECORD_SCORE, GET_RANKING and
 GET_RANKING_BY_ID, and decodes the MEMBER_JOINED, MEMBER_LEFT and ROUTE pushes; other pushes arrive undecoded. Room data and
 messages, kicks, invite-only rooms, relay streams, UDP probes and the relay's datagrams are not in it yet. The protocol has no
-message for the server's version, uptime or connection counts, so the app cannot show them without the status page.
+message for the server's version, uptime or connection counts. Configured HTTP supplies uptime and counts; neither
+source reports the server version. Host mode, room joining from the UI and launch profiles remain unfinished.
