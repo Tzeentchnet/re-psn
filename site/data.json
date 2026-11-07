@@ -5,10 +5,10 @@
  "go": "1.22",
  "status_counts": {
   "available": 26,
-  "unverified": 1,
+  "unverified": 2,
   "partial": 6,
   "in-progress": 0,
-  "planned": 16,
+  "planned": 15,
   "later": 8,
   "declined": 1
  },
@@ -208,14 +208,14 @@
   {
    "id": "deploy-caddy",
    "area": "Deployment",
-   "feature": "Caddy example",
-   "detail": "A Caddy config next to the other examples in `deploy/`.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "feature": "Caddy status-page example",
+   "detail": "A stock Caddy 2 HTTP reverse-proxy example in `deploy/caddy/`, copied into future release archives with the other deployment examples. Defaults to loopback and leaves game TCP/UDP direct.",
+   "status": "unverified",
+   "since": "main",
+   "evidence": "deploy/caddy/Caddyfile, deploy/caddy/README.md, scripts/check-deploy.sh, docs/running.md",
+   "note": "Written from the official Caddy documentation; not run or validated with Caddy. No layer-4 plugin is included. The existing HTTP token check is preserved and client-supplied CF-Connecting-IP is removed before forwarding.",
+   "status_label": "not yet verified",
+   "status_class": "unv"
   },
   {
    "id": "deploy-container",
@@ -723,6 +723,7 @@
    "proxy-support",
    "deploy-examples",
    "deploy-nginx-haproxy",
+   "deploy-caddy",
    "deploy-container",
    "settings-env",
    "store-interface",
@@ -750,7 +751,6 @@
   "Next": [
    "rooms-private",
    "players-friends",
-   "deploy-caddy",
    "store-sqlite",
    "store-backup",
    "ha-restart",
@@ -907,6 +907,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
      "A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.",
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
@@ -916,7 +917,7 @@
     ]
    },
    "counts": {
-    "Added": 3,
+    "Added": 4,
     "Changed": 1
    }
   },

@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A stock Caddy 2 example for the HTTP status page, included with the deployment examples. It defaults to loopback;
+  game TCP and UDP stay direct. The example has not been run or validated with Caddy.
 - A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance
   tests against temporary loopback servers. Required skips and timeouts fail; `--race` is optional. See `docs/testing.md`.
 - Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours
