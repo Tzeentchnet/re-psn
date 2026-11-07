@@ -16,7 +16,7 @@ everything a title's online mode needs: matchmaking, friends, invites,
 leaderboards, per-player storage.
 
 It is **not** a public PSN replacement, and won't grow into one:
-- no public instance or public server directory;
+- no public instance and no server directory;
 - no accounts or passwords, just an unauthenticated name each player sets;
 - no live Sony infrastructure, impersonation of Sony's servers, real PSN authentication or real PSN tickets;
 - no DNAS, DRM, commerce, publisher services, or reliance on real keys, credentials or other secrets.
