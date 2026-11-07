@@ -229,10 +229,14 @@ func (m Model) renderOverview() []string {
 		m.st.heading.Render("Connection"),
 	}
 	b = append(b, m.connection()...)
-	b = append(b, "",
-		m.row("Version", notOverProtocol),
-		m.row("Uptime", notOverProtocol),
-		m.row("Players", notOverProtocol+" (connection counts)"))
+	if h := m.httpStats(); h != nil {
+		b = append(b, "", m.row("Version", "not shared by HTTP status"), m.row("Uptime", httpText(h.Uptime)), m.row("Clients", fmt.Sprint(h.Clients)), m.row("Connections", fmt.Sprint(h.Connections)))
+	} else {
+		b = append(b, "",
+			m.row("Version", notOverProtocol),
+			m.row("Uptime", notOverProtocol),
+			m.row("Players", notOverProtocol+" (connection counts)"))
+	}
 	if m.set.Mode == config.ModeHost || m.set.Mode == config.ModeBoth {
 		b = append(b, "", m.st.muted.Render("Hosting from the app comes in a later version. For now, run the re-psn server and set its address as Server."))
 	}
@@ -241,6 +245,14 @@ func (m Model) renderOverview() []string {
 
 // connection says in words what the last refresh found.
 func (m Model) connection() []string {
+	lines := m.connectionLines()
+	if m.snap != nil && m.snap.HTTPUnavailable {
+		lines = append(lines, m.st.warn.Render("HTTP status unavailable; using the game protocol when reachable."))
+	}
+	return lines
+}
+
+func (m Model) connectionLines() []string {
 	server := m.snapQuery.Server
 	switch {
 	case m.loading:
@@ -256,6 +268,12 @@ func (m Model) connection() []string {
 		}
 	case m.snap == nil:
 		return []string{m.st.muted.Render("Not checked yet: press r.")}
+	}
+	if h := m.httpStats(); h != nil {
+		return []string{m.st.good.Render("HTTP status connected") + m.st.text.Render("; read-only server snapshot."), m.st.muted.Render("Checked at " + m.fetchedAt.Format("15:04:05") + ". No game-protocol session was opened.")}
+	}
+	if m.snap.HTTP != nil {
+		return []string{m.st.muted.Render("Status source changed: press r.")}
 	}
 	a := m.snap.Ack
 	return []string{
@@ -297,7 +315,11 @@ func (m Model) renderStatus() []string {
 	}
 	b = append(b, "")
 	b = append(b, m.connection()...)
-	b = append(b, m.st.muted.Render("Uptime, connections and server version: "+notOverProtocol+"."), "")
+	if h := m.httpStats(); h != nil {
+		b = append(b, m.st.text.Render(fmt.Sprintf("Up %s · %d clients · %d connections total", httpText(h.Uptime), h.Clients, h.Connections)), m.st.muted.Render("Version is not shared by HTTP status."), "")
+	} else {
+		b = append(b, m.st.muted.Render("Uptime, connections and server version: "+notOverProtocol+"."), "")
+	}
 	if m.menu == paneRooms {
 		return append(b, m.roomLines()...)
 	}
@@ -313,6 +335,9 @@ func (m Model) current(board bool) bool {
 }
 
 func (m Model) roomLines() []string {
+	if h := m.httpStats(); h != nil {
+		return m.httpRoomLines(h)
+	}
 	if m.title == "" {
 		return []string{m.st.text.Render("Rooms belong to one title: press e and type its communication ID, such as NPWR00860_00.")}
 	}
@@ -332,6 +357,9 @@ func (m Model) roomLines() []string {
 }
 
 func (m Model) boardLines() []string {
+	if h := m.httpStats(); h != nil {
+		return m.httpBoardLines(h)
+	}
 	note := m.st.muted.Render("The protocol cannot list a title's boards: type a board id (b).")
 	switch {
 	case m.title == "":
@@ -366,7 +394,7 @@ func (m Model) renderSettings() []string {
 		{"Mode", orUnset(string(m.set.Mode)), "enter: play, host, both"},
 		{"Name", orUnset(m.set.Name), "enter to edit"},
 		{"Server", orUnset(m.set.Server), "host:port"},
-		{"Status URL", orUnset(m.set.StatusURL), "stored only, not used yet"},
+		{"Status URL", orUnset(m.set.StatusURL), "optional HTTP status; r refreshes"},
 		{"Theme", m.themeName(), "enter or t"},
 	}
 	edits := []edit{editNone, editName, editServer, editStatusURL, editNone}
@@ -416,7 +444,7 @@ func (m Model) renderHelp() []string {
 		b = append(b, m.st.key.Render(fmt.Sprintf("%-12s", k[0]))+" "+m.st.text.Render(k[1]))
 	}
 	return append(b, "", m.st.heading.Render("What the screens show"), "",
-		m.st.text.Render("Rooms and Leaderboards come from the game protocol, the same requests a game sends, under a throwaway name. "+
+		m.st.text.Render("A configured Status URL supplies native server totals, public rooms and board summaries without a browser. Otherwise, Rooms and Leaderboards come from the game protocol under a throwaway name. "+
 			"The protocol cannot list a title's boards or report the server's version, uptime or connection counts, so those read \""+notOverProtocol+"\"."))
 }
 

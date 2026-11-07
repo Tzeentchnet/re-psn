@@ -420,7 +420,7 @@ func TestSettings(t *testing.T) {
 	m := New(Options{Path: "s.ini", File: &config.File{Settings: config.Settings{Mode: config.ModePlay, Name: "alice_01", Server: "h:1"}},
 		Fetcher: &fake{}, Save: save})
 	m = drive(t, m, keys("4", "enter")...)
-	mustShow(t, m, "Mode", "play", "Status URL", "stored only")
+	mustShow(t, m, "Mode", "play", "Status URL", "optional HTTP status")
 	m = drive(t, m, keys("enter")...) // mode: play -> host
 	if m.set.Mode != config.ModeHost || !m.dirty {
 		t.Fatalf("mode %q dirty %v", m.set.Mode, m.dirty)
