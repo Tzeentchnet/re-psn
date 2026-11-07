@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.
+  A minimal C HELLO/search example runs in the required native-client check; C API comments now clarify blocking
+  writes, diagnostic state and reply-wait timeout limits without changing implementation or the wire protocol.
 - `/healthz` on the opt-in status listener, protected by the existing HTTP token. It reports game TCP/UDP readiness
   without player data. Shutdown marks the server unready and closes accepted client/relay sockets with bounded cleanup;
   restart behavior and supervisor settings are documented in `docs/restarts.md`.

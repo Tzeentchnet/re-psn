@@ -4,7 +4,7 @@
  "repository": "https://github.com/undecuple/re-psn",
  "go": "1.22",
  "status_counts": {
-  "available": 28,
+  "available": 29,
   "unverified": 2,
   "partial": 6,
   "in-progress": 0,
@@ -425,11 +425,11 @@
    "id": "client-c",
    "area": "Client",
    "feature": "C client",
-   "detail": "One file with no dependencies and no threads: `psnr_send` returns a request id, and `psnr_poll` hands out replies and pushes without blocking. It also builds the UDP probe and relay packets.",
+   "detail": "One file with no dependencies and no threads: `psnr_send` returns a request id, and `psnr_poll` hands out replies and pushes; sends and automatic heartbeat writes can wait for socket writability. It also builds the UDP probe and relay packets.",
    "status": "available",
    "since": "0.1.0",
    "evidence": "client/psnr.c, client/test_psnr.c, TestCClient",
-   "note": "Upstream work. `TestCClient` skips without a C compiler; CI runs it on Linux only.",
+   "note": "Upstream work. The integration guide documents ownership and timeout limits. `TestCClient` also compiles/runs the minimal example; it skips without a C compiler, and Linux CI requires execution.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -708,6 +708,18 @@
    "note": "Python standard library and Git only. Does not fetch external links, evaluate arbitrary shell/YAML expressions or validate generated artifact paths.",
    "status_label": "available",
    "status_class": "ok"
+  },
+  {
+   "id": "docs-integration",
+   "area": "Documentation",
+   "feature": "Recomp developer integration",
+   "detail": "A source-pinned guide for ps3recomp ports and direct C/C++ adapters: build/startup, callback ownership, message lifetime, failure handling and peer/relay boundaries. A synthetic minimal C example exercises HELLO and room search in the required native-client test.",
+   "status": "available",
+   "since": "main",
+   "evidence": "docs/integrating.md, client/examples/minimal.c, TestCClient",
+   "note": "Runtime integration was inspected at the linked upstream revision; no actual title was built or run for the guide. Native example/conformance checks are synthetic loopback evidence, not gameplay or NAT certification.",
+   "status_label": "available",
+   "status_class": "ok"
   }
  ],
  "roadmap": {
@@ -747,7 +759,8 @@
    "docs-readme",
    "docs-art",
    "docs-website",
-   "repo-check"
+   "repo-check",
+   "docs-integration"
   ],
   "Now": [],
   "Next": [
@@ -907,6 +920,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.",
      "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
      "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
      "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",
@@ -920,7 +934,7 @@
     ]
    },
    "counts": {
-    "Added": 7,
+    "Added": 8,
     "Changed": 1
    }
   },

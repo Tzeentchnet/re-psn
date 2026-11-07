@@ -15,6 +15,7 @@ optional relay.
 - [Example](#example)
 - [Features](#features)
 - [Desktop app](#desktop-app)
+- [For recomp developers](#for-recomp-developers)
 - [Install](#install)
 - [Configuration](#configuration)
 - [Security and privacy](#security-and-privacy)
@@ -178,6 +179,13 @@ website's colours. The server's version, uptime and connection counts are not av
 The terminal UI uses [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lip Gloss](https://github.com/charmbracelet/lipgloss)
 (MIT); the server module stays standard-library only. The app module needs Go 1.26 or newer; the server and the C client keep
 their own requirements.
+
+## For recomp developers
+
+Start with [Integrating re-psn into a recompiled game](docs/integrating.md): existing ps3recomp bridge setup, direct
+C/C++ integration, callback ownership, peer/relay transport and failure handling. The [minimal C example](client/examples/minimal.c)
+is compiled and exercised against a loopback server by the required native-client check. Source-level runtime findings
+are pinned; synthetic checks do not certify a title's gameplay or NAT behavior.
 
 ## Install
 
@@ -370,6 +378,7 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 
 | Document | What is in it |
 |---|---|
+| [docs/integrating.md](docs/integrating.md) | Developer integration paths, a tested C example, runtime startup/callback details and acceptance checks |
 | [docs/architecture.md](docs/architecture.md) | The parts, the threadless client, why game traffic is peer to peer, the relay |
 | [docs/api.md](docs/api.md) | The protocol: framing, session, rooms, leaderboards, UDP, relay, HTTP |
 | [docs/running.md](docs/running.md) | Flags, variables, UDP source check, reverse proxy, logging, ports, firewall, storage |
