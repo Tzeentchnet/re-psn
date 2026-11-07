@@ -6,9 +6,9 @@
  "status_counts": {
   "available": 28,
   "unverified": 2,
-  "partial": 6,
+  "partial": 7,
   "in-progress": 0,
-  "planned": 13,
+  "planned": 12,
   "later": 8,
   "declined": 1
  },
@@ -117,7 +117,7 @@
    "status": "available",
    "since": "0.2.0",
    "evidence": "server/limits_test.go, TestBlobLimit, TestPlayerRoomLimit, TestConnLimitPerAddr, TestRequestRateLimit, TestLogHelloAndRefusals",
-   "note": "TCP only. UDP rate limits are planned (net-guardrails).",
+   "note": "These limits cover TCP. Main also has bounded UDP admission and drop counters; see the partial net-guardrails row.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -125,7 +125,7 @@
    "id": "logs-levels",
    "area": "Logging",
    "feature": "Log levels and formats",
-   "detail": "`-log-level` (debug, info, warn, error), `-v` as debug, `-log-format` text or json, and `-log-file` to append to a file (mode 0600). Every refusal is logged at warn level; tokens and query strings are never logged.",
+   "detail": "`-log-level` (debug, info, warn, error), `-v` as debug, `-log-format` text or json, and `-log-file` to append to a file (mode 0600). Connection and room refusals are logged at warn level; UDP drops use aggregate counters, with one warning per player for a mismatched probe. Tokens and query strings are never logged.",
    "status": "available",
    "since": "0.2.0",
    "evidence": "server/logging.go, TestLogHelloAndRefusals, TestLogLevelAndFormat, TestLogStatusRefusalKeepsTokenOut, #4",
@@ -389,13 +389,13 @@
    "id": "net-guardrails",
    "area": "Network",
    "feature": "More UDP and relay guardrails",
-   "detail": "Per-source UDP rate limits and a failed-token counter, relay budgets (datagram size, per-player rates, idle streams), a 64-bit token, the limits written down, counters of dropped packets on /api/stats, and a test for each, with a fuzz test for the UDP packets.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. The 64-bit token changes the wire format and waits for a protocol version bump.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "Bounded per-source-IP UDP packet admission shared by probes, relay and invalid traffic, plus aggregate drop-reason counters in /api/stats. The token bucket tracks at most 4096 sources, expires idle entries and rejects new sources at capacity.",
+   "status": "partial",
+   "since": "main",
+   "evidence": "server/udp_guard.go, server/udp.go, server/relay.go, TestUDPLimiter, TestUDPAdmissionRealPackets, TestUDPCountersStatsAuthenticationAndConcurrency, docs/udp-guardrails.md",
+   "note": "Initial packet limiter only: default 1000 packets/second with the same burst, configurable with -max-udp-rate and 0 for off; players behind one NAT share it. Per-player relay byte/datagram budgets, payload and TCP stream limits, failed-token blocking and UDP fuzz coverage remain planned. A larger token needs a protocol version bump.",
+   "status_label": "partial",
+   "status_class": "warn"
   },
   {
    "id": "net-checks",
@@ -731,6 +731,7 @@
    "net-punch",
    "net-relay",
    "net-udp-guard",
+   "net-guardrails",
    "client-c",
    "app-client",
    "app-tui",
@@ -756,7 +757,6 @@
    "store-sqlite",
    "store-backup",
    "ha-failover",
-   "net-guardrails",
    "net-checks",
    "client-desktop",
    "client-gui",
@@ -835,6 +835,12 @@
    "description": "Requests per second per connection before it is closed (0: no limit)"
   },
   {
+   "flag": "-max-udp-rate",
+   "variable": "RE_PSN_MAX_UDP_RATE",
+   "default": "1000",
+   "description": "UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit)"
+  },
+  {
    "flag": "-v",
    "variable": "RE_PSN_V",
    "default": "off",
@@ -907,6 +913,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "Bounded per-source-IP UDP admission with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.",
      "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
      "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
      "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",
@@ -920,7 +927,7 @@
     ]
    },
    "counts": {
-    "Added": 7,
+    "Added": 8,
     "Changed": 1
    }
   },
