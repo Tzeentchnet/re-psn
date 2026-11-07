@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Bounded per-source-IP UDP admission with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second,
+  same-size burst; 0 disables it), shared by probes and relay datagrams. Aggregate `udp_drops` counters in the
+  opt-in `/api/stats` identify refusal reasons without per-packet logging or source labels. Relay byte/stream budgets
+  remain planned; the packet format and token checks are unchanged.
 - `/healthz` on the opt-in status listener, protected by the existing HTTP token. It reports game TCP/UDP readiness
   without player data. Shutdown marks the server unready and closes accepted client/relay sockets with bounded cleanup;
   restart behavior and supervisor settings are documented in `docs/restarts.md`.

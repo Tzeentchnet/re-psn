@@ -266,7 +266,7 @@ re-psn runs with no settings at all. [docs/running.md](docs/running.md) has the 
 
 ### Settings
 
-Each of the 20 flags can also be set as a `RE_PSN_<FLAG>` variable. A flag on the command line wins, then the variable; a value
+Each of the 21 flags can also be set as a `RE_PSN_<FLAG>` variable. A flag on the command line wins, then the variable; a value
 that does not parse stops the server at start.
 
 <details>
@@ -285,6 +285,7 @@ Variables are upper case, with dashes as underscores. Defaults are those of `./r
 | `-max-player-rooms` | `RE_PSN_MAX_PLAYER_ROOMS` | `8` | Rooms one player may be in at once (0: no limit) |
 | `-max-conns-per-addr` | `RE_PSN_MAX_CONNS_PER_ADDR` | `32` | Open connections per remote address (0: no limit) |
 | `-max-req-rate` | `RE_PSN_MAX_REQ_RATE` | `200` | Requests per second per connection before it is closed (0: no limit) |
+| `-max-udp-rate` | `RE_PSN_MAX_UDP_RATE` | `1000` | UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit) |
 | `-v` | `RE_PSN_V` | off | Same as `-log-level debug` |
 | `-log-level` | `RE_PSN_LOG_LEVEL` | `info` | `debug` (room events), `info`, `warn` or `error` |
 | `-log-format` | `RE_PSN_LOG_FORMAT` | `text` | `text` or `json` |
@@ -344,7 +345,9 @@ What to set before the server goes behind a proxy or on the internet.
   HAProxy not yet run).
 - **Status page:** off by default; `-http 127.0.0.1:36101` turns it on. Set `-http-token` whenever `-http` is not on localhost;
   the server warns at start if it is reachable without one.
-- **Limits:** room data is capped at 4096 bytes; the four `-max-*` settings above cover the rest. Each refusal is logged at warn level.
+- **Limits:** room data is capped at 4096 bytes; the `-max-*` settings above also bound rooms, connections and request rates.
+  UDP admission uses a bounded per-source-IP packet allowance, shared by players behind one NAT; see
+  [UDP guardrails](docs/udp-guardrails.md). UDP drops are counted in `/api/stats` without per-packet refusal logs.
 - **Storage:** `-db` accepts only `off` (the default) and `memory`, which both keep scores in memory; a restart empties every
   board. Database backends are planned ([docs/features.md](docs/features.md#storage)); a database setting stops the server at start.
 
