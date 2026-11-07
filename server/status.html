@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta id="fallback-refresh" http-equiv="refresh" content="5">
+<title>re:psn · server status</title>
+<style>{{style}}</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to status</a>
+<div class="terminal">
+  <header class="titlebar">
+    <h1><span class="prompt" aria-hidden="true">&gt;_</span> re:psn <span class="muted">/ server status</span></h1>
+    <span class="version">v{{version}} · read-only</span>
+    <div id="theme-controls" class="theme-controls" role="group" aria-label="Colour mode" hidden>
+      <button type="button" data-theme="system" aria-pressed="true">System</button>
+      <button type="button" data-theme="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+  <div class="summary" aria-label="Server summary">
+    <p><span class="label">uptime</span> <strong id="uptime">{{.Uptime}}</strong></p>
+    <p><span class="label">connected</span> <strong id="clients">{{.Clients}}</strong></p>
+    <p><span class="label">connections total</span> <strong id="connections">{{.Connections}}</strong></p>
+    <p><span class="label">unlisted rooms</span> <strong id="unlisted">{{.Unlisted}}</strong></p>
+  </div>
+  <div id="toolbar" class="toolbar" hidden>
+    <div role="tablist" aria-label="Status view">
+      <button id="rooms-tab" role="tab" aria-selected="true" aria-controls="rooms-panel" tabindex="0">Rooms <span id="rooms-count">{{len .Rooms}}</span></button>
+      <button id="boards-tab" role="tab" aria-selected="false" aria-controls="boards-panel" tabindex="-1">Leaderboards <span id="boards-count">{{len .Boards}}</span></button>
+    </div>
+    <div class="refresh-controls">
+      <button id="refresh" type="button">Refresh now</button>
+      <button id="pause" type="button" aria-pressed="false">Pause refresh</button>
+    </div>
+  </div>
+  <main id="main">
+    <section id="rooms-panel" aria-labelledby="rooms-heading" tabindex="0">
+      <div class="file-head"><h2 id="rooms-heading"><span aria-hidden="true">// </span>Rooms</h2><span>public rooms</span></div>
+      <div class="table-scroll" role="region" aria-label="Rooms table" tabindex="0">
+        <table><caption class="sr-only">Public rooms and their members</caption>
+          <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Members</th><th scope="col">Age</th></tr></thead>
+          <tbody id="rooms-body">{{range .Rooms}}<tr><td class="number">{{.ID}}</td><td class="identifier">{{.Title}}</td><td>{{len .Members}}/{{.Max}} <span class="muted">{{range .Members}}{{.}} {{end}}</span></td><td>{{.Age}}</td></tr>{{else}}<tr><td colspan="4" class="empty">No public rooms. A room appears here when a player hosts one.</td></tr>{{end}}</tbody>
+        </table>
+      </div>
+    </section>
+    <section id="boards-panel" aria-labelledby="boards-heading" tabindex="0">
+      <div class="file-head"><h2 id="boards-heading"><span aria-hidden="true">// </span>Leaderboards</h2><span>recorded scores</span></div>
+      <div class="table-scroll" role="region" aria-label="Leaderboards table" tabindex="0">
+        <table><caption class="sr-only">Leaderboards and leading scores</caption>
+          <thead><tr><th scope="col">Title</th><th scope="col">Board</th><th scope="col">Entries</th><th scope="col">Leader</th></tr></thead>
+          <tbody id="boards-body">{{range .Boards}}<tr><td class="identifier">{{.Title}}</td><td class="number">{{.Board}}</td><td>{{.Entries}}</td><td>{{if .Entries}}{{.Leader}} <span class="score">({{.Best}})</span>{{else}}No scores yet{{end}}</td></tr>{{else}}<tr><td colspan="4" class="empty">No leaderboards. Scores appear after a player submits one.</td></tr>{{end}}</tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <details id="appearance" hidden>
+    <summary>Appearance <span class="muted">/ gruvbox-material · local to this browser</span></summary>
+    <div class="appearance-body">
+      <div class="preferences">
+        <label>Text size <select id="text-size"><option value="14">14 px</option><option value="16" selected>16 px</option><option value="18">18 px</option></select></label>
+        <label>Spacing <select id="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+      </div>
+      <form id="colours">
+        <fieldset><legend>Custom colours for the current light or dark mode</legend>
+          <p class="muted">Use six-digit hex values. Text colours must meet 4.5:1 contrast on both backgrounds.</p>
+          <div id="colour-fields" class="colour-fields"></div>
+          <div class="actions"><button type="submit">Apply colours</button><button id="reset" type="button">Reset appearance</button></div>
+          <p id="appearance-message" role="status"></p>
+        </fieldset>
+      </form>
+      <p class="muted">Appearance is saved for this server origin, when browser storage is available. It changes no server settings.</p>
+    </div>
+  </details>
+  <footer class="statusbar">
+    <span id="refresh-state" role="status">Snapshot · refreshes every 5 seconds</span>
+    <span class="muted">Invite-only rooms are counted, never listed.</span>
+  </footer>
+</div>
+<noscript><p>JavaScript is off: both tables remain visible, the browser theme is followed, and this page reloads every 5 seconds.</p></noscript>
+<script>{{script}}</script>
+</body>
+</html>

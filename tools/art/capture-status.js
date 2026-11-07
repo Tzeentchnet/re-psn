@@ -10,9 +10,10 @@ const puppeteer = require(dir);
   });
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1000, height: 420, deviceScaleFactor: 1 });
+    await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: 1 });
     await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
     await page.goto(url, { waitUntil: 'load' });
+    await page.waitForFunction(() => !document.querySelector('#toolbar').hidden);
     await page.screenshot({ path: out });
   } finally {
     await browser.close();

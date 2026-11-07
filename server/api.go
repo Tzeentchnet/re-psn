@@ -1,14 +1,13 @@
 package main
 
 // Read-only HTTP view of the server: JSON for scripts, one HTML page for
-// people. Bind it to localhost or a LAN address; it has no auth and shows
-// every player's online ID.
+// people. It is opt-in, supports a status token, and lists public-room
+// members. Invite-only rooms are counted without exposing their members.
 
 import (
 	"crypto/subtle"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net"
 	"net/http"
 	"sort"
@@ -93,17 +92,6 @@ func (s *Server) snapshot() statsJSON {
 	return st
 }
 
-var page = template.Must(template.New("p").Parse(`<!doctype html>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<meta http-equiv="refresh" content="5"><title>psnr</title>
-<style>body{font:14px system-ui;margin:16px;max-width:900px}table{border-collapse:collapse;width:100%;margin-bottom:24px}
-td,th{text-align:left;padding:4px 8px;border-bottom:1px solid #8884}</style>
-<h1>psnr</h1><p>up {{.Uptime}} · {{.Clients}} connected · {{.Connections}} connections total{{if .Unlisted}} · {{.Unlisted}} unlisted rooms{{end}}</p>
-<h2>Rooms</h2><table><tr><th>ID<th>Title<th>Members<th>Age</tr>
-{{range .Rooms}}<tr><td>{{.ID}}<td>{{.Title}}<td>{{len .Members}}/{{.Max}} {{range .Members}}{{.}} {{end}}<td>{{.Age}}</tr>{{else}}<tr><td colspan=4>none</tr>{{end}}</table>
-<h2>Leaderboards</h2><table><tr><th>Title<th>Board<th>Entries<th>Leader</tr>
-{{range .Boards}}<tr><td>{{.Title}}<td>{{.Board}}<td>{{.Entries}}<td>{{.Leader}} ({{.Best}})</tr>{{else}}<tr><td colspan=4>none</tr>{{end}}</table>`))
-
 // reachable reports whether an -http address listens beyond this machine.
 func reachable(addr string) bool {
 	host, _, err := net.SplitHostPort(addr)
@@ -137,6 +125,8 @@ func (s *Server) HTTP() http.Handler {
 		json.NewEncoder(w).Encode(s.snapshot())
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Security-Policy", statusPolicy)
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return
@@ -146,6 +136,9 @@ func (s *Server) HTTP() http.Handler {
 		}
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		if !s.authorized(r) {
 			// the path only: the token may be in the query string
 			s.log.Warn("status page refused", "addr", s.clientAddr(r), "path", r.URL.Path, "reason", "token missing or wrong")
