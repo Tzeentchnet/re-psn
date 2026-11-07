@@ -538,7 +538,7 @@ func TestReleaseAssetListsAgree(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		return string(b)
+		return strings.ReplaceAll(string(b), "\r\n", "\n")
 	}
 	const tag = "vX.Y.Z"
 	want := strings.Join(releaseAssets(tag), " ")
@@ -582,9 +582,10 @@ func TestReleaseCheckWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	workflow := strings.ReplaceAll(string(b), "\r\n", "\n")
 	step := func(name string) (string, string) {
 		t.Helper()
-		_, block, ok := strings.Cut(string(b), "      - name: "+name+"\n")
+		_, block, ok := strings.Cut(workflow, "      - name: "+name+"\n")
 		if !ok {
 			t.Fatalf("missing workflow step %q", name)
 		}
