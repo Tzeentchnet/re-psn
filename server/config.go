@@ -153,3 +153,20 @@ func openStore(db, file setting) (store.Store, error) {
 	}
 	return st, nil
 }
+
+// Parse this flag after selection so neither flag.Parse nor -h can print its
+// environment/command-line value in an error or default. Only its name leaves
+// this function. Command-line and new-name precedence apply before validation.
+func parseUDPRate(s setting) (int, error) {
+	if !s.set {
+		return defaultUDPRate, nil
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(s.val))
+	if err != nil {
+		return 0, fmt.Errorf("%s: not a number", s.name)
+	}
+	if n < 0 {
+		return 0, fmt.Errorf("%s must be zero or positive", s.name)
+	}
+	return n, nil
+}

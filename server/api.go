@@ -33,12 +33,13 @@ type boardJSON struct {
 }
 
 type statsJSON struct {
-	Uptime      string      `json:"uptime"`
-	Clients     int         `json:"clients"`
-	Connections uint64      `json:"connections_total"`
-	Rooms       []roomJSON  `json:"rooms"`
-	Unlisted    int         `json:"unlisted_rooms"`
-	Boards      []boardJSON `json:"boards"`
+	Uptime      string       `json:"uptime"`
+	Clients     int          `json:"clients"`
+	Connections uint64       `json:"connections_total"`
+	Rooms       []roomJSON   `json:"rooms"`
+	Unlisted    int          `json:"unlisted_rooms"`
+	Boards      []boardJSON  `json:"boards"`
+	UDPDrops    udpDropStats `json:"udp_drops"`
 }
 
 // boardStats lists the leaderboards, sorted by title and board. A store
@@ -76,6 +77,7 @@ func (s *Server) snapshot() statsJSON {
 		Connections: s.conns,
 		Rooms:       []roomJSON{},
 		Boards:      boards,
+		UDPDrops:    s.udpDrops.snapshot(),
 	}
 	for _, r := range s.rooms {
 		if r.code != "" { // invite-only rooms are counted, not listed
