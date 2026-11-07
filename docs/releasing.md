@@ -73,16 +73,21 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 6. The tag starts [`.github/workflows/release.yml`](../.github/workflows/release.yml). It first runs
    `scripts/check-release.sh --tag <tag>`, which fails unless the tag is `v` + `VERSION` at the tagged commit and the
    version checks pass; nothing is built after a failure. Then vet and tests, the archives for windows/amd64, linux/amd64
-   and linux/arm64 and the x86_64 [AppImage](#the-appimage), and one `SHA256SUMS` listing all four files (LF, no BOM),
-   the notes, and a **draft** pre-release
+   and linux/arm64 and the x86_64 [AppImage](#the-appimage), copies of `scripts/install.sh` and `scripts/install.ps1`
+   (byte for byte, as `install.sh` and `install.ps1`; see [installing.md](installing.md)), and one `SHA256SUMS` listing
+   those six files (LF, no BOM); `scripts/check-release.sh --assets` then checks that exactly the seven assets are there.
+   Then the notes, and a **draft** pre-release
    titled with the tag. The notes are `scripts/release-notes.sh` for `VERSION` (the CHANGELOG.md entries under that
    version's heading, which the bump filled) with the list of files, the checksums and the closing line
    `Next release: when ready` added. The job fails if a release for the tag exists already.
-7. Check the draft: the notes, the assets (three archives, the AppImage, `SHA256SUMS`: five in all), and a download checked
-   with `sha256sum -c SHA256SUMS`. A bad draft is deleted before it is published; then re-run the workflow for the same
+7. Check the draft: the notes, the assets (three archives, the AppImage, `install.sh`, `install.ps1`, `SHA256SUMS`: seven
+   in all), and a download checked with `sha256sum -c SHA256SUMS`. A bad draft is deleted before it is published; then re-run the workflow for the same
    tag, or, if the tagged commit is wrong, bump to the next version.
 8. Publishing is the maintainer's. Publishing starts
    [`.github/workflows/release-check.yml`](../.github/workflows/release-check.yml), which reads the release back.
+
+Manual `release-check` runs still accept the historical five-asset lists for v0.2.0 and v0.3.0. Later tags require all
+seven assets and compare both installer scripts with the tagged source.
 9. Afterwards: CI is green on the tagged commit, and a fixed issue gets a comment naming the release.
 
 > [!NOTE]
@@ -92,13 +97,15 @@ checked on the way. Pre-releases come often and on no schedule, whenever there i
 ## Before the first tag: the dry run
 
 Run the release workflow by hand (Actions, release, Run workflow). A manual run builds the archives and the AppImage for
-`v0.0.0` and keeps them, with `notes.md`, as a run artifact; it creates no release and has no write permission. The tag check is skipped (there
+`v0.0.0`, copies the install scripts, checks the seven assets with `scripts/check-release.sh --assets`, and keeps them,
+with `notes.md`, as a run artifact; it creates no release and has no write permission. The tag check is skipped (there
 is no tag), but `scripts/release-build.sh` still runs `scripts/check-release.sh`, and the notes are built the same way as on
 a tag, for the version in `VERSION`: what a tag at that commit would get. Before the first tag, check that artifact by hand: the sizes, the checksums
 against `SHA256SUMS`, and that the Linux archive unpacks in an empty directory and the server inside starts without Go or
 build tools. The Windows and arm64 archives are cross-built; say in the notes which ones were not run.
 
-`scripts/release-build.sh v0.0.0` builds the same archives locally into `dist/` (ignored by git). To build the AppImage too:
+`scripts/release-build.sh v0.0.0` builds the same archives and copies the install scripts locally into `dist/` (ignored by
+git); without the AppImage that is six files, so the seven-asset check runs only with it. To build the AppImage too:
 
 ```sh
 scripts/build-appimage.sh fetch /tmp/appimage-tools      # the only download; checked against the pins
@@ -180,14 +187,19 @@ How it is built ([`scripts/build-appimage.sh`](../scripts/build-appimage.sh), ru
 | The tag is `v` + `VERSION` at the tagged commit (`TestCheckReleaseTag` for the script) | `scripts/check-release.sh --tag`, first step of `release.yml` on a tag |
 | The deploy examples match the server's flags | `scripts/check-deploy.sh`, run by `scripts/release-build.sh` |
 | `SHA256SUMS` verifies | `scripts/release-build.sh`, `release.yml` (build and draft jobs), `release-check.yml` |
+| The build holds exactly the seven assets, `SHA256SUMS` has one `HASH  NAME` line (LF, no BOM) for each of the other six, and `install.sh` and `install.ps1` are the tree's scripts byte for byte (`TestCheckReleaseAssets`); the script and both workflows name the same seven (`TestReleaseAssetListsAgree`) | `scripts/check-release.sh --assets`, run by `scripts/release-build.sh` with the AppImage, in `release.yml`; the tests in `go test ./...` |
 | appimagetool and the runtime match their SHA-256 pins; the script and the workflow pin the same files (`TestAppImagePinsAgree`); a wrong hash or tag is refused before anything runs (`TestBuildAppImageRefuses`) | `release.yml`, `scripts/build-appimage.sh`; the tests in `go test ./...` |
 | The AppImage holds the archive's binary, and its `-h` and version match | `scripts/build-appimage.sh` (smoke test), in `release.yml` |
 | No release exists for the tag yet | `release.yml` |
-| Published, titled with the tag, pre-release while 0.x, exactly the expected assets, checksums | `release-check.yml` |
+| Published, titled with the tag, pre-release while 0.x, exactly the seven assets (five for v0.2.0 and v0.3.0), checksums, and `install.sh` and `install.ps1` equal to the files at the tag; `TestReleaseCheckWorkflow` exercises metadata and script comparison with local API responses | `release-check.yml` |
 
 ## Not checked yet
 
 - That the Windows and arm64 binaries run; they are cross-built. The exe, the AppImage and `SHA256SUMS` are unsigned.
 - The AppImage on other distributions: it was built and run (with FUSE and with `--appimage-extract-and-run`) on one
   x86_64 Linux machine only.
+- The seven-asset release: v0.3.0 and earlier carry five assets, without the install scripts. The upload of `install.sh`
+  and `install.ps1` to a draft, and `release-check.yml` reading seven assets back and comparing the scripts with the tag
+  through the contents API, run for the first time on the next tag. A manual run of the release workflow builds and checks
+  the seven files but creates no draft.
 - Sample log output in the README and `docs/running.md` (`version=0.1.0`) is an example and is not changed by the bump.

@@ -179,7 +179,7 @@ their own requirements.
 
 Releases are pre-releases for now: the newest, [v0.3.0](https://github.com/undecuple/re-psn/releases/tag/v0.3.0), is on the [releases page](https://github.com/undecuple/re-psn/releases) (see [Release archives](#release-archives)). Its container image is `ghcr.io/undecuple/re-psn:0.3.0` (see [Container](#container)).
 
-Optional install scripts for Linux and Windows download a release and check it against `SHA256SUMS`: see [docs/installing.md](docs/installing.md).
+Optional install scripts for Linux and Windows download a release and check it against `SHA256SUMS`; from the next release they are release assets with their own line in `SHA256SUMS`: see [docs/installing.md](docs/installing.md).
 
 ### From source
 
@@ -225,8 +225,9 @@ It is configured only by `RE_PSN_*` variables.
 
 Each release carries `re-psn-vX.Y.Z-windows-amd64.zip`, `re-psn-vX.Y.Z-linux-amd64.tar.gz` and
 `re-psn-vX.Y.Z-linux-arm64.tar.gz` (built by [scripts/release-build.sh](scripts/release-build.sh)): a static `re-psn` binary
-(`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. `SHA256SUMS` lists them
-and the AppImage. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
+(`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. From the next release after
+v0.3.0 it also carries the install scripts `install.sh` and `install.ps1` ([docs/installing.md](docs/installing.md)), seven
+assets in all. `SHA256SUMS` lists the archives, the AppImage and the scripts. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
 `Get-FileHash <archive>` with the line in `SHA256SUMS` on Windows.
 
 Linux x86_64 also gets `re-psn-vX.Y.Z-x86_64.AppImage`, the same binary as one runnable file (unsigned): check it with

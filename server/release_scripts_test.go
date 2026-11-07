@@ -2,11 +2,15 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -72,7 +76,7 @@ func newTree(t *testing.T, files map[string]string) string {
 	for rel, text := range files {
 		write(rel, []byte(text), 0o644)
 	}
-	for _, s := range []string{"bump-version.sh", "release-notes.sh", "check-release.sh", "build-appimage.sh"} {
+	for _, s := range []string{"bump-version.sh", "release-notes.sh", "check-release.sh", "build-appimage.sh", "install.sh", "install.ps1"} {
 		b, err := os.ReadFile(filepath.Join("..", "scripts", s))
 		if err != nil {
 			t.Fatal(err)
@@ -386,5 +390,309 @@ func TestAppImagePinsAgree(t *testing.T) {
 		if ver == nil || url == nil || !strings.Contains(url[1], "/download/"+ver[1]+"/") {
 			t.Errorf("%s: the URL does not name the version %v", key, ver)
 		}
+	}
+}
+
+// releaseAssets is the seven release assets for a tag, sorted as the C locale sorts them.
+func releaseAssets(tag string) []string {
+	return []string{"SHA256SUMS", "install.ps1", "install.sh", "re-psn-" + tag + "-linux-amd64.tar.gz",
+		"re-psn-" + tag + "-linux-arm64.tar.gz", "re-psn-" + tag + "-windows-amd64.zip", "re-psn-" + tag + "-x86_64.AppImage"}
+}
+
+// sumsLine is the SHA256SUMS line for data, in the format sha256sum writes.
+func sumsLine(name string, data []byte) string {
+	h := sha256.Sum256(data)
+	return hex.EncodeToString(h[:]) + "  " + name + "\n"
+}
+
+// scripts/check-release.sh --assets passes a directory with the seven assets, whose SHA256SUMS lists the other six with
+// their hashes and whose install scripts are the repository's; it fails on a missing or extra file, a script that is not
+// the repository's, a missing, repeated, wrong or malformed SHA256SUMS line, and a bad tag.
+func TestCheckReleaseAssets(t *testing.T) {
+	needShell(t, "sha256sum", "cmp", "sort", "grep", "sed", "find")
+	const tag = "v0.3.1"
+	root := newTree(t, fixtureTree)
+	type asset struct {
+		name string
+		data []byte
+	}
+	script := func(name string) []byte {
+		b, err := os.ReadFile(filepath.Join("..", "scripts", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+	// assets returns the six files other than SHA256SUMS, with data replacing a file's contents and drop leaving one out.
+	assets := func(drop string, data map[string][]byte) []asset {
+		var as []asset
+		for _, name := range releaseAssets(tag) {
+			if name == "SHA256SUMS" || name == drop {
+				continue
+			}
+			b := []byte("stand-in for " + name + "\n")
+			if name == "install.sh" || name == "install.ps1" {
+				b = script(name)
+			}
+			if d, ok := data[name]; ok {
+				b = d
+			}
+			as = append(as, asset{name, b})
+		}
+		return as
+	}
+	sums := func(as []asset) string {
+		var b strings.Builder
+		for _, a := range as {
+			b.WriteString(sumsLine(a.name, a.data))
+		}
+		return b.String()
+	}
+	check := func(as []asset, sumsText string, extra ...string) (string, error) {
+		t.Helper()
+		dir := filepath.Join(t.TempDir(), "dist")
+		if err := os.Mkdir(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for _, a := range as {
+			if err := os.WriteFile(filepath.Join(dir, a.name), a.data, 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		for _, name := range extra {
+			if err := os.WriteFile(filepath.Join(dir, name), []byte("x\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := os.WriteFile(filepath.Join(dir, "SHA256SUMS"), []byte(sumsText), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		out, errout, err := run(t, root, "sh", "scripts/check-release.sh", "--assets", tag, dir)
+		return out + errout, err
+	}
+
+	// The passing case; SHA256SUMS holds the hashes of the repository's two scripts.
+	good := assets("", nil)
+	text := sums(good)
+	for _, name := range []string{"install.sh", "install.ps1"} {
+		if !strings.Contains(text, sumsLine(name, script(name))) {
+			t.Fatalf("SHA256SUMS lacks the line for scripts/%s", name)
+		}
+	}
+	if out, err := check(good, text); err != nil || !strings.Contains(out, "release assets passed for "+tag) {
+		t.Fatalf("seven good assets: want a pass, got %v %q", err, out)
+	}
+
+	appimage := "re-psn-" + tag + "-x86_64.AppImage"
+	otherSh := map[string][]byte{"install.sh": []byte("#!/bin/sh\necho other\n")}
+	otherPs1 := map[string][]byte{"install.ps1": []byte("Write-Output other\n")}
+	ps1Line := sumsLine("install.ps1", script("install.ps1"))
+	for _, c := range []struct {
+		what, want string
+		as         []asset
+		sums       string
+		extra      []string
+	}{
+		{"install.ps1 missing", "not the seven assets", assets("install.ps1", nil), sums(assets("install.ps1", nil)), nil},
+		{"install.sh missing", "not the seven assets", assets("install.sh", nil), sums(assets("install.sh", nil)), nil},
+		{"the AppImage missing", "not the seven assets", assets(appimage, nil), sums(assets(appimage, nil)), nil},
+		{"an extra file", "not the seven assets", good, text, []string{"notes.md"}},
+		{"an extra hidden file", "not the seven assets", good, text, []string{".x"}},
+		{"install.sh not the repository's", "install.sh differs from scripts/install.sh",
+			assets("", otherSh), sums(assets("", otherSh)), nil},
+		{"install.ps1 not the repository's", "install.ps1 differs from scripts/install.ps1",
+			assets("", otherPs1), sums(assets("", otherPs1)), nil},
+		{"no line for install.sh", "does not list", good, sums(assets("install.sh", nil)), nil},
+		{"a line twice", "does not list", good, text + ps1Line, nil},
+		{"a wrong hash", "does not verify", good, strings.Replace(text, ps1Line, "00000000"+ps1Line[8:], 1), nil},
+		{"CRLF line ends", "is not 'HASH  NAME'", good, strings.ReplaceAll(text, "\n", "\r\n"), nil},
+		{"a BOM", "is not 'HASH  NAME'", good, "\xef\xbb\xbf" + text, nil},
+	} {
+		if out, err := check(c.as, c.sums, c.extra...); err == nil || !strings.Contains(out, c.want) {
+			t.Errorf("%s: want a failure saying %q, got %v %q", c.what, c.want, err, out)
+		}
+	}
+	if out, err := check(good, ""); err == nil || !strings.Contains(out, "does not list") {
+		t.Errorf("empty SHA256SUMS: want a failure, got %v %q", err, out)
+	}
+
+	for _, args := range [][]string{{"--assets"}, {"--assets", tag}, {"--assets", tag, ""}, {"--assets", tag, ".", "x"}} {
+		if _, errout, err := run(t, root, "sh", append([]string{"scripts/check-release.sh"}, args...)...); err == nil ||
+			!strings.Contains(errout, "usage:") {
+			t.Errorf("%q: want a usage error, got %v %q", args, err, errout)
+		}
+	}
+	for bad, want := range map[string]string{"0.3.1": "is not vMAJOR.MINOR.PATCH", "v0.3.1;x": "odd characters"} {
+		if _, errout, err := run(t, root, "sh", "scripts/check-release.sh", "--assets", bad, root); err == nil ||
+			!strings.Contains(errout, want) {
+			t.Errorf("tag %q: want %q, got %v %q", bad, want, err, errout)
+		}
+	}
+}
+
+// The seven asset names are the same in scripts/check-release.sh, the draft upload in .github/workflows/release.yml and
+// the expected list in .github/workflows/release-check.yml.
+func TestReleaseAssetListsAgree(t *testing.T) {
+	read := func(rel string) string {
+		b, err := os.ReadFile(filepath.Join("..", filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(b)
+	}
+	const tag = "vX.Y.Z"
+	want := strings.Join(releaseAssets(tag), " ")
+	list := func(names []string) string {
+		sort.Strings(names)
+		return strings.Join(names, " ")
+	}
+	wantLine := func(file, variable string) string {
+		t.Helper()
+		m := regexp.MustCompile(`(?m)^\s*want="(re-psn-\$`+variable+`[^"]*)"$`).FindAllStringSubmatch(read(file), -1)
+		if len(m) != 1 {
+			t.Fatalf("%s: want one want=\"...\" asset list, got %d", file, len(m))
+		}
+		return list(strings.Fields(strings.ReplaceAll(m[0][1], "$"+variable, tag)))
+	}
+	if got := wantLine("scripts/check-release.sh", "tag"); got != want {
+		t.Errorf("scripts/check-release.sh: %s, want %s", got, want)
+	}
+	if got := wantLine(".github/workflows/release-check.yml", "TAG"); got != want {
+		t.Errorf("release-check.yml: %s, want %s", got, want)
+	}
+	workflow := read(".github/workflows/release.yml")
+	i := strings.Index(workflow, "gh release create")
+	if i < 0 {
+		t.Fatal("release.yml: no gh release create")
+	}
+	var uploaded []string
+	for _, m := range regexp.MustCompile(`(?m)^\s*dist/(\S+?)(?: \\)?$`).FindAllStringSubmatch(workflow[i:], -1) {
+		uploaded = append(uploaded, strings.ReplaceAll(m[1], `"$TAG"`, tag))
+	}
+	if got := list(uploaded); got != want {
+		t.Errorf("release.yml uploads %s, want %s", got, want)
+	}
+}
+
+// Exercise the actual release-check shell steps with local metadata and source-file responses.
+// Existing five-file releases remain checkable; newer tags need both installers and matching tagged bytes.
+func TestReleaseCheckWorkflow(t *testing.T) {
+	needShell(t, "bash", "jq", "sort", "tr", "sed", "cmp")
+	b, err := os.ReadFile(filepath.Join("..", ".github", "workflows", "release-check.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	step := func(name string) (string, string) {
+		t.Helper()
+		_, block, ok := strings.Cut(string(b), "      - name: "+name+"\n")
+		if !ok {
+			t.Fatalf("missing workflow step %q", name)
+		}
+		block, _, _ = strings.Cut(block, "\n      - ")
+		header, body, ok := strings.Cut(block, "        run: |\n")
+		if !ok {
+			t.Fatalf("missing shell block in %q", name)
+		}
+		var lines []string
+		for _, line := range strings.Split(body, "\n") {
+			if strings.TrimSpace(line) != "" && !strings.HasPrefix(line, "          ") {
+				t.Fatalf("unexpected shell indentation in %q", name)
+			}
+			lines = append(lines, strings.TrimPrefix(line, "          "))
+		}
+		return header, strings.Join(lines, "\n")
+	}
+	_, metadata := step("Release metadata")
+	guard, compare := step("The install scripts are the tag's")
+	if !strings.Contains(guard, "if: env.INSTALLER_ASSETS == 'true'") {
+		t.Fatal("installer comparison must be conditional on the metadata result")
+	}
+	for _, c := range []struct {
+		name, tag, drop, tamper string
+		historical, extra       bool
+		wantMetadata, wantCmp   bool
+	}{
+		{name: "old v0.2.0", tag: "v0.2.0", historical: true, wantMetadata: true},
+		{name: "old v0.3.0", tag: "v0.3.0", historical: true, wantMetadata: true},
+		{name: "old unexpected installers", tag: "v0.3.0", wantMetadata: false},
+		{name: "new seven assets", tag: "v0.3.1", wantMetadata: true, wantCmp: true},
+		{name: "new missing sh", tag: "v0.3.1", drop: "install.sh"},
+		{name: "new missing ps1", tag: "v0.3.1", drop: "install.ps1"},
+		{name: "new extra asset", tag: "v0.3.1", extra: true},
+		{name: "sh differs from tag", tag: "v0.3.1", tamper: "install.sh", wantMetadata: true},
+		{name: "ps1 differs from tag", tag: "v0.3.1", tamper: "install.ps1", wantMetadata: true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.Mkdir(filepath.Join(root, "assets"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			write := func(name, data string) {
+				t.Helper()
+				if err := os.WriteFile(filepath.Join(root, name), []byte(data), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			var assets []map[string]string
+			for _, name := range releaseAssets(c.tag) {
+				if name == c.drop || (c.historical && (name == "install.sh" || name == "install.ps1")) {
+					continue
+				}
+				assets = append(assets, map[string]string{"name": name})
+			}
+			if c.extra {
+				assets = append(assets, map[string]string{"name": "extra.txt"})
+			}
+			data, err := json.Marshal(map[string]any{"draft": false, "name": c.tag,
+				"tag_name": c.tag, "prerelease": true, "assets": assets})
+			if err != nil {
+				t.Fatal(err)
+			}
+			write("fixture.json", string(data))
+			for _, name := range []string{"install.sh", "install.ps1"} {
+				write("source-"+name, "tagged "+name+"\n")
+				text := "tagged " + name + "\n"
+				if name == c.tamper {
+					text = "different\n"
+				}
+				write("assets/"+name, text)
+			}
+			write("gh", `#!/bin/sh
+set -eu
+case "$*" in
+  "api repos/example/re-psn/releases/tags/$TAG") cat "$RUNNER_TEMP/fixture.json" ;;
+  "api -H Accept: application/vnd.github.raw+json repos/example/re-psn/contents/scripts/install.sh?ref=$TAG") cat "$RUNNER_TEMP/source-install.sh" ;;
+  "api -H Accept: application/vnd.github.raw+json repos/example/re-psn/contents/scripts/install.ps1?ref=$TAG") cat "$RUNNER_TEMP/source-install.ps1" ;;
+  *) echo 'unexpected API call' >&2; exit 1 ;;
+esac
+`)
+			env := append(append([]string{}, gitEnv...), "PATH="+root+string(os.PathListSeparator)+os.Getenv("PATH"),
+				"TAG="+c.tag, "GITHUB_REPOSITORY=example/re-psn", "RUNNER_TEMP="+root,
+				"GITHUB_ENV="+filepath.Join(root, "env"))
+			runStep := func(script string) (string, error) {
+				cmd := exec.Command("bash", "-e", "-o", "pipefail", "-c", script)
+				cmd.Env = env
+				out, err := cmd.CombinedOutput()
+				return string(out), err
+			}
+			if out, err := runStep(metadata); (err == nil) != c.wantMetadata {
+				t.Fatalf("metadata: want success=%v, got %v: %s", c.wantMetadata, err, out)
+			}
+			if !c.wantMetadata {
+				return
+			}
+			wantEnv := "INSTALLER_ASSETS=true\n"
+			if c.historical {
+				wantEnv = "INSTALLER_ASSETS=false\n"
+			}
+			if got := readFile(t, root, "env"); got != wantEnv {
+				t.Fatalf("environment %q, want %q", got, wantEnv)
+			}
+			if !c.historical {
+				if out, err := runStep(compare); (err == nil) != c.wantCmp {
+					t.Fatalf("tagged scripts: want success=%v, got %v: %s", c.wantCmp, err, out)
+				}
+			}
+		})
 	}
 }

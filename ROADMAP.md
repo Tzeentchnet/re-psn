@@ -60,7 +60,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [release-archives] Release archives with checksums, built by a workflow; partial: published in the v0.2.0 pre-release; the Windows and arm64 binaries are cross-built and not run.
 - [release-process] Written release steps and a dry run, then the first tag (v0.2.0, a pre-release); further pre-releases come with no fixed release day.
 - [release-appimage] A Linux x86_64 AppImage beside the archives; partial: published in the v0.2.0 pre-release, unsigned, and run on one machine.
-- [install-script] Install scripts for Linux and Windows that check SHA256SUMS; partial: on main, not yet release assets, and the PowerShell script tested only under PowerShell 7 on Linux.
+- [install-script] Install scripts for Linux and Windows that check SHA256SUMS; partial: on main and release assets from the next release (none has shipped them yet), PowerShell fake-release tests passed on Linux and Windows CI under PowerShell 7, and PowerShell 5.1 remains untested.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.

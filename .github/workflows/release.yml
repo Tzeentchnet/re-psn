@@ -1,9 +1,11 @@
-# Release build for the fork. A pushed tag vMAJOR.MINOR.PATCH builds the archives and the x86_64 AppImage and creates a
-# DRAFT PRE-RELEASE for the maintainer to publish; this workflow never publishes. A manual run (workflow_dispatch) only
-# builds and keeps the files as a run artifact: the dry run. Permissions: read at the top; write only on the job that
-# creates the draft.
+# Release build for the fork. A pushed tag vMAJOR.MINOR.PATCH builds the archives and the x86_64 AppImage, copies the two
+# install scripts, and creates a DRAFT PRE-RELEASE with the seven assets for the maintainer to publish; this workflow
+# never publishes. A manual run (workflow_dispatch) only builds and keeps the files as a run artifact: the dry run.
+# Permissions: read at the top; write only on the job that creates the draft.
 # Checks here: on a tag, that the tag is v + VERSION and the version checks pass (scripts/check-release.sh --tag), before
-# anything is built; vet and tests, the tag shape, SHA256SUMS verified, and that no release for the tag exists yet.
+# anything is built; vet and tests, the tag shape, that dist/ holds exactly the seven assets with install.sh and
+# install.ps1 equal to the tagged scripts (scripts/check-release.sh --assets, run by release-build.sh), SHA256SUMS
+# verified, and that no release for the tag exists yet.
 # Network fetch: appimagetool and the type-2 AppImage runtime, from their GitHub releases at fixed tags, checked against
 # the SHA-256 pins below before use (scripts/build-appimage.sh checks the same pins again before running anything).
 # The notes are scripts/release-notes.sh for VERSION: the CHANGELOG.md entries under that version's heading.
@@ -52,7 +54,7 @@ jobs:
           curl -fsSL --proto '=https' --tlsv1.2 --retry 3 -o "$d/runtime-x86_64" "$RUNTIME_URL"
           printf '%s  %s\n' "$APPIMAGETOOL_SHA256" "$d/appimagetool-x86_64.AppImage" "$RUNTIME_SHA256" "$d/runtime-x86_64" \
             | sha256sum -c - || { echo "::error::a pinned AppImage tool does not match its SHA-256"; rm -rf "$d"; exit 1; }
-      - name: Build archives, the AppImage (with its smoke test) and checksums
+      - name: Build archives, the AppImage (with its smoke test), the install scripts and checksums
         run: scripts/release-build.sh "$TAG" --appimage-tools "$RUNNER_TEMP/appimage-tools"
       - name: Release notes
         run: |
@@ -61,6 +63,7 @@ jobs:
             echo
             echo "Each archive holds one self-contained server binary (no installer, no runtime needed), LICENSE, NOTICE.md and an examples folder (settings file, systemd unit, proxy configs)."
             echo "The x86_64 AppImage holds the same Linux binary and examples as one runnable file; it needs FUSE to mount, or run it with \`--appimage-extract-and-run\`. It is not signed."
+            echo "\`install.sh\` (Linux) and \`install.ps1\` (Windows) are the install scripts from this tag, listed in SHA256SUMS too: download one with SHA256SUMS, check it, read it, then run it (see docs/installing.md)."
             echo "Check a download with \`sha256sum -c SHA256SUMS --ignore-missing\`."
             echo
             echo '```'
@@ -105,4 +108,6 @@ jobs:
             dist/re-psn-"$TAG"-linux-amd64.tar.gz \
             dist/re-psn-"$TAG"-linux-arm64.tar.gz \
             dist/re-psn-"$TAG"-x86_64.AppImage \
+            dist/install.sh \
+            dist/install.ps1 \
             dist/SHA256SUMS

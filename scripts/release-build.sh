@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Build the release archives into dist/: static server binaries (no cgo) for the three targets and one
-# SHA256SUMS (LF, no BOM). With --appimage-tools DIR it also builds re-psn-vX.Y.Z-x86_64.AppImage with
-# scripts/build-appimage.sh (DIR holds the pinned files from `scripts/build-appimage.sh fetch DIR`), and SHA256SUMS
-# lists it too. Used by .github/workflows/release.yml and runnable locally.
+# Build the release into dist/: archives of static server binaries (no cgo) for the three targets, copies of
+# scripts/install.sh and scripts/install.ps1 (byte for byte, under those names), and one SHA256SUMS (LF, no BOM) listing
+# them. With --appimage-tools DIR it also builds re-psn-vX.Y.Z-x86_64.AppImage with scripts/build-appimage.sh (DIR holds
+# the pinned files from `scripts/build-appimage.sh fetch DIR`), SHA256SUMS lists it too, and
+# `scripts/check-release.sh --assets` then checks that dist/ holds exactly the seven release assets.
+# Used by .github/workflows/release.yml and runnable locally.
 # usage: scripts/release-build.sh vX.Y.Z [--appimage-tools DIR]
 set -euo pipefail
 usage="usage: scripts/release-build.sh vX.Y.Z [--appimage-tools DIR]"
@@ -42,7 +44,12 @@ for target in windows/amd64 linux/amd64 linux/arm64; do
   fi
 done
 
+cp "$root/scripts/install.sh" "$root/scripts/install.ps1" "$dist/"
+
 cd "$dist"
-sha256sum re-psn-*.zip re-psn-*.tar.gz > SHA256SUMS
-[ -z "$tools" ] || "$root/scripts/build-appimage.sh" build "$tag" "$tools"
+sha256sum re-psn-*.zip re-psn-*.tar.gz install.sh install.ps1 > SHA256SUMS
 sha256sum -c SHA256SUMS
+if [ -n "$tools" ]; then
+  "$root/scripts/build-appimage.sh" build "$tag" "$tools"
+  "$root/scripts/check-release.sh" --assets "$tag" "$dist"
+fi
