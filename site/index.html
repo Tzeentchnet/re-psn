@@ -171,7 +171,7 @@
 <thead><tr><th>Feature</th><th>Status</th><th>Since</th></tr></thead>
 <tbody>
 <tr id="f-test-fuzz"><td data-label="Feature"><strong>Fuzz tests</strong> <code>test-fuzz</code><br>Go fuzz targets for the frame parser, the request handlers and the PROXY header parser. Their seed inputs run with every <code>go test</code>.<br><span class="note">CI runs the seeds only; longer fuzzing runs are by hand. The UDP packets have no fuzz target yet.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
-<tr id="f-ci-checks"><td data-label="Feature"><strong>CI checks</strong> <code>ci-checks</code><br>gofmt, go vet, <code>go test -race</code> on Linux (with the C client) and <code>go test</code> on Windows, govulncheck, gitleaks over the full history, the NAT lab in Docker, and CodeQL for Go and the workflows. Actions are pinned and permissions are read-only by default.<br><span class="note">Dependabot proposes version updates.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-ci-checks"><td data-label="Feature"><strong>CI checks</strong> <code>ci-checks</code><br>gofmt, go vet, <code>go test -race</code> on Linux (with the C client) and <code>go test</code> on Windows, govulncheck, gitleaks over the full history, the NAT lab in Docker, and CodeQL for Go and the workflows. Actions are pinned and permissions are read-only by default.<br><span class="note">Dependabot proposes version updates. A focused local loopback runner requires native C-client and Go app-client conformance checks to execute; synthetic loopback only.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-ci-more"><td data-label="Feature"><strong>More CI checks</strong> <code>ci-more</code><br>Candidates: the C client outside Linux, the race detector on Windows, and a scan of the container image.<br><span class="note">The list is not settled. The header of ci.yml says what CI does not check today.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
 </tbody>
 </table>
@@ -282,6 +282,7 @@
 <h3>Unreleased</h3>
 <h4>Added</h4>
 <ul>
+<li>A focused loopback check: <code>python3 tools/loopback.py</code> runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.</li>
 <li>Numbered file-style output in the website&#x27;s terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.</li>
 <li>Optional install scripts: <code>scripts/install.sh</code> (POSIX sh; Linux amd64 and arm64) and <code>scripts/install.ps1</code> (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ...</li>
 </ul>
