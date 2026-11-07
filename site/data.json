@@ -536,8 +536,8 @@
    "detail": "gofmt, go vet, `go test -race` on Linux (with the C client) and `go test` on Windows, govulncheck, gitleaks over the full history, the NAT lab in Docker, and CodeQL for Go and the workflows. Actions are pinned and permissions are read-only by default.",
    "status": "available",
    "since": "0.2.0",
-   "evidence": ".github/workflows/ci.yml, .github/workflows/codeql.yml, .github/dependabot.yml, #1, #6",
-   "note": "Dependabot proposes version updates.",
+   "evidence": ".github/workflows/ci.yml, .github/workflows/codeql.yml, .github/dependabot.yml, #1, #6, tools/loopback.py, docs/testing.md",
+   "note": "Dependabot proposes version updates. A focused local loopback runner requires native C-client and Go app-client conformance checks to execute; synthetic loopback only.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -907,6 +907,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.",
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
     ],
@@ -915,7 +916,7 @@
     ]
    },
    "counts": {
-    "Added": 2,
+    "Added": 3,
     "Changed": 1
    }
   },

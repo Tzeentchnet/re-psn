@@ -56,7 +56,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 
 [Testing and CI](docs/features.md#testing-and-ci), [release](docs/features.md#release) and [documentation](docs/features.md#documentation)
 - [test-fuzz] Fuzz tests for the frame parser, the request handlers and the PROXY header.
-- [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning.
+- [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning; a focused local loopback runner for the C and Go app clients.
 - [release-archives] Release archives with checksums, built by a workflow; partial: published in the v0.2.0 pre-release; the Windows and arm64 binaries are cross-built and not run.
 - [release-process] Written release steps and a dry run, then the first tag (v0.2.0, a pre-release); further pre-releases come with no fixed release day.
 - [release-appimage] A Linux x86_64 AppImage beside the archives; partial: published in the v0.2.0 pre-release, unsigned, and run on one machine.

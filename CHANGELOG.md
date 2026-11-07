@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance
+  tests against temporary loopback servers. Required skips and timeouts fail; `--race` is optional. See `docs/testing.md`.
 - Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours
   and wrapped continuation rows with an empty gutter. Headers and numbers are excluded from text selection. A pager
   trial shows long output by page, with a line-range status, keyboard shortcuts and buttons; `pager off` shows all lines.
