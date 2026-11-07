@@ -16,28 +16,38 @@ no macOS builds, and the Linux script says so and stops.
 
 ## Get the script, then read it
 
-Download the script to a file, read it, then run it. Do not pipe it into a shell.
+Download the script and `SHA256SUMS` from a release, check the script's hash, read it, then run it. Do not pipe it into a
+shell.
 
 > [!NOTE]
-> The scripts are not release assets yet, so `SHA256SUMS` does not list them, and the
-> `releases/latest/download/install.sh` link does not work yet. Until a release ships them, they live in
-> [scripts/](../scripts/) of this repository. A release tag that has them is the next one after v0.3.0.
+> The scripts are release assets, listed in `SHA256SUMS`, from the next release after v0.3.0; v0.3.0 and earlier do not
+> carry them. Use the versioned link below (replace `vX.Y.Z` with a release from the
+> [releases page](https://github.com/undecuple/re-psn/releases)): every release so far is a pre-release, and GitHub's
+> `releases/latest/download/...` link does not point at pre-releases, so it gives a 404.
 
-From a release tag that has them (replace `vX.Y.Z`):
+Linux:
 
 ```sh
-curl -fsSL --proto '=https' --tlsv1.2 -o install.sh https://raw.githubusercontent.com/undecuple/re-psn/vX.Y.Z/scripts/install.sh
+curl -fsSL --proto '=https' --tlsv1.2 -O https://github.com/undecuple/re-psn/releases/download/vX.Y.Z/install.sh
+curl -fsSL --proto '=https' --tlsv1.2 -O https://github.com/undecuple/re-psn/releases/download/vX.Y.Z/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing   # must print "install.sh: OK"
 less install.sh
 ```
 
+Windows (the third command prints `True` when the hash matches the one in `SHA256SUMS`; continue only if it does):
+
 ```powershell
-Invoke-WebRequest -UseBasicParsing -OutFile install.ps1 https://raw.githubusercontent.com/undecuple/re-psn/vX.Y.Z/scripts/install.ps1
+Invoke-WebRequest -UseBasicParsing -OutFile install.ps1 https://github.com/undecuple/re-psn/releases/download/vX.Y.Z/install.ps1
+Invoke-WebRequest -UseBasicParsing -OutFile SHA256SUMS https://github.com/undecuple/re-psn/releases/download/vX.Y.Z/SHA256SUMS
+(Get-FileHash install.ps1 -Algorithm SHA256).Hash -eq (Select-String -Path SHA256SUMS -Pattern '  install\.ps1$').Line.Split(' ')[0]
 notepad install.ps1
 ```
 
-There is no checksum for the script itself: a file from a tag is only as trustworthy as the tag and your connection to
-GitHub, which is why you read it before running it. What the script then downloads is checked against `SHA256SUMS`. From a
-clone, `git show vX.Y.Z:scripts/install.sh > install.sh` gives the same file.
+The release's `install.sh` and `install.ps1` are byte for byte the files in [scripts/](../scripts/) at the release's tag; the
+release workflow checks that before the draft is made, and again once it is published. `SHA256SUMS` is unsigned, so a match
+shows the script is the one the release lists, not who made the release: read it before running it. What the script then
+downloads is checked against the same `SHA256SUMS`. From a clone, `git show vX.Y.Z:scripts/install.sh > install.sh` gives the
+same file.
 
 ## Linux
 

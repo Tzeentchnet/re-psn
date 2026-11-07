@@ -17,8 +17,13 @@ All notable changes to this project are documented here. The format follows
   or a pinned `--version` / `-Version`. They check the download against `SHA256SUMS` and stop before installing anything on a
   mismatch or a missing line, need no sudo or administrator rights, edit no shell profile, and change the user PATH only with
   `-AddToPath` on Windows. macOS is refused (there are no macOS builds). `--dry-run` / `-DryRun` downloads nothing. Tested
-  with `scripts/test-install.sh` and `scripts/test-install.ps1` against a fake release. See `docs/installing.md`; the scripts
-  are not release assets yet.
+  with `scripts/test-install.sh` and `scripts/test-install.ps1` against a fake release. See `docs/installing.md`.
+
+### Changed
+- The release carries seven assets: the three archives, the AppImage, `SHA256SUMS`, and the two install scripts as
+  `install.sh` and `install.ps1`, byte for byte the tagged `scripts/` files, with their checksums in `SHA256SUMS`. Check one
+  with `sha256sum -c SHA256SUMS --ignore-missing` before reading and running it. `scripts/check-release.sh --assets` checks a
+  build holds exactly the seven, and `release-check` compares the published scripts with the tag.
 
 ## [0.3.0] - 2026-11-06
 

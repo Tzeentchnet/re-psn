@@ -584,8 +584,8 @@
    "detail": "`scripts/install.sh` (Linux amd64 and arm64, POSIX sh) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from a GitHub release, newest or pinned, after checking the download against SHA256SUMS. No sudo or administrator rights, no profile edits; `--dry-run`, `--dir`, `--appimage`, `-AddToPath`.",
    "status": "partial",
    "since": "main",
-   "evidence": "scripts/install.sh, scripts/install.ps1, scripts/test-install.sh, scripts/test-install.ps1, docs/installing.md",
-   "note": "Partial: not release assets yet, so SHA256SUMS does not list the scripts themselves. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a real release, and the PowerShell test (a fake release, 20 checks) has run under PowerShell 7 on Linux only, not on Windows or in PowerShell 5.1. No macOS builds, so no macOS support.",
+   "evidence": "scripts/install.sh, scripts/install.ps1, scripts/test-install.sh, scripts/test-install.ps1, TestCheckReleaseAssets, docs/installing.md",
+   "note": "Partial: release assets (`install.sh`, `install.ps1`, listed in SHA256SUMS) from the next release after v0.3.0; v0.3.0 does not carry them, and no release has shipped them yet. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a published release. The PowerShell fake-release tests have passed under PowerShell 7 on Linux and Windows CI; PowerShell 5.1 remains untested. No macOS builds, so no macOS support.",
    "status_label": "partial",
    "status_class": "warn"
   },
@@ -909,10 +909,14 @@
     "Added": [
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
+    ],
+    "Changed": [
+     "The release carries seven assets: the three archives, the AppImage, `SHA256SUMS`, and the two install scripts as `install.sh` and `install.ps1`, byte for byte the tagged `scripts/` files, with their checksums in ..."
     ]
    },
    "counts": {
-    "Added": 2
+    "Added": 2,
+    "Changed": 1
    }
   },
   "latest": {
