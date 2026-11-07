@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace
+  framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked custom colours.
+  Appearance is local to each browser. Live refresh can be paused and retains the last snapshot on failure; without
+  JavaScript both tables remain visible and reload as before. The status token and `/api/stats` fields are unchanged.
+  Embedded assets normalize line endings before rendering and CSP hashing. Polling preserves full 64-bit score and
+  identifier values without changing their JSON types on the server.
 - An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static
   workflow/Dependabot input paths. Run `python3 tools/repo_check.py`; CI runs it with the documentation checks.
 - A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance

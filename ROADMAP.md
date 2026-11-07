@@ -38,7 +38,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 [Limits](docs/features.md#limits), [logging](docs/features.md#logging) and the [status page](docs/features.md#status-page)
 - [limits-requests] Limits on rooms, connections, request rate and room data size, each refusal logged.
 - [logs-levels] Log levels, text or JSON output, and an optional log file.
-- [status-page] A status page and `/api/stats`, off unless `-http` is set, with an optional token.
+- [status-page] A terminal-style status page and `/api/stats`, off unless `-http` is set, with an optional token. Main adds Rooms/Leaderboards tabs, System/Light/Dark and browser-local text size, spacing and custom colours; see docs/running.md.
 
 [Reverse proxy](docs/features.md#reverse-proxy), [deployment](docs/features.md#deployment) and [settings](docs/features.md#settings)
 - [proxy-support] PROXY protocol v1 and v2 and trusted proxies, so the real client address counts.
