@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static
+  workflow/Dependabot input paths. Run `python3 tools/repo_check.py`; CI runs it with the documentation checks.
 - A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance
   tests against temporary loopback servers. Required skips and timeouts fail; `--race` is optional. See `docs/testing.md`.
 - Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours

@@ -61,7 +61,8 @@ class LoopbackTest(unittest.TestCase):
                     try:
                         if stat.read_text().rsplit(")", 1)[1].split()[0] == "Z":
                             break
-                    except FileNotFoundError:
+                    except (FileNotFoundError, ProcessLookupError):
+                        # Linux can return ENOENT or ESRCH if the child exits during the read.
                         break
                     time.sleep(0.01)
                 else:

@@ -59,6 +59,7 @@ jobs:
       - name: features list
         if: runner.os == 'Linux'
         run: |
+          python3 tools/repo_check.py
           python3 tools/features.py --check
           python3 tools/site.py --check
           python3 -m unittest -v

@@ -34,7 +34,7 @@
 <h2>Overview</h2>
 <p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person&#x27;s machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
 <p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, with no accounts and no public instance.</p>
-<p class="status-line">Version 0.3.0 (pre-release). 58 features: 26 available, 1 not yet verified, 6 partial, 16 planned, 8 later, 1 declined.</p>
+<p class="status-line">Version 0.3.0 (pre-release). 58 features: 27 available, 1 not yet verified, 6 partial, 15 planned, 8 later, 1 declined.</p>
 <p class="notice">Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own.</p>
 </section>
 <section id="features">
@@ -192,12 +192,12 @@
 <tbody>
 <tr id="f-docs-features"><td data-label="Feature"><strong>Features list</strong> <code>docs-features</code><br><code>docs/features.tsv</code> holds one row per feature with its status and evidence, and <code>tools/features.py</code> generates this page. CI fails when the page is stale, a row is malformed, or evidence is missing.</td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-diagrams"><td data-label="Feature"><strong>Mermaid diagrams</strong> <code>docs-diagrams</code><br>The architecture, reverse proxy, relay and NAT lab diagrams are Mermaid, which GitHub renders.<br><span class="note">No generated images to keep in step.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
-<tr id="f-docs-markdown"><td data-label="Feature"><strong>Docs in Markdown</strong> <code>docs-markdown</code><br>Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams.<br><span class="note">Links were checked once with a throwaway script; a CI link check is planned (repo-check).</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
+<tr id="f-docs-markdown"><td data-label="Feature"><strong>Docs in Markdown</strong> <code>docs-markdown</code><br>Every doc in Markdown with one layout, including the deploy and Docker READMEs with diagrams.<br><span class="note">The offline repo-check guard validates tracked local Markdown links and anchors in CI.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-connecting"><td data-label="Feature"><strong>Ways to connect</strong> <code>docs-connecting</code><br>A page on how players reach a server: same LAN, port forwarding, a public server with <code>-relay</code>, a VPN overlay (Tailscale, ZeroTier) or a reverse proxy, with what each needs, its limits, diagrams and links to the overlays&#x27; official documentation.<br><span class="note">Not tested: re-psn has not been run over Tailscale, ZeroTier or any other overlay. Overlay addressing was imitated with network namespaces only.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-readme"><td data-label="Feature"><strong>README rewrite</strong> <code>docs-readme</code><br>A README that says what re-psn is, with a quick start, the available features linking to this page, installation, configuration and credit to upstream.<br><span class="note">Example output comes from real local runs; the settings table was checked against the server flags. The banner comes from the art generator (docs-art).</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-art"><td data-label="Feature"><strong>Art generator</strong> <code>docs-art</code><br><code>tools/art/make_art.py</code> draws the README banner, a social preview image and terminal images in the gruvbox-material palette (<code>docs/art/palette.json</code>), with JetBrains Mono fetched from its tagged release and pinned by SHA-256. Terminal images are drawn only from transcripts of real runs (<code>docs/art/transcripts/</code>, recorded by <code>tools/art/capture.sh</code>). CI renders again and fails when a byte differs.<br><span class="note">The README shows the banner; the social image is uploaded by hand in the repository settings; its example stays text, and the terminal images are kept for the site. Images are dark only; the light colours are in the palette for later. Fonts are not committed.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">0.2.0</td></tr>
 <tr id="f-docs-website"><td data-label="Feature"><strong>Project website</strong> <code>docs-website</code><br>A static page built from the features list, the version, the settings table and the changelog by <code>tools/site.py</code>: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With <code>site/terminal.js</code> (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands <code>features</code>, <code>roadmap</code>, <code>settings</code>, <code>install</code>, <code>connect</code>, <code>changelog</code>, <code>docs</code> and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the <code>theme</code> command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone (a phone starts in the plain view); the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. <code>pages.yml</code> deploys <code>site/</code> to GitHub Pages. Command output has a file header, line-number gutter, frame and syntax-style colours; a pager trial supplies line ranges, keys and buttons, with pager on/off.<br><span class="note">Partial: the page is published at https://undecuple.github.io/re-psn/ and deploys from main while PAGES_ENABLED is true. Unit tests and optional headless-browser checks cover pager navigation, rendered page fitting, command typing, autocomplete/history, selection without gutter numbers, dark/light and system-theme changes, narrow layouts and static fallbacks. A real keyboard, screen reader and physical phone have not been tried. The font remains the visitor&#x27;s monospace; self-hosting is not added.</span></td><td data-label="Status"><span class="tag warn">partial</span></td><td data-label="Since">main</td></tr>
-<tr id="f-repo-check"><td data-label="Feature"><strong>Repository layout check</strong> <code>repo-check</code><br>A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist.<br><span class="note">Not started. After docs-markdown.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
+<tr id="f-repo-check"><td data-label="Feature"><strong>Repository layout check</strong> <code>repo-check</code><br>An offline CI check of tracked root filenames and top-level directories, local Markdown links and heading/explicit anchors, and static repository input paths in workflows and Dependabot.<br><span class="note">Python standard library and Git only. Does not fetch external links, evaluate arbitrary shell/YAML expressions or validate generated artifact paths.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">main</td></tr>
 </tbody>
 </table>
 </section>
@@ -205,7 +205,7 @@
 <h2>Roadmap</h2>
 <p>The same list grouped by status. No dates are promised; <a href="https://github.com/undecuple/re-psn/blob/main/ROADMAP.md">ROADMAP.md</a> has the order and the scope.</p>
 <div class="cols">
-<div><h3>Done <span class="count">(33)</span></h3>
+<div><h3>Done <span class="count">(34)</span></h3>
 <ul>
 <li><a href="#f-rooms-basic">Rooms and search</a></li>
 <li><a href="#f-rooms-data">Room and member data</a></li>
@@ -240,8 +240,9 @@
 <li><a href="#f-docs-readme">README rewrite</a></li>
 <li><a href="#f-docs-art">Art generator</a></li>
 <li><a href="#f-docs-website">Project website</a> <span class="tag warn">partial</span></li>
+<li><a href="#f-repo-check">Repository layout check</a></li>
 </ul></div>
-<div><h3>Next <span class="count">(16)</span></h3>
+<div><h3>Next <span class="count">(15)</span></h3>
 <ul>
 <li><a href="#f-rooms-private">Private rooms</a></li>
 <li><a href="#f-players-friends">Friends, presence and invites</a></li>
@@ -258,7 +259,6 @@
 <li><a href="#f-app-appearance">Appearance mode</a></li>
 <li><a href="#f-app-colours">Custom colours</a></li>
 <li><a href="#f-ci-more">More CI checks</a></li>
-<li><a href="#f-repo-check">Repository layout check</a></li>
 </ul></div>
 <div><h3>Later <span class="count">(8)</span></h3>
 <ul>
@@ -282,6 +282,7 @@
 <h3>Unreleased</h3>
 <h4>Added</h4>
 <ul>
+<li>An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static workflow/Dependabot input paths.</li>
 <li>A focused loopback check: <code>python3 tools/loopback.py</code> runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.</li>
 <li>Numbered file-style output in the website&#x27;s terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.</li>
 <li>Optional install scripts: <code>scripts/install.sh</code> (POSIX sh; Linux amd64 and arm64) and <code>scripts/install.ps1</code> (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ...</li>
