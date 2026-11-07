@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and
+  leaderboard summaries, using a local Bearer-token file. Requests and displayed data are bounded, redirects/proxies
+  are disabled and failures fall back to the game protocol. Initial refresh and changed-source sequencing are corrected.
 - `/healthz` on the opt-in status listener, protected by the existing HTTP token. It reports game TCP/UDP readiness
   without player data. Shutdown marks the server unready and closes accepted client/relay sockets with bounded cleanup;
   restart behavior and supervisor settings are documented in `docs/restarts.md`.
