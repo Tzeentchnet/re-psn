@@ -12,6 +12,19 @@ import (
 	"time"
 )
 
+func TestStatusAssetLineEndings(t *testing.T) {
+	for _, source := range []string{"a\r\nb\r\n", "a\rb\r", "a\nb\n"} {
+		if statusLF(source) != "a\nb\n" || statusHash(source) != statusHash("a\nb\n") {
+			t.Fatalf("line endings affect rendered asset or CSP hash: %q", source)
+		}
+	}
+	for _, source := range []string{statusHTML, statusCSS, statusJS} {
+		if strings.Contains(source, "\r") {
+			t.Fatal("embedded status asset was not normalized")
+		}
+	}
+}
+
 func TestStatusTerminalPage(t *testing.T) {
 	st := statsJSON{Uptime: "1m", Rooms: []roomJSON{{ID: 9, Title: "<script>bad</script>", Members: []string{"<img src=x>"}, Max: 4}},
 		Boards: []boardJSON{{Title: "<svg>", Entries: 1, Leader: "<script>leader</script>", Best: 100}}}

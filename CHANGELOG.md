@@ -11,6 +11,8 @@ All notable changes to this project are documented here. The format follows
   framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked custom colours.
   Appearance is local to each browser. Live refresh can be paused and retains the last snapshot on failure; without
   JavaScript both tables remain visible and reload as before. The status token and `/api/stats` fields are unchanged.
+  Embedded assets normalize line endings before rendering and CSP hashing. Polling preserves full 64-bit score and
+  identifier values without changing their JSON types on the server.
 - Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours
   and wrapped continuation rows with an empty gutter. Headers and numbers are excluded from text selection. A pager
   trial shows long output by page, with a line-range status, keyboard shortcuts and buttons; `pager off` shows all lines.

@@ -80,6 +80,9 @@ without saving it in appearance settings. Responses disable caching and referrer
 
 Assets are embedded in the binary with `embed` and `html/template`; there is no frontend build or runtime dependency.
 The HTML response uses hashes for its embedded CSS and script in its Content Security Policy. `go test ./...` checks
+line-ending normalization, so CRLF checkouts produce the same rendered assets and hashes. Polling retains exact decimal
+text for integers beyond JavaScript's safe range, including signed 64-bit scores; `/api/stats` still returns JSON numbers.
+The same suite checks
 escaping, authentication and the actual rendered hashes. `python3 -m unittest tools.test_status` checks palette parity;
 `node --test tools/status.test.js` checks custom colour validation and stored settings. The optional
 `tools/status_browser_check.mjs` uses the existing Chromium DevTools helper against an owned loopback

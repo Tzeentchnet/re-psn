@@ -104,11 +104,16 @@ try {
   await click('#refresh');
   await c.waitFor("document.querySelector('#refresh-state').hasAttribute('data-error')");
   ok(await evaluate("document.querySelector('#rooms-body').textContent.includes('alice')"), 'unauthorized refresh retains previous snapshot');
-  await evaluate(`window.fetch=async()=>({ok:true,json:async()=>({uptime:'1m',clients:1,connections_total:2,unlisted_rooms:1,rooms:[{id:1,title:'<img src=x onerror=alert(1)>',members:['<svg onload=alert(1)>'],max:2,age:'1m'}],boards:[]})})`);
+  await evaluate(`window.fetch=async()=>({ok:true,text:async()=>' {"uptime":"1m","clients":1,"connections_total":2,"unlisted_rooms":0,"rooms":[],"boards":[{"title":"test","board":1,"entries":1,"leader":"alice","best":9223372036854775807},{"title":"test","board":2,"entries":1,"leader":"bob","best":-9223372036854775808}]} '})`);
+  await click('#refresh');
+  await c.waitFor("!document.querySelector('#refresh-state').hasAttribute('data-error')");
+  ok(await evaluate("document.querySelector('#boards-body').textContent.includes('9223372036854775807')"), 'polling preserves maximum signed 64-bit score');
+  ok(await evaluate("document.querySelector('#boards-body').textContent.includes('-9223372036854775808')"), 'polling preserves minimum signed 64-bit score');
+  await evaluate(`window.fetch=async()=>({ok:true,text:async()=>JSON.stringify({uptime:'1m',clients:1,connections_total:2,unlisted_rooms:1,rooms:[{id:1,title:'<img src=x onerror=alert(1)>',members:['<svg onload=alert(1)>'],max:2,age:'1m'}],boards:[]})})`);
   await click('#refresh');
   await c.waitFor("!document.querySelector('#refresh-state').hasAttribute('data-error')");
   ok(await evaluate("!document.querySelector('#rooms-body img, #rooms-body svg') && document.querySelector('#rooms-body').textContent.includes('<img')"), 'polled names render as text');
-  await evaluate("window.fetch=async()=>({ok:true,json:async()=>({uptime:'1m',clients:0,connections_total:2,unlisted_rooms:0,rooms:[],boards:[]})})");
+  await evaluate("window.fetch=async()=>({ok:true,text:async()=>JSON.stringify({uptime:'1m',clients:0,connections_total:2,unlisted_rooms:0,rooms:[],boards:[]})})");
   await click('#refresh');
   await c.waitFor("!!document.querySelector('#rooms-body .empty')");
   ok(await evaluate("document.querySelector('#boards-body').textContent.includes('No leaderboards')"), 'empty tables explain state');

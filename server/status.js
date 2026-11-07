@@ -22,6 +22,16 @@
     }
     return '';
   }
+  function parseStats(text) {
+    // Quote only unsafe integer tokens before JSON.parse rounds them. Complete
+    // JSON strings are matched first so names, escapes and numeric-looking text
+    // remain untouched. The API keeps its numeric schema; display stays exact.
+    const lossless = text.replace(/"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g, token => {
+      if (/^-?\d+$/.test(token) && !Number.isSafeInteger(Number(token))) return JSON.stringify(token);
+      return token;
+    });
+    return JSON.parse(lossless);
+  }
   function settings(value) {
     const clean = {theme: 'system', size: '16', density: 'comfortable', colours: {}};
     if (!value || typeof value !== 'object') return clean;
@@ -34,7 +44,7 @@
     }
     return clean;
   }
-  if (typeof module !== 'undefined' && module.exports) module.exports = {contrast, colourError, settings};
+  if (typeof module !== 'undefined' && module.exports) module.exports = {contrast, colourError, settings, parseStats};
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
@@ -165,7 +175,7 @@
       url.search = location.search;
       const response = await fetch(url, {cache: 'no-store', credentials: 'same-origin', redirect: 'error', signal: activeRequest.signal});
       if (!response.ok) throw new Error('HTTP ' + response.status);
-      const data = await response.json();
+      const data = parseStats(await response.text());
       if (!Array.isArray(data.rooms) || !Array.isArray(data.boards)) throw new Error('Invalid status response');
       for (const [id, value] of [['uptime', data.uptime], ['clients', data.clients], ['connections', data.connections_total], ['unlisted', data.unlisted_rooms], ['rooms-count', data.rooms.length], ['boards-count', data.boards.length]]) byID(id).textContent = String(value);
       rows('rooms-body', data.rooms, 'No public rooms. A room appears here when a player hosts one.', room => [cell(room.id, 'number'), cell(room.title, 'identifier'), cell(`${(room.members || []).length}/${room.max} ${(room.members || []).join(' ')}`), cell(room.age)]);
