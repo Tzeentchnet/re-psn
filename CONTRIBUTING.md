@@ -33,3 +33,13 @@ go test -race ./...
 
 On Linux the tests also build `client/test_psnr.c` and run it against the server (they skip without a C compiler).
 `nix develop` gives a shell with Go and gcc. CI also runs `govulncheck`, a secret scan and the NAT lab (`sh lab/run.sh`, needs Docker).
+
+CI uses `tools/check_conformance.py` with Go's JSON test output to require the native C-client test on Linux and the three
+app client conformance tests on Linux and Windows to pass. A missing, skipped or failed required test fails that job,
+even if the Go command otherwise succeeds. Unrelated platform-specific skips remain allowed. Local `go test` commands
+keep their existing skip behavior when optional tooling or server source is unavailable. The wrapper forwards test
+output and also fails if the Go command fails or its JSON output is invalid; run it from the same directory as `go test`:
+
+```sh
+python3 tools/check_conformance.py --require github.com/sp00nznet/psnr/server:TestCClient -- go test -race -json ./...
+```

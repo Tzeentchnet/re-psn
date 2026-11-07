@@ -37,7 +37,10 @@ jobs:
       # -race needs cgo, which the Windows runner has no C compiler for.
       - name: test
         if: runner.os == 'Linux'
-        run: go test -race -v ./...
+        run: >-
+          python3 tools/check_conformance.py
+          --require github.com/sp00nznet/psnr/server:TestCClient
+          -- go test -race -json ./...
       - name: test (Windows)
         if: runner.os == 'Windows'
         run: go test -v ./...
@@ -102,10 +105,20 @@ jobs:
         run: go vet -mod=readonly ./...
       - name: test
         if: runner.os == 'Linux'
-        run: go test -mod=readonly -race -v ./...
+        run: >-
+          python ../tools/check_conformance.py
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRoomsAndScores
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRelayRoute
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceErrors
+          -- go test -mod=readonly -race -json ./...
       - name: test (Windows)
         if: runner.os == 'Windows'
-        run: go test -mod=readonly -v ./...
+        run: >-
+          python ../tools/check_conformance.py
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRoomsAndScores
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRelayRoute
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceErrors
+          -- go test -mod=readonly -json ./...
       - name: cross-build
         if: runner.os == 'Linux'
         run: |
