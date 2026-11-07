@@ -274,6 +274,16 @@ TEXT_PAIRS = (
     + [("link", "page"), ("c-h1", "page"), ("c-h1", "raised"), ("c-h2", "page"), ("c-h3", "page"), ("c-cmd", "page"),
        ("c-prompt", "page"), ("c-code", "panel"), ("c-id", "page"), ("c-err", "page"), ("c-key", "raised"), ("page", "strong")]
     + [("tt-" + t, "page") for t in TAGS]
+    # the numbered output: syntax colours, gutter numbers, header; the pager status line is page on strong (above)
+    + [("c-num", "page"), ("c-opt", "page"), ("c-env", "page"), ("c-label", "page")]
+)
+
+# Non-text UI (WCAG 1.4.11, 3:1): (the role drawn, the background beside it). The file frame and the gutter rule are `line` on the
+# page; the pager chips have a `line` border on the page; the focus ring is `strong` on every background a focusable sits on;
+# the pager status bar is a block of `strong` on the page.
+NONTEXT_PAIRS = (
+    [("line", "page")]
+    + [("strong", bg) for bg in ("page", "panel", "raised", "hover")]
 )
 
 
@@ -307,6 +317,24 @@ class ContrastTest(unittest.TestCase):
                 self.assertIn(bg, r, f"{mode}: no role {bg}")
                 ratio = contrast(r[fg], r[bg])
                 self.assertGreaterEqual(ratio, 4.5, f"{mode}: {fg} {r[fg]} on {bg} {r[bg]} is {ratio:.2f}:1")
+
+    def test_every_non_text_pair_is_at_least_3(self):
+        for mode in ("dark", "light"):
+            r = self.resolve(mode)
+            for fg, bg in NONTEXT_PAIRS:
+                ratio = contrast(r[fg], r[bg])
+                self.assertGreaterEqual(ratio, 3.0, f"{mode}: {fg} {r[fg]} beside {bg} {r[bg]} is {ratio:.2f}:1")
+
+    def test_output_frame_uses_the_checked_roles(self):
+        # The frame, the gutter rule and the chip borders are drawn in `line`; the gutter numbers are `muted` text.
+        for rule in (".tui-out .file {", ".tui-out .file-head {", ".tui-out .gut {", ".tui-pager {"):
+            block = self.css[self.css.index(rule):].split("}", 1)[0]
+            self.assertRegex(block, r"border-(?:top|bottom|right): 1px solid var\(--line\)", rule)
+        gut = self.css[self.css.index(".tui-out .gut {"):].split("}", 1)[0]
+        self.assertIn("color: var(--muted)", gut)
+        self.assertIn("user-select: none", gut)
+        self.assertIn(".tui-out .gut::before { content: attr(data-n); }", self.css)
+        self.assertIn("border: 1px solid var(--line)", self.css[self.css.index(".tui .chip {"):].split("}", 1)[0])
 
     def test_stylesheet_text_colours_are_all_covered(self):
         # Every `color: var(--x)` in the stylesheet (not border-color and so on) must be a role in the pair table above.

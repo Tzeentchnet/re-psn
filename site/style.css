@@ -59,6 +59,7 @@
   --c-code: var(--purple); --c-id: var(--aqua); --c-err: var(--red); --c-key: var(--orange);
   --tt-ok: var(--green); --tt-warn: var(--yellow); --tt-unv: var(--orange); --tt-info: var(--aqua);
   --tt-plan: var(--blue); --tt-dim: var(--purple); --tt-bad: var(--red); --tag-w: 1px;
+  --c-num: var(--purple); --c-opt: var(--blue); --c-env: var(--yellow); --c-label: var(--green); --syn-w: normal;
 }
 /* /roles */
 
@@ -92,6 +93,7 @@
     --c-code: var(--fg1); --c-id: var(--fg1); --c-err: var(--fg1); --c-key: var(--fg1);
     --tt-ok: var(--fg1); --tt-warn: var(--fg1); --tt-unv: var(--fg1); --tt-info: var(--fg1);
     --tt-plan: var(--fg1); --tt-dim: var(--fg1); --tt-bad: var(--fg1); --tag-w: 2px;
+    --c-num: var(--blue); --c-opt: var(--fg1); --c-env: var(--fg1); --c-label: var(--fg1); --syn-w: bold;
   }
   /* /roles */
 }
@@ -127,6 +129,7 @@
   --c-code: var(--purple); --c-id: var(--aqua); --c-err: var(--red); --c-key: var(--orange);
   --tt-ok: var(--green); --tt-warn: var(--yellow); --tt-unv: var(--orange); --tt-info: var(--aqua);
   --tt-plan: var(--blue); --tt-dim: var(--purple); --tt-bad: var(--red); --tag-w: 1px;
+  --c-num: var(--purple); --c-opt: var(--blue); --c-env: var(--yellow); --c-label: var(--green); --syn-w: normal;
 }
 /* /roles */
 /* palette:light */
@@ -158,6 +161,7 @@
   --c-code: var(--fg1); --c-id: var(--fg1); --c-err: var(--fg1); --c-key: var(--fg1);
   --tt-ok: var(--fg1); --tt-warn: var(--fg1); --tt-unv: var(--fg1); --tt-info: var(--fg1);
   --tt-plan: var(--fg1); --tt-dim: var(--fg1); --tt-bad: var(--fg1); --tag-w: 2px;
+  --c-num: var(--blue); --c-opt: var(--fg1); --c-env: var(--fg1); --c-label: var(--fg1); --syn-w: bold;
 }
 /* /roles */
 
@@ -418,7 +422,7 @@ html.tui-on:not(.plain) body { padding-bottom: 16px; }
 .tui .chip.tui-back { display: none; }
 .tui-out { flex: 1; overflow: auto; padding: 0.5em 1ch; min-height: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .tui-out .ln { min-height: 1.5em; }
-.tui-out { scrollbar-color: var(--thumb) var(--panel); }
+.tui-out { scrollbar-color: var(--thumb) var(--panel); scrollbar-gutter: stable; }
 .tui-out .ps { color: var(--c-prompt); font-weight: bold; }
 .tui-out .echo { color: var(--c-cmd); }
 .tui-out .strong { color: var(--strong); font-weight: bold; }
@@ -427,6 +431,33 @@ html.tui-on:not(.plain) body { padding-bottom: 16px; }
 .tui-out .id { color: var(--c-id); border-bottom: 1px dotted var(--aqua); }
 .tui-out .err { color: var(--c-err); font-weight: bold; border-left: 3px solid var(--red); padding-left: 1ch; }
 .tui-out .code, .tui-out .flag { background: var(--panel); color: var(--c-code); padding: 0 0.5ch; border-bottom: 2px solid var(--purple); }
+
+/* Each answer is a numbered file: a header with its name, a gutter of line numbers with a rule beside it, and a frame above and
+   below that runs the width of the pane. The numbers are drawn from data-n, so they are never selected, copied or read. A line
+   that wraps stays in its one grid row, so its further rows have an empty gutter. */
+.tui-out .file { --gw: 4ch; --gp: 1ch; margin: 0.25em -1ch 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.tui-out .file.gw2 { --gw: 5ch; }
+.tui-out .file.gw3 { --gw: 6ch; }
+.tui-out .file.gw4 { --gw: 7ch; }
+.tui-out :is(.file-head, .fl) { display: grid; grid-template-columns: var(--gw) minmax(0, 1fr); }
+.tui-out .file-head { border-bottom: 1px solid var(--line); user-select: none; -webkit-user-select: none; }
+.tui-out .fl { min-height: 1.5em; }
+.tui-out .gut { border-right: 1px solid var(--line); padding-right: var(--gp); text-align: right; color: var(--muted); user-select: none; -webkit-user-select: none; }
+.tui-out .gut::before { content: attr(data-n); }
+.tui-out .tx { min-width: 0; padding-left: var(--gp); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tui-out .file-label { color: var(--muted); }
+.tui-out .file-name { color: var(--strong); font-weight: bold; }
+.tui-out .num { color: var(--c-num); }
+.tui-out .opt { color: var(--c-opt); font-weight: var(--syn-w); }
+.tui-out .env { color: var(--c-env); font-weight: var(--syn-w); }
+.tui-out .label { color: var(--c-label); font-weight: bold; }
+
+/* The pager (a trial): a status line in reverse colours under the output, then chips for its keys. */
+.tui-pager { border-top: 1px solid var(--line); }
+.tui-pager .pg-status { display: flex; flex-wrap: wrap; gap: 0 2ch; margin: 0; padding: 0 1ch; background: var(--strong); color: var(--page); }
+.tui-pager .pg-label { font-weight: bold; }
+.tui ul.tui-pgchips { display: flex; flex-wrap: wrap; gap: 4px 1ch; padding: 4px 1ch; }
+.tui .tui-pgchips .chip { min-height: 1.75em; padding: 0 1ch; }
 
 .tui-cmd { position: relative; border-top: 1px solid var(--line); padding: 0.25em 1ch; }
 .tui-hint { margin: 0; color: var(--muted); }
@@ -497,5 +528,11 @@ html.tui-on:not(.plain) body { padding-bottom: 16px; }
   .tui ul.tui-chips { display: flex; }
   .tui-keys, .tui ul.tui-fkeys { display: none; }
   .tui-out { overflow: visible; }
+  .tui-out .file { --gw: 2.5ch; --gp: 0.5ch; }
+  .tui-out .file.gw2 { --gw: 3.5ch; }
+  .tui-out .file.gw3 { --gw: 4.5ch; }
+  .tui-out .file.gw4 { --gw: 5.5ch; }
+  .tui .tui-pgchips .chip { min-height: 44px; min-width: 44px; justify-content: center; padding: 0 1.5ch; }
+  .tui-pager .pg-keys { display: none; }
   nav.bar ul { gap: 0 1.5ch; }
 }
