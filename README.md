@@ -177,9 +177,27 @@ their own requirements.
 
 ## Install
 
+**Recommended:** download an official [release archive or AppImage](#release-archives) from the
+[releases page](https://github.com/undecuple/re-psn/releases) and verify it against `SHA256SUMS`.
+
 Releases are pre-releases for now: the newest, [v0.3.0](https://github.com/undecuple/re-psn/releases/tag/v0.3.0), is on the [releases page](https://github.com/undecuple/re-psn/releases) (see [Release archives](#release-archives)). Its container image is `ghcr.io/undecuple/re-psn:0.3.0` (see [Container](#container)).
 
-Optional install scripts for Linux and Windows download a release and check it against `SHA256SUMS`; from the next release they are release assets with their own line in `SHA256SUMS`: see [docs/installing.md](docs/installing.md).
+### Optional quick install (Linux)
+
+The installer downloads the packaged release and checks it against `SHA256SUMS`. Download this pinned script, verify
+its hash and read it before running it. Each `&&` stops the sequence if the previous command fails:
+
+```sh
+curl -fsSL --proto '=https' --proto-redir '=https' --tlsv1.2 \
+  -o install.sh https://raw.githubusercontent.com/undecuple/re-psn/dc0238c2407570837ab4e14b803fb260ff77742e/scripts/install.sh &&
+printf '%s  install.sh\n' 'fef1f7f9a424275e45cbca80398477b4440c82b87c106ce6aa7626f3bbce1772' | sha256sum -c - &&
+less install.sh &&
+sh install.sh --version v0.3.0
+```
+
+This installs into `~/.local/bin` for the current user. The script comes from the pinned repository revision because
+v0.3.0 has no installer assets; future releases will include the scripts and their checksums. See
+[docs/installing.md](docs/installing.md) for options and the Windows installer.
 
 ### From source
 
