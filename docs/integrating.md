@@ -183,7 +183,8 @@ heartbeat timer. Poll regularly enough to send the 20-second idle heartbeat befo
 does not bound DNS/connect/send, and does not cancel a request. A late reply can still arrive; a timed-out room creation
 may already have happened. Do not blindly retry side-effecting operations. `psnr_connect_error` is process-global last
 HELLO diagnostic state and can retain a prior error on an earlier-stage failure; it is not a definitive cause for
-every NULL return. Plan and test cancellation/shutdown behavior rather than assuming a timeout interrupts all I/O.
+every NULL return. Serialize connect attempts and reads of this shared diagnostic across clients. Plan and test
+cancellation/shutdown behavior rather than assuming a timeout interrupts all I/O.
 
 On Windows, preserve SOCKET width for returned stream handles and close them with `closesocket`. Coordinate Winsock
 lifetime with the host runtime: this C-client snapshot calls `WSAStartup` on connect and does not balance it with
@@ -210,8 +211,14 @@ discovers the wrong mapping. Announce the bound peer port in HELLO, send periodi
 and consume `psnr_is_control` / `psnr_probe_reply` traffic before delivering gameplay bytes. The helpers format/read
 packets; your transport must schedule I/O, track peer routes and distinguish control from game data.
 
+On receive, recognize and validate relay datagrams from the expected server endpoint before applying a generic
+control-packet discard. Unwrap their sender/payload, consume probe replies and punch/control traffic, then deliver
+only gameplay bytes with the correct peer identity. Blindly discarding every `psnr_is_control` match first would
+discard relay datagrams too; the unwrapping helper alone does not authenticate the network sender.
+
 The current C helpers assume IPv4 and derive the probe target from the connected server endpoint. Keep the server's
-game TCP/UDP ports aligned for that path. Each local instance needs its own name and peer port; duplicate names on one
+game TCP/UDP address and port aligned as seen by the client for that path. A separate UDP endpoint needs explicit
+adapter support. Each local instance needs its own name and peer port; duplicate names on one
 source address replace the older connection. The server's UDP source check requires the same source IP as TCP unless
 the operator explicitly enables its exception. See [connecting.md](connecting.md) and [running.md](running.md).
 
