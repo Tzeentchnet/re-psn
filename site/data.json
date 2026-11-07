@@ -4,11 +4,11 @@
  "repository": "https://github.com/undecuple/re-psn",
  "go": "1.22",
  "status_counts": {
-  "available": 27,
+  "available": 28,
   "unverified": 2,
   "partial": 6,
   "in-progress": 0,
-  "planned": 14,
+  "planned": 13,
   "later": 8,
   "declined": 1
  },
@@ -305,13 +305,13 @@
    "id": "ha-restart",
    "area": "High availability",
    "feature": "Health check and clean restarts",
-   "detail": "A `/healthz` endpoint on the status listener (200 when the server accepts connections, no player data), a graceful shutdown that closes connections so players reconnect at once, and a page on restart settings and what players see.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "A data-free `/healthz` endpoint on the opt-in status listener, guarded by the existing HTTP token, and bounded shutdown that closes listeners and accepted client/relay sockets. A guide covers probe results, supervisors and what players lose on restart.",
+   "status": "available",
+   "since": "main",
+   "evidence": "server/lifecycle.go, server/lifecycle_test.go, server/api.go, server/main.go, docs/restarts.md",
+   "note": "Health is 200 only while both game serving loops are active, 503 during startup/shutdown or after a loop exits. Loopback and subprocess tests cover shutdown; systemd/container restarts and remote failover are not run. Rooms and scores remain in memory and are lost on restart. No database retry is needed until a network backend exists.",
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "ha-failover",
@@ -727,6 +727,7 @@
    "deploy-container",
    "settings-env",
    "store-interface",
+   "ha-restart",
    "net-punch",
    "net-relay",
    "net-udp-guard",
@@ -754,7 +755,6 @@
    "players-friends",
    "store-sqlite",
    "store-backup",
-   "ha-restart",
    "ha-failover",
    "net-guardrails",
    "net-checks",
@@ -907,6 +907,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
      "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
      "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",
      "An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static workflow/Dependabot input paths.",
@@ -919,7 +920,7 @@
     ]
    },
    "counts": {
-    "Added": 6,
+    "Added": 7,
     "Changed": 1
    }
   },

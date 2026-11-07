@@ -42,6 +42,7 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 
 [Reverse proxy](docs/features.md#reverse-proxy), [deployment](docs/features.md#deployment) and [settings](docs/features.md#settings)
 - [proxy-support] PROXY protocol v1 and v2 and trusted proxies, so the real client address counts.
+- [ha-restart] A data-free health endpoint and bounded shutdown of client/relay sockets, with restart documentation; on main, not released. Rooms and scores remain in memory.
 - [deploy-examples] A settings file, a systemd unit and a Traefik example, shipped in the release archives.
 - [deploy-nginx-haproxy] nginx and HAProxy examples, not yet run against the server.
 - [deploy-caddy] A stock Caddy 2 status-page example on main, not released or run/validated with Caddy; game TCP and UDP stay direct.
@@ -93,7 +94,6 @@ In about this order.
 - [store-backup] Backup and restore steps for each database.
 
 ### Running a server
-- [ha-restart] A health endpoint, a graceful shutdown, and docs on restarts and what players see.
 - [ha-failover] Docs and examples for a standby server that takes over the address.
 - [net-guardrails] UDP rate limits, relay budgets and counters of dropped packets.
 - [ci-more] More CI checks, such as the C client outside Linux.

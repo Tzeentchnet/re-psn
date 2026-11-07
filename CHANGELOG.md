@@ -7,6 +7,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `/healthz` on the opt-in status listener, protected by the existing HTTP token. It reports game TCP/UDP readiness
+  without player data. Shutdown marks the server unready and closes accepted client/relay sockets with bounded cleanup;
+  restart behavior and supervisor settings are documented in `docs/restarts.md`.
 - A stock Caddy 2 example for the HTTP status page, included with the deployment examples. It defaults to loopback;
   game TCP and UDP stay direct. The example has not been run or validated with Caddy.
 - The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace

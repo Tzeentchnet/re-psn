@@ -34,7 +34,7 @@
 <h2>Overview</h2>
 <p>re-psn answers the matchmaking and leaderboard calls of a statically recompiled PS3 game, for a group running its own server: a LAN, a VPN, or friends connecting to one person&#x27;s machine. The server keeps rooms and leaderboards and tells each player where the others are. Game traffic goes directly between players, and through the server only when two players cannot reach each other and the host has turned the relay on.</p>
 <p>It is a fork of <a href="https://github.com/sp00nznet/psnr">psnr</a> by sp00nz: a Go server and a one-file C client, with no accounts and no public instance.</p>
-<p class="status-line">Version 0.3.0 (pre-release). 58 features: 27 available, 2 not yet verified, 6 partial, 14 planned, 8 later, 1 declined.</p>
+<p class="status-line">Version 0.3.0 (pre-release). 58 features: 28 available, 2 not yet verified, 6 partial, 13 planned, 8 later, 1 declined.</p>
 <p class="notice">Unofficial; not affiliated with Sony. No game files, keys or firmware are in the repository or needed from it. Play only games you own.</p>
 </section>
 <section id="features">
@@ -134,7 +134,7 @@
 <table class="stack feat">
 <thead><tr><th>Feature</th><th>Status</th><th>Since</th></tr></thead>
 <tbody>
-<tr id="f-ha-restart"><td data-label="Feature"><strong>Health check and clean restarts</strong> <code>ha-restart</code><br>A <code>/healthz</code> endpoint on the status listener (200 when the server accepts connections, no player data), a graceful shutdown that closes connections so players reconnect at once, and a page on restart settings and what players see.<br><span class="note">Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
+<tr id="f-ha-restart"><td data-label="Feature"><strong>Health check and clean restarts</strong> <code>ha-restart</code><br>A data-free <code>/healthz</code> endpoint on the opt-in status listener, guarded by the existing HTTP token, and bounded shutdown that closes listeners and accepted client/relay sockets. A guide covers probe results, supervisors and what players lose on restart.<br><span class="note">Health is 200 only while both game serving loops are active, 503 during startup/shutdown or after a loop exits. Loopback and subprocess tests cover shutdown; systemd/container restarts and remote failover are not run. Rooms and scores remain in memory and are lost on restart. No database retry is needed until a network backend exists.</span></td><td data-label="Status"><span class="tag ok">available</span></td><td data-label="Since">main</td></tr>
 <tr id="f-ha-failover"><td data-label="Feature"><strong>Active/passive failover</strong> <code>ha-failover</code><br>Docs and example files for a standby server: a floating address (keepalived) or a proxy&#x27;s health checks, both servers on the same database, one active at a time. No election or replication inside the server.<br><span class="note">Not started. After ha-restart; the shared database needs store-postgres or store-mariadb. Live rooms are lost on failover.</span></td><td data-label="Status"><span class="tag plan">planned</span></td><td data-label="Since">not released</td></tr>
 <tr id="f-ha-multi"><td data-label="Feature"><strong>Several servers</strong> <code>ha-multi</code><br>Several servers behind one address, each room wholly on one server, with a routing layer that sends a new room or a join to the right one.<br><span class="note">On the back burner: revisited after ha-restart and ha-failover exist and one server is not enough.</span></td><td data-label="Status"><span class="tag dim">later</span></td><td data-label="Since">not released</td></tr>
 <tr id="f-ha-handover"><td data-label="Feature"><strong>Live room handover</strong> <code>ha-handover</code><br>Rooms that survive the loss of a server.<br><span class="note">Needs replicated live state; out of scope for a server of this size.</span></td><td data-label="Status"><span class="tag bad">declined</span></td><td data-label="Since">not released</td></tr>
@@ -205,7 +205,7 @@
 <h2>Roadmap</h2>
 <p>The same list grouped by status. No dates are promised; <a href="https://github.com/undecuple/re-psn/blob/main/ROADMAP.md">ROADMAP.md</a> has the order and the scope.</p>
 <div class="cols">
-<div><h3>Done <span class="count">(35)</span></h3>
+<div><h3>Done <span class="count">(36)</span></h3>
 <ul>
 <li><a href="#f-rooms-basic">Rooms and search</a></li>
 <li><a href="#f-rooms-data">Room and member data</a></li>
@@ -222,6 +222,7 @@
 <li><a href="#f-deploy-container">Docker and Podman</a></li>
 <li><a href="#f-settings-env">Flags and RE_PSN_* variables</a></li>
 <li><a href="#f-store-interface">Storage interface</a></li>
+<li><a href="#f-ha-restart">Health check and clean restarts</a></li>
 <li><a href="#f-net-punch">Address discovery and hole punching</a></li>
 <li><a href="#f-net-relay">Relay</a></li>
 <li><a href="#f-net-udp-guard">UDP source address check</a></li>
@@ -243,13 +244,12 @@
 <li><a href="#f-docs-website">Project website</a> <span class="tag warn">partial</span></li>
 <li><a href="#f-repo-check">Repository layout check</a></li>
 </ul></div>
-<div><h3>Next <span class="count">(14)</span></h3>
+<div><h3>Next <span class="count">(13)</span></h3>
 <ul>
 <li><a href="#f-rooms-private">Private rooms</a></li>
 <li><a href="#f-players-friends">Friends, presence and invites</a></li>
 <li><a href="#f-store-sqlite">SQLite storage (opt-in)</a></li>
 <li><a href="#f-store-backup">Backup and restore</a></li>
-<li><a href="#f-ha-restart">Health check and clean restarts</a></li>
 <li><a href="#f-ha-failover">Active/passive failover</a></li>
 <li><a href="#f-net-guardrails">More UDP and relay guardrails</a></li>
 <li><a href="#f-net-checks">Connection checks</a></li>
@@ -282,6 +282,7 @@
 <h3>Unreleased</h3>
 <h4>Added</h4>
 <ul>
+<li><code>/healthz</code> on the opt-in status listener, protected by the existing HTTP token.</li>
 <li>A stock Caddy 2 example for the HTTP status page, included with the deployment examples.</li>
 <li>The opt-in server status page now matches the website and terminal app&#x27;s gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...</li>
 <li>An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static workflow/Dependabot input paths.</li>
