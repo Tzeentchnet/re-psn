@@ -26,7 +26,7 @@ It is **not** a public PSN replacement, and won't grow into one:
 Merged into main and released in v0.2.0, unless a line says otherwise.
 
 [Rooms and matchmaking](docs/features.md#rooms-and-matchmaking)
-- [rooms-basic] Create, search, join and leave rooms, with room messages and owner handoff.
+- [rooms-basic] Create, search, join and leave rooms, with room messages, owner kicks and owner handoff.
 - [rooms-data] Room and member data, and room flags that searchers see.
 - [rooms-codes] Invite-only rooms with an 8-character code, hidden from search and the status page.
 
