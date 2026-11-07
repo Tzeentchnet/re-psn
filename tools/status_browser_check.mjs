@@ -4,6 +4,7 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {connect} from './site_browser_cdp.mjs';
 import theme from '../server/status.js';
+import framing from './art/status-frame.js';
 
 const [port, url, directory] = process.argv.slice(2);
 if (new URL(url).hostname !== '127.0.0.1') throw new Error('An owned loopback fixture is required');
@@ -48,6 +49,19 @@ try {
   ok(await fits(), 'desktop fits');
   await contrast();
   await screenshot('desktop-dark.png');
+  const readmeFrame = await framing.prepareStatusScreenshot({evaluate, viewport});
+  ok(readmeFrame.width === 1000, 'README capture matches the original width');
+  ok(await evaluate("!document.querySelector('#rooms-panel').hidden && !document.querySelector('#boards-panel').hidden"), 'Overview shows both real status tables');
+  ok(await evaluate("document.querySelector('#rooms-body').textContent.includes('alice') && document.querySelector('#boards-body').textContent.includes('alice') && document.querySelector('#boards-body').textContent.includes('100')"), 'README capture includes the room and leading score');
+  await screenshot('readme-status.png');
+  await writeFile(resolve(directory, 'readme-frame.json'), JSON.stringify(readmeFrame, null, 2)+'\n');
+  await evaluate("document.querySelector('#overview-tab').focus()");
+  await c.key('ArrowLeft');
+  ok(await evaluate("document.activeElement.id === 'boards-tab' && !document.querySelector('#boards-view').hidden"), 'tab keys wrap from Overview to Leaderboards');
+  await c.key('Home');
+  ok(await evaluate("document.activeElement.id === 'overview-tab' && !document.querySelector('#overview-view').hidden"), 'Home selects Overview');
+  await click('#rooms-tab');
+  await viewport(1200, 800);
   await click('#boards-tab');
   ok(await evaluate("!document.querySelector('#boards-panel').hidden && document.querySelector('#rooms-panel').hidden"), 'leaderboards tab switches panel');
   await evaluate("document.querySelector('#boards-tab').focus()");

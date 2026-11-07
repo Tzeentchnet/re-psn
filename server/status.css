@@ -105,7 +105,7 @@ h1 .muted { font-weight: normal; }
 .label { color: var(--muted); display: block; font-size: .8rem; }
 .summary strong { display: block; font-size: 1.5rem; color: var(--good); font-weight: normal; }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--frame); }
-[role="tablist"] { display: flex; gap: .4rem; }
+[role="tablist"] { display: flex; flex-wrap: wrap; gap: .4rem; }
 [role="tab"] span { color: var(--muted); font-weight: normal; }
 main { min-height: 16rem; }
 section + section { border-top: 1px solid var(--frame); }

@@ -60,7 +60,8 @@ docker compose -f docker/docker-compose.yml up -d
 
 With `-http 127.0.0.1:36101`, open `http://127.0.0.1:36101/`. The read-only status page uses the same
 gruvbox-material palette and monospace framing as the project website and terminal app. Rooms and Leaderboards
-are tabs; use the arrow keys while a tab is focused, or click one. Invite-only rooms remain counted without names.
+are tabs; Overview shows both tables together. Use the arrow keys while a tab is focused, or click one.
+Invite-only rooms remain counted without names.
 `/api/stats` keeps its existing JSON fields and token rules.
 
 The header offers System, Light and Dark; System follows the browser and responds to changes while the page is open.

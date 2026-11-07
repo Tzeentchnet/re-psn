@@ -28,8 +28,9 @@
   </div>
   <div id="toolbar" class="toolbar" hidden>
     <div role="tablist" aria-label="Status view">
-      <button id="rooms-tab" role="tab" aria-selected="true" aria-controls="rooms-panel" tabindex="0">Rooms <span id="rooms-count">{{len .Rooms}}</span></button>
-      <button id="boards-tab" role="tab" aria-selected="false" aria-controls="boards-panel" tabindex="-1">Leaderboards <span id="boards-count">{{len .Boards}}</span></button>
+      <button id="overview-tab" role="tab" aria-selected="false" aria-controls="overview-view" tabindex="-1">Overview</button>
+      <button id="rooms-tab" role="tab" aria-selected="true" aria-controls="rooms-view" tabindex="0">Rooms <span id="rooms-count">{{len .Rooms}}</span></button>
+      <button id="boards-tab" role="tab" aria-selected="false" aria-controls="boards-view" tabindex="-1">Leaderboards <span id="boards-count">{{len .Boards}}</span></button>
     </div>
     <div class="refresh-controls">
       <button id="refresh" type="button">Refresh now</button>
@@ -37,6 +38,7 @@
     </div>
   </div>
   <main id="main">
+    <div id="overview-view" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
     <section id="rooms-panel" aria-labelledby="rooms-heading" tabindex="0">
       <div class="file-head"><h2 id="rooms-heading"><span aria-hidden="true">// </span>Rooms</h2><span>public rooms</span></div>
       <div class="table-scroll" role="region" aria-label="Rooms table" tabindex="0">
@@ -55,6 +57,9 @@
         </table>
       </div>
     </section>
+    </div>
+    <div id="rooms-view" role="tabpanel" aria-labelledby="rooms-tab" tabindex="0" hidden></div>
+    <div id="boards-view" role="tabpanel" aria-labelledby="boards-tab" tabindex="0" hidden></div>
   </main>
   <details id="appearance" hidden>
     <summary>Appearance <span class="muted">/ gruvbox-material · local to this browser</span></summary>

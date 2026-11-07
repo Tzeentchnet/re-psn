@@ -107,7 +107,8 @@
     apply(); message('Appearance reset to gruvbox-material.'); save();
   });
 
-  const tabs = [byID('rooms-tab'), byID('boards-tab')];
+  const tabs = [byID('overview-tab'), byID('rooms-tab'), byID('boards-tab')];
+  const sections = [byID('rooms-panel'), byID('boards-panel')];
   function selectTab(tab) {
     for (const item of tabs) {
       const selected = item === tab;
@@ -115,8 +116,12 @@
       item.tabIndex = selected ? 0 : -1;
       const panel = byID(item.getAttribute('aria-controls'));
       panel.hidden = !selected;
-      panel.setAttribute('role', 'tabpanel');
-      panel.setAttribute('aria-labelledby', item.id);
+    }
+    const overview = tab.id === 'overview-tab';
+    for (const section of sections) {
+      const selected = overview || section.id === (tab.id === 'rooms-tab' ? 'rooms-panel' : 'boards-panel');
+      section.hidden = !selected;
+      byID(selected ? tab.getAttribute('aria-controls') : 'overview-view').append(section);
     }
   }
   tabs.forEach((tab, index) => {
@@ -124,7 +129,8 @@
     tab.addEventListener('keydown', event => {
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || event.altKey || event.ctrlKey || event.metaKey) return;
       event.preventDefault();
-      const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[1] : tabs[1 - index];
+      const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[tabs.length - 1]
+        : tabs[(index + (event.key === 'ArrowLeft' ? tabs.length - 1 : 1)) % tabs.length];
       selectTab(next); next.focus();
     });
   });
@@ -180,7 +186,7 @@
     if (!state.hasAttribute('data-error')) state.textContent = paused ? 'Automatic refresh paused · snapshot retained' : 'Automatic refresh · every 5 seconds';
     if (!paused) refresh();
   });
-  apply(); selectTab(tabs[0]);
+  apply(); selectTab(byID('rooms-tab'));
   for (const id of ['theme-controls', 'toolbar', 'appearance']) byID(id).hidden = false;
   byID('fallback-refresh').remove();
   setInterval(() => { if (!paused && !document.hidden) refresh(); }, 5000);

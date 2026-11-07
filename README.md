@@ -143,14 +143,15 @@ $ curl -s http://127.0.0.1:36101/api/stats
 
 </details>
 
-With `-http 127.0.0.1:36101`, http://127.0.0.1:36101/ shows a terminal-style status page with Rooms and Leaderboards tabs.
-Below, alice is hosting a room; her score is in the Leaderboards tab. The screenshot comes from a real loopback server
+With `-http 127.0.0.1:36101`, http://127.0.0.1:36101/ shows a terminal-style status page. Overview shows both tables;
+Rooms and Leaderboards open either table separately. Below, alice is hosting a room and leads the leaderboard with 100.
+The screenshot uses the old image's 1000 px width, with enough height to show both tables, and comes from a real loopback server
 and protocol clients ([tools/art/capture-status.sh](tools/art/capture-status.sh) can capture another).
 System/Light/Dark, text size, spacing and custom colours are [browser-local appearance settings](docs/running.md#status-page-appearance).
 Routers and the relay are tested in Docker by the
 [NAT lab](lab/README.md).
 
-![Terminal-style status page in dark mode: alice's room and a tab for one leaderboard](docs/status.png)
+![Terminal-style server status in dark mode: alice's room and her leaderboard score of 100, shown together in Overview](docs/status.png)
 
 ## Features
 

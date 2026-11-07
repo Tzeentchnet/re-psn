@@ -907,7 +907,7 @@
    "date": "",
    "sections": {
     "Added": [
-     "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked custom ...",
+     "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
     ],
