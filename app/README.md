@@ -10,6 +10,7 @@ The app has a terminal UI built on [Bubble Tea](https://github.com/charmbracelet
 - [What is here](#what-is-here)
 - [Build and test](#build-and-test)
 - [The terminal UI](#the-terminal-ui)
+- [Starting from the desktop](#starting-from-the-desktop)
 - [The check command](#the-check-command)
 - [Settings file](#settings-file)
 - [Dependencies](#dependencies)
@@ -48,8 +49,8 @@ re-psn-app            # start the terminal UI
 re-psn-app --no-tui   # do not: print a note and exit 2
 ```
 
-The UI needs a terminal on stdin and stdout. Without one (for example when a file manager starts the program by a double-click)
-it prints one line to stderr saying so and exits 2; it does not open a terminal window by itself yet.
+The UI needs a terminal on stdin and stdout. On a Linux desktop it can open an installed terminal when started without
+one, for example by a file manager. See [Starting from the desktop](#starting-from-the-desktop).
 
 **First start.** With no settings file yet, the app asks what it is for on this machine: **Play** (join servers), **Host** (run a
 server; the Host screen comes later, Status works now) or **Both**. Then the online ID (not for Host) and the server as
@@ -96,6 +97,30 @@ shown as text on the screen, with the error, and the app keeps running. The HTTP
 **Theme.** Dark by default, light with `t`; the colours are the gruvbox-material values the website uses
 ([docs/art/palette.json](../docs/art/palette.json)). In light mode the accents that are too faint as text are replaced by the
 strong text colour in bold. No state is shown by colour alone. With `NO_COLOR` set the UI uses no colour, only bold and reverse.
+
+## Starting from the desktop
+
+The same Go terminal app builds for Windows and Linux. Windows uses the normal console-subsystem executable: it can
+open a console when double-clicked, following the Windows console configuration. A physical Windows terminal has not
+been tested locally; CI tests and cross-builds provide separate evidence.
+
+On Linux, a start with no terminal and with `DISPLAY` or `WAYLAND_DISPLAY` set opens a supported terminal. It tries
+`TERMINAL` first, then `x-terminal-emulator`, `kitty` and `xterm`. `TERMINAL` is one executable name or path, including a
+path containing spaces; command strings, shell expansion and extra options are not parsed. A custom terminal must
+support the xterm-style `-e PROGRAM ARG...` convention. Kitty is invoked with its own command syntax and no startup session.
+
+Arguments and the environment are passed directly to the terminal. An internal recursion guard stops a second relaunch
+if that terminal fails to provide a TTY. The app waits for the selected terminal and does not launch another after a
+runtime error. Without a display or supported terminal, or on an error, it prints one line and exits 2. Starting
+`check`, `version`, `--help` or `--no-tui` never opens a terminal. No server or browser is started by this behavior.
+
+The repository provides a Linux desktop entry at `share/applications/re-psn.desktop` with `Terminal=true`, plus
+`share/icons/hicolor/scalable/apps/re-psn.svg`, copied from the site's favicon artwork. These are installation inputs;
+they do not install the executable, register a desktop entry automatically or add release assets. Install the app on
+the graphical session's PATH before installing the entry, and install the SVG under the matching icon name `re-psn`.
+
+Tests exercise selection, literal arguments, failure/recursion paths and a synthetic terminal/child process. These are
+not a physical desktop, Steam Deck game-mode or emulator compatibility run. macOS still requires an existing terminal.
 
 ## The check command
 

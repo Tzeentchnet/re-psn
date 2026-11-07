@@ -452,8 +452,8 @@
    "detail": "`re-psn-app` with no arguments: a first-run choice of Play, Host or Both with the online ID and the server, a menu and content pane (one at a time under 70 columns), a Status screen with Rooms and Leaderboards tabs filled over the game protocol only, a Settings screen that saves `re-psn.ini`, and a dark or light theme in the website colours. Built on Bubble Tea and Lip Gloss.",
    "status": "partial",
    "since": "main",
-   "evidence": "app/internal/tui, TestFirstRunChooser, TestStatusTabs, TestConnectionErrorsAreText, TestNarrowLayout, TestThemeToggle, TestSettings",
-   "note": "Partial: no Host screen, room joining, launch profiles or theme presets yet, and it does not open a terminal window when started without one. The server version, uptime, connection counts, room age and the list of boards are not available over the protocol. Driven in tmux on Linux; not tried on Windows or macOS terminals.",
+   "evidence": "app/internal/tui, TestFirstRunChooser, TestStatusTabs, TestConnectionErrorsAreText, TestNarrowLayout, TestThemeToggle, TestSettings, app/internal/desktop, TestLaunchSyntheticTerminalProcess",
+   "note": "Partial: no Host screen, room joining, launch profiles or theme presets yet. Linux desktop starts without a TTY can open a supported terminal; Windows uses its console. Synthetic startup tests ran; physical desktops/emulators remain unverified. The server version, uptime, connection counts, room age and the list of boards are not available over the protocol. Driven in tmux on Linux; not tried on Windows or macOS terminals.",
    "status_label": "partial",
    "status_class": "warn"
   },
@@ -913,6 +913,7 @@
    "date": "",
    "sections": {
     "Added": [
+     "Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal arguments and a recursion guard.",
      "Bounded per-source-IP UDP admission with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.",
      "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
      "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
@@ -927,7 +928,7 @@
     ]
    },
    "counts": {
-    "Added": 8,
+    "Added": 9,
     "Changed": 1
    }
   },
