@@ -13,7 +13,7 @@ the game's peer traffic, synchronization or proprietary backend works.
 | Another recomp runtime or a custom online adapter | Vendor the C client, map your runtime's asynchronous operations and implement peer transport around it. |
 | A tool inspecting a running server | Use the optional [HTTP status API](api.md#http); it is separate from the game protocol. |
 
-This guide was checked against re-psn main `3b1eabbac902fe5238ab64bf3e2ae1b86a385ee6` and ps3recomp
+This guide was checked against re-psn main `15bb542fd5a27d539781691d5bc9dca16244314b` and ps3recomp
 [`de4f090328ea08bef6b2f15caec0b85e343a7ece`](https://github.com/sp00nznet/ps3recomp/tree/de4f090328ea08bef6b2f15caec0b85e343a7ece)
 on 2026-11-07. The C example is compiled and run by this repository's required native-client check. Runtime observations
 below are source inspection at that pin, not an executed game-compatibility claim. Record your exact server, client,
@@ -221,6 +221,12 @@ game TCP/UDP address and port aligned as seen by the client for that path. A sep
 adapter support. Each local instance needs its own name and peer port; duplicate names on one
 source address replace the older connection. The server's UDP source check requires the same source IP as TCP unless
 the operator explicitly enables its exception. See [connecting.md](connecting.md) and [running.md](running.md).
+
+Server-bound probes and relay datagrams share the host's per-source-IP UDP allowance: by default 1000 packets/second
+with the same-size burst. Players behind one NAT share that allowance across source ports; direct peer-to-peer packets
+do not traverse this server limiter. Avoid busy probe loops and test the configured budget with your actual relay
+traffic. A zero setting disables the limiter; this is not source authentication or a byte budget. See
+[UDP guardrails](udp-guardrails.md) for configuration, drop counters and capacity limits.
 
 With server `-relay`, handle relay capability, ROUTE/STREAM_OFFER pushes and datagram wrapping/unwrapping or separate
 stream sockets. Fallback is transport policy, not an automatic property of calling `psnr_connect`. The inspected

@@ -19,7 +19,7 @@ type Options struct {
 	Path     string       // the settings file
 	File     *config.File // its contents; an empty File when it does not exist
 	FirstRun bool         // no settings file yet: start with the chooser
-	Fetcher  Fetcher      // nil means Protocol{}
+	Fetcher  Fetcher      // nil means NativeStatus{}
 	Save     func(path string, f *config.File) error
 	Timeout  time.Duration // for one refresh; 0 means 5 s
 	NoColor  bool          // NO_COLOR is set: bold and reverse only
@@ -100,6 +100,8 @@ type Model struct {
 	quitting bool
 }
 
+type initialRefreshMsg struct{}
+
 type fetchedMsg struct {
 	seq  int
 	snap Snapshot
@@ -119,7 +121,7 @@ func New(o Options) Model {
 		o.File = &config.File{}
 	}
 	if o.Fetcher == nil {
-		o.Fetcher = Protocol{}
+		o.Fetcher = NativeStatus{}
 	}
 	if o.Save == nil {
 		o.Save = config.Save
@@ -146,8 +148,8 @@ func New(o Options) Model {
 
 // Init checks the connection at start when a server is already set.
 func (m Model) Init() tea.Cmd {
-	if m.stage == stageHome && m.set.Server != "" {
-		return m.refresh()
+	if m.stage == stageHome && (m.set.Server != "" || m.set.StatusURL != "") {
+		return func() tea.Msg { return initialRefreshMsg{} }
 	}
 	return nil
 }
@@ -155,6 +157,8 @@ func (m Model) Init() tea.Cmd {
 // Update handles one message.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case initialRefreshMsg:
+		return m, m.refresh()
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
 	case fetchedMsg:
@@ -408,13 +412,24 @@ func (m Model) editKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		s.Server = v
 		if err = s.Validate(); err == nil {
 			m.set = s
-			m.snap, m.fetchErr = nil, nil
+			m.snap, m.fetchErr, m.loading = nil, nil, false
+			m.seq++
 		}
 	case editStatusURL:
 		s := m.set
 		s.StatusURL = v
-		if err = s.Validate(); err == nil {
+		if v != "" {
+			if _, err = statusEndpoint(v); err != nil {
+				err = errors.New("[server] status_url: use HTTP or HTTPS without credentials, query or fragment")
+			}
+		}
+		if err == nil {
+			err = s.Validate()
+		}
+		if err == nil {
 			m.set = s
+			m.snap, m.fetchErr, m.loading = nil, nil, false
+			m.seq++
 		}
 	}
 	if err != nil {
@@ -492,12 +507,12 @@ func (m Model) settingsKey(key string) (tea.Model, tea.Cmd) {
 func (m *Model) refresh() tea.Cmd {
 	m.seq++
 	m.snap, m.fetchErr = nil, nil
-	if m.set.Server == "" {
+	if m.set.Server == "" && m.set.StatusURL == "" {
 		m.loading = false
 		m.fetchErr = errors.New("no server set: add one in Settings")
 		return nil
 	}
-	q := Query{Server: m.set.Server, Title: m.title}
+	q := Query{Server: m.set.Server, Title: m.title, StatusURL: m.set.StatusURL, StatusTokenFile: m.set.StatusTokenFile}
 	if m.board != "" {
 		n, _ := strconv.ParseUint(m.board, 10, 32)
 		q.Board, q.Boards = uint32(n), true

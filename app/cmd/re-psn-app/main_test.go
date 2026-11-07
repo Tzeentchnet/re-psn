@@ -2,13 +2,22 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net"
 	"strings"
 	"testing"
 )
 
+func restoreStartupHooks(t *testing.T) {
+	t.Helper()
+	tty, tui, desktop := isTerminal, startTUI, launchDesktop
+	t.Cleanup(func() { isTerminal, startTUI, launchDesktop = tty, tui, desktop })
+	launchDesktop = func() error { return errors.New("run in a terminal") }
+}
+
 func TestRun(t *testing.T) {
+	restoreStartupHooks(t)
 	isTerminal = func() bool { return false }
 	startTUI = func(io.Writer) int { t.Error("the UI started with no terminal"); return 0 }
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -39,6 +48,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestRunStartsTheUIOnlyInATerminal(t *testing.T) {
+	restoreStartupHooks(t)
 	started := 0
 	startTUI = func(io.Writer) int { started++; return 0 }
 	for _, tty := range []bool{false, true} {
@@ -54,5 +64,36 @@ func TestRunStartsTheUIOnlyInATerminal(t *testing.T) {
 		if strings.Count(errOut.String(), "\n") > 1 {
 			t.Errorf("want a one-line note, got %q", errOut.String())
 		}
+	}
+}
+
+func TestRunDesktopStartup(t *testing.T) {
+	restoreStartupHooks(t)
+	isTerminal = func() bool { return false }
+	startTUI = func(io.Writer) int { t.Fatal("started TUI without a terminal"); return 0 }
+	for _, args := range [][]string{nil, {"--"}} {
+		for _, failed := range []bool{false, true} {
+			calls := 0
+			launchDesktop = func() error {
+				calls++
+				if failed {
+					return errors.New("synthetic failure")
+				}
+				return nil
+			}
+			var out, errOut bytes.Buffer
+			code := run(args, &out, &errOut)
+			want := 0
+			if failed {
+				want = 2
+			}
+			if code != want || calls != 1 || out.Len() != 0 || strings.Count(errOut.String(), "\n") != map[bool]int{false: 0, true: 1}[failed] {
+				t.Fatalf("desktop run(%q) = %d, calls %d, output %q/%q", args, code, calls, out.String(), errOut.String())
+			}
+		}
+	}
+	launchDesktop = func() error { t.Fatal("noninteractive command opened a terminal"); return nil }
+	for _, args := range [][]string{{"version"}, {"--help"}, {"--no-tui"}, {"unknown"}, {"check"}} {
+		run(args, io.Discard, io.Discard)
 	}
 }

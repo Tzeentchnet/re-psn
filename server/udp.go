@@ -19,6 +19,8 @@ package main
 import (
 	"encoding/binary"
 	"net"
+	"net/netip"
+	"time"
 )
 
 const (
@@ -29,6 +31,12 @@ const (
 )
 
 func (s *Server) ServeUDP(pc net.PacketConn) error {
+	return s.serveUDP(pc, time.Now)
+}
+
+// The clock parameter keeps admission tests deterministic while exercising
+// actual loopback sockets; production uses time.Now and its monotonic clock.
+func (s *Server) serveUDP(pc net.PacketConn, now func() time.Time) error {
 	s.lifeMu.Lock()
 	if s.stopping || s.udp != nil {
 		s.lifeMu.Unlock()
@@ -45,21 +53,42 @@ func (s *Server) ServeUDP(pc net.PacketConn) error {
 		s.handlers.Done()
 	}()
 	buf := make([]byte, 65536)
+	limiter := udpLimiter{rate: s.maxUDPRate}
 	for {
 		n, addr, err := pc.ReadFrom(buf)
 		if err != nil {
 			return err
 		}
 		ua, ok := addr.(*net.UDPAddr)
-		if ok && n >= 5 && string(buf[:4]) == udpMagic && buf[4] == udpRelay {
-			s.relayUDP(pc, buf[:n], ua)
+		if !ok {
+			s.udpDrops.malformed.Add(1)
 			continue
 		}
-		if !ok || n < 17 || string(buf[:4]) != udpMagic || buf[4] != udpProbe {
+		source, valid := netip.AddrFromSlice(ua.IP)
+		if !valid {
+			s.udpDrops.malformed.Add(1)
+			continue
+		}
+		rateLimited, capacity := limiter.allow(source, now())
+		if rateLimited {
+			s.udpDrops.rateLimit.Add(1)
+			continue
+		}
+		if capacity {
+			s.udpDrops.sourceCapacity.Add(1)
+			continue
+		}
+		if n < 17 || string(buf[:4]) != udpMagic || (buf[4] != udpRelay && buf[4] != udpProbe) {
+			s.udpDrops.malformed.Add(1)
+			continue
+		}
+		if buf[4] == udpRelay {
+			s.relayUDP(pc, buf[:n], ua)
 			continue
 		}
 		ip := ua.IP.To4()
 		if ip == nil {
+			s.udpDrops.malformed.Add(1)
 			continue
 		}
 		id, token := binary.BigEndian.Uint32(buf[5:]), binary.BigEndian.Uint32(buf[9:])
@@ -80,6 +109,7 @@ func (s *Server) ServeUDP(pc net.PacketConn) error {
 		}
 		s.mu.Unlock()
 		if mismatch {
+			s.udpDrops.sourceMismatch.Add(1)
 			// Not this player's address: a spoofed source, a stolen token, or a network whose UDP leaves from another address (-udp-any-source).
 			if warn {
 				s.log.Warn("UDP probe refused", "client", id, "reason", "source address differs from the TCP connection's", "udp", ip.String(), "tcp", ipString(c.ip), "opt_out", "-udp-any-source")
@@ -87,6 +117,7 @@ func (s *Server) ServeUDP(pc net.PacketConn) error {
 			continue
 		}
 		if !ok {
+			s.udpDrops.unauthorized.Add(1)
 			continue
 		}
 		s.log.Debug("P2P socket seen", "client", id, "addr", ua.String(), "local", ipString(local))
@@ -94,7 +125,9 @@ func (s *Server) ServeUDP(pc net.PacketConn) error {
 		reply := append([]byte(udpMagic), udpProbeReply)
 		reply = append(reply, ip...)
 		reply = binary.BigEndian.AppendUint16(reply, uint16(ua.Port))
-		pc.WriteTo(reply, addr)
+		if n, err := pc.WriteTo(reply, addr); err != nil || n != len(reply) {
+			s.udpDrops.writeError.Add(1)
+		}
 	}
 }
 

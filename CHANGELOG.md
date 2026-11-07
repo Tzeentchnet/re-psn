@@ -10,6 +10,16 @@ All notable changes to this project are documented here. The format follows
 - A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.
   A minimal C HELLO/search example runs in the required native-client check; C API comments now clarify blocking
   writes, diagnostic state and reply-wait timeout limits without changing implementation or the wire protocol.
+- Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and
+  leaderboard summaries, using a local Bearer-token file. Requests and displayed data are bounded, redirects/proxies
+  are disabled and failures fall back to the game protocol. Initial refresh and changed-source sequencing are corrected.
+- Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal
+  arguments and a recursion guard. A desktop entry and the site's favicon artwork are provided as installation inputs;
+  no release assets are added, and the Windows build retains its normal console behavior.
+- Bounded per-source-IP UDP admission with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second,
+  same-size burst; 0 disables it), shared by probes and relay datagrams. Aggregate `udp_drops` counters in the
+  opt-in `/api/stats` identify refusal reasons without per-packet logging or source labels. Relay byte/stream budgets
+  remain planned; the packet format and token checks are unchanged.
 - `/healthz` on the opt-in status listener, protected by the existing HTTP token. It reports game TCP/UDP readiness
   without player data. Shutdown marks the server unready and closes accepted client/relay sockets with bounded cleanup;
   restart behavior and supervisor settings are documented in `docs/restarts.md`.
