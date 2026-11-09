@@ -36,9 +36,7 @@ All notable changes to this project are documented here. The format follows
 - A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance
   tests against temporary loopback servers. Required skips and timeouts fail; `--race` is optional. See `docs/testing.md`.
 - Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours
-  and wrapped continuation rows with an empty gutter. Headers and numbers are excluded from text selection. A pager
-  trial shows long output by page, with a line-range status, keyboard shortcuts and buttons; `pager off` shows all lines.
-  Command typing stays independent of pager shortcuts, and pages remeasure after viewport and theme changes. See
+  and wrapped continuation rows with an empty gutter. Headers and numbers are excluded from text selection. See
   `docs/website.md` for controls and browser-test instructions.
 - Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64;
   written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from a GitHub release, the newest one (pre-releases included)
@@ -48,6 +46,8 @@ All notable changes to this project are documented here. The format follows
   with `scripts/test-install.sh` and `scripts/test-install.ps1` against a fake release. See `docs/installing.md`.
 
 ### Changed
+- The website's pager trial is removed: the `pager` command, its keys, buttons and status bar, and the saved pager
+  setting are gone, and long output is shown in full in the scrolling output pane. Numbered file output is unchanged.
 - The release carries seven assets: the three archives, the AppImage, `SHA256SUMS`, and the two install scripts as
   `install.sh` and `install.ps1`, byte for byte the tagged `scripts/` files, with their checksums in `SHA256SUMS`. Check one
   with `sha256sum -c SHA256SUMS --ignore-missing` before reading and running it. `scripts/check-release.sh --assets` checks a

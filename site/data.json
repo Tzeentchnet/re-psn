@@ -689,11 +689,11 @@
    "id": "docs-website",
    "area": "Documentation",
    "feature": "Project website",
-   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone (a phone starts in the plain view); the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages. Command output has a file header, line-number gutter, frame and syntax-style colours; a pager trial supplies line ranges, keys and buttons, with pager on/off.",
+   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone (a phone starts in the plain view); the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages. Command output has a file header, line-number gutter, frame and syntax-style colours.",
    "status": "partial",
    "since": "main",
    "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml, tools/terminal.test.js, tools/site_browser_check.mjs, docs/website.md",
-   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and deploys from main while PAGES_ENABLED is true. Unit tests and optional headless-browser checks cover pager navigation, rendered page fitting, command typing, autocomplete/history, selection without gutter numbers, dark/light and system-theme changes, narrow layouts and static fallbacks. A real keyboard, screen reader and physical phone have not been tried. The font remains the visitor's monospace; self-hosting is not added.",
+   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and deploys from main while PAGES_ENABLED is true. Unit tests and optional headless-browser checks cover command typing, autocomplete/history, selection without gutter numbers, dark/light and system-theme changes, narrow layouts and static fallbacks. A real keyboard, screen reader and physical phone have not been tried. The font remains the visitor's monospace; self-hosting is not added.",
    "status_label": "partial",
    "status_class": "warn"
   },
@@ -939,12 +939,13 @@
      "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
     ],
     "Changed": [
+     "The website's pager trial is removed: the `pager` command, its keys, buttons and status bar, and the saved pager setting are gone, and long output is shown in full in the scrolling output pane.",
      "The release carries seven assets: the three archives, the AppImage, `SHA256SUMS`, and the two install scripts as `install.sh` and `install.ps1`, byte for byte the tagged `scripts/` files, with their checksums in ..."
     ]
    },
    "counts": {
     "Added": 11,
-    "Changed": 1
+    "Changed": 2
    }
   },
   "latest": {
@@ -1029,7 +1030,7 @@
   {
    "path": "docs/website.md",
    "title": "Website controls",
-   "summary": "Numbered terminal output, the pager trial, keyboard controls and contributor checks",
+   "summary": "Numbered terminal output, keyboard controls and contributor checks",
    "url": "https://github.com/undecuple/re-psn/blob/main/docs/website.md"
   },
   {
