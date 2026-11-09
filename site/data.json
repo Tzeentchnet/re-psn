@@ -439,7 +439,7 @@
    "feature": "Go client package",
    "detail": "`app/internal/client`: a Go client for the TCP protocol, for the desktop app. HELLO, heartbeat, create, search, join and leave rooms, record and read scores, and the member and route pushes, with typed messages and errors. `re-psn-app check HOST:PORT` uses it.",
    "status": "partial",
-   "since": "main",
+   "since": "0.3.0",
    "evidence": "app/internal/client, TestConformanceRoomsAndScores, TestConformanceRelayRoute, TestConformanceErrors",
    "note": "Room data and messages, kicks, invite-only rooms, relay streams and UDP are not in it yet.",
    "status_label": "partial",
@@ -451,7 +451,7 @@
    "feature": "Desktop app, terminal UI",
    "detail": "`re-psn-app` with no arguments: a first-run choice of Play, Host or Both with the online ID and the server, a menu and content pane (one at a time under 70 columns), a Status screen with Rooms and Leaderboards tabs over the game protocol or an explicitly configured HTTP status source, a Settings screen that saves `re-psn.ini`, and a dark or light theme in the website colours. Built on Bubble Tea and Lip Gloss.",
    "status": "partial",
-   "since": "main",
+   "since": "0.3.0",
    "evidence": "app/internal/tui, TestFirstRunChooser, TestStatusTabs, TestConnectionErrorsAreText, TestNarrowLayout, TestThemeToggle, TestSettings, app/internal/desktop, TestLaunchSyntheticTerminalProcess, app/internal/tui/http_status.go, TestHTTPStatusNativeViewsAndQuery, TestHTTPStatusFallbackUsesProtocol",
    "note": "Partial: no Host screen, room joining, launch profiles or theme presets yet. Linux desktop starts without a TTY can open a supported terminal; Windows uses its console. Synthetic startup tests ran; physical desktops/emulators remain unverified. The optional HTTP source adds uptime, connection counts, public-room members/age and board leader summaries with bounded authenticated fetches and game-protocol fallback. The game protocol still lacks those extra fields; neither source reports server version. Driven in tmux on Linux; not tried on Windows or macOS terminals.",
    "status_label": "partial",
@@ -851,7 +851,7 @@
    "flag": "-max-udp-rate",
    "variable": "RE_PSN_MAX_UDP_RATE",
    "default": "1000",
-   "description": "UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit)"
+   "description": "UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0"
   },
   {
    "flag": "-v",
@@ -936,16 +936,19 @@
      "An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static workflow/Dependabot input paths.",
      "A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.",
      "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
-     "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
+     "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ...",
+     "`.github/FUNDING.yml`, which gives the repository a sponsor link (Ko-fi).",
+     "Tests for room kick behavior, contributed by Tzeentchnet."
     ],
     "Changed": [
      "The website's pager trial is removed: the `pager` command, its keys, buttons and status bar, and the saved pager setting are gone, and long output is shown in full in the scrolling output pane.",
+     "The README install section recommends the release archives and shows an optional quick install: the installer is fetched from a pinned revision of the repository, its hash is checked, and it is read before it is run.",
      "The release carries seven assets: the three archives, the AppImage, `SHA256SUMS`, and the two install scripts as `install.sh` and `install.ps1`, byte for byte the tagged `scripts/` files, with their checksums in ..."
     ]
    },
    "counts": {
-    "Added": 11,
-    "Changed": 2
+    "Added": 13,
+    "Changed": 3
    }
   },
   "latest": {
