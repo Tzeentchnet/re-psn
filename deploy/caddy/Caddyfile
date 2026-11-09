@@ -1,0 +1,12 @@
+# Caddy 2 HTTP status-page example; not run or validated with Caddy here.
+# Same host only: RE_PSN_HTTP=127.0.0.1:36201 and RE_PSN_TRUSTED_PROXIES=127.0.0.1/32.
+# Game TCP and UDP remain direct on 36100; leave RE_PSN_PROXY_PROTOCOL off.
+# Set RE_PSN_HTTP_TOKEN before making the status page reachable beyond localhost.
+# See README.md here for HTTPS, trust boundaries and validation commands.
+http://127.0.0.1:36101 {
+	bind 127.0.0.1
+	reverse_proxy 127.0.0.1:36201 {
+		# re-psn prefers this header over X-Forwarded-For; direct clients must not supply it.
+		header_up -CF-Connecting-IP
+	}
+}

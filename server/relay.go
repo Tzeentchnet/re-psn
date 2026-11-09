@@ -140,6 +140,11 @@ func (s *Server) streamLeg(conn net.Conn, t byte, p []byte) (handedOff bool) {
 	var other net.Conn
 	select {
 	case other = <-st.accept:
+	case <-s.stopped:
+		s.mu.Lock()
+		delete(s.streams, st.id)
+		s.mu.Unlock()
+		return false
 	case <-time.After(streamAcceptTimeout):
 		s.mu.Lock()
 		delete(s.streams, st.id)
@@ -169,23 +174,34 @@ func (s *Server) splice(dst, src net.Conn) {
 // payload, sent from sender, becomes "PSNR" 03 | from u32 | payload, sent to the target's probed
 // endpoint from the server's UDP port.
 func (s *Server) relayUDP(pc net.PacketConn, pkt []byte, sender *net.UDPAddr) {
-	if !s.relay || len(pkt) < 17 {
+	if len(pkt) < 17 {
+		s.udpDrops.malformed.Add(1)
+		return
+	}
+	if !s.relay {
+		s.udpDrops.relayDisabled.Add(1)
 		return
 	}
 	from, token, toID := binary.BigEndian.Uint32(pkt[5:]), binary.BigEndian.Uint32(pkt[9:]), binary.BigEndian.Uint32(pkt[13:])
 	s.mu.Lock()
 	src, dst := s.clients[from], s.clients[toID]
 	ok := src != nil && src.token == token && dst != nil && dst.udpPort != 0 && sharesRoom(src, dst)
+	mismatch := false
 	if ok && !s.udpAnySource {
 		ip := sender.IP.To4()
-		ok = ip != nil && src.ip == [4]byte(ip) // the sender's own address, as for a probe
+		mismatch = ip == nil || src.ip != [4]byte(ip) // the sender's own address, as for a probe
 	}
 	var to *net.UDPAddr
-	if ok {
+	if ok && !mismatch {
 		to = &net.UDPAddr{IP: net.IP(append([]byte(nil), dst.udpIP[:]...)), Port: int(dst.udpPort)}
 	}
 	s.mu.Unlock()
 	if !ok {
+		s.udpDrops.unauthorized.Add(1)
+		return
+	}
+	if mismatch {
+		s.udpDrops.sourceMismatch.Add(1)
 		return
 	}
 	out := make([]byte, 0, len(pkt)-8)
@@ -193,6 +209,9 @@ func (s *Server) relayUDP(pc net.PacketConn, pkt []byte, sender *net.UDPAddr) {
 	out = append(out, udpRelay)
 	out = binary.BigEndian.AppendUint32(out, from)
 	out = append(out, pkt[17:]...)
-	pc.WriteTo(out, to)
+	if n, err := pc.WriteTo(out, to); err != nil || n != len(out) {
+		s.udpDrops.writeError.Add(1)
+		return
+	}
 	atomic.AddUint64(&s.relayed, uint64(len(pkt)-17))
 }

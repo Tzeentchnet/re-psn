@@ -5,7 +5,9 @@
    and the only thing stored is the theme choice (localStorage, optional). Text is built with textContent and DOM nodes,
    never HTML strings, and a link is made only for a github.com address or a path in this repository.
 
-   The first half is pure (run, complete, suggest) and is tested with `node --test tools/terminal.test.js`. The second half touches the page. */
+   Each answer is shown as a numbered file: a name, a line-number gutter and a frame.
+
+   The first half is pure (run, complete, suggest and the numbered file) and is tested with `node --test tools/terminal.test.js`. The second half touches the page. */
 (function (root) {
   'use strict';
 
@@ -262,7 +264,28 @@
         return { lines: [err('command not found: ' + tokens[0].slice(0, 60) + ', ' + HINT)], cmd: '', error: true };
     }
     res.cmd = word;
+    var name = fileName(word, args, res);
+    if (name) { res.file = name; }
     return res;
+  }
+
+  // The name in the header of an answer, like a file name: the command, and the item asked for. An answer that is only an error,
+  // and clear, have none (they are not framed).
+  function fileName(word, args, res) {
+    if (!res.lines.length || (res.lines.length === 1 && isErrorLine(res.lines[0]))) { return null; }
+    if (word === 'features') {
+      var i = args.indexOf('--status');
+      var st = i >= 0 ? args[i + 1] : (args.filter(function (a) { return a.indexOf('--status=') === 0; })[0] || '').slice(9);
+      var id = args.filter(function (a, j) { return a.charAt(0) !== '-' && args[j - 1] !== '--status'; })[0];
+      if (id) { return 'features/' + id; }
+      if (st) { return 'features/' + st; }
+    }
+    if (word === 'settings' && args.length) { return 'settings/' + args[0].replace(/^-+/, ''); }
+    return word;
+  }
+
+  function isErrorLine(line) {
+    return Array.isArray(line) && line.length === 1 && typeof line[0] === 'object' && line[0].c === 'err';
   }
 
   function commonPrefix(list) {
@@ -356,7 +379,114 @@
     return pick(pool, cur, head);
   }
 
-  var api = { run: run, complete: complete, suggest: suggest, md: md, hrefFor: hrefFor, COMMANDS: COMMANDS, HINT: HINT };
+  // ------------------------------------------------------------------ the numbered file (pure)
+
+  // The text of one output line (a string or a list of spans).
+  function lineText(line) {
+    return (Array.isArray(line) ? line : [line]).map(function (sp) { return typeof sp === 'string' ? sp : sp.t; }).join('');
+  }
+
+  // Digits in the gutter: enough for the last line number of the output, 1 to 4.
+  function gutterWidth(total) {
+    return Math.min(4, String(Math.max(1, Math.floor(total) || 1)).length);
+  }
+
+  // Colouring of the plain text of a line, like a syntax theme: option names, RE_PSN_ variables, numbers and versions, and a label
+  // at the start of a line ("Evidence:"). Spans that already have a class (headings, ids, values, links) keep it.
+  var TOKEN = /(^|[\s(\[,|])(--?[a-z][a-z0-9-]*)|\b(RE_PSN_(?:[A-Z0-9_]|<[A-Z]+>)+)|(\bv?\d+(?:[.:]\d+)*\b)/g;
+  function classify(text, atStart) {
+    var out = [];
+    var last = 0;
+    var m;
+    text = String(text);
+    var lab = atStart ? /^([A-Z][A-Za-z ]{0,24}:)(?= )/.exec(text) : null;
+    if (lab) { out.push({ t: lab[1], c: 'label' }); last = lab[1].length; }
+    TOKEN.lastIndex = last;
+    while ((m = TOKEN.exec(text)) !== null) {
+      var start = m.index + (m[1] ? m[1].length : 0);
+      if (start > last) { out.push(text.slice(last, start)); }
+      if (m[2]) {
+        out.push({ t: m[2], c: 'opt' });
+      } else if (m[3]) {
+        out.push({ t: m[3], c: 'env' });
+      } else {
+        out.push({ t: m[4], c: 'num' });
+      }
+      last = TOKEN.lastIndex;
+    }
+    if (last < text.length) { out.push(text.slice(last)); }
+    return out;
+  }
+
+  // ---- drawing, given a document (the page's, or a small stand-in in the tests). Text only through textContent and text nodes.
+
+  function node(doc, tag, cls, text) {
+    var n = doc.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text !== undefined) { n.textContent = text; }
+    return n;
+  }
+
+  function spansInto(doc, parent, line, colour) {
+    (Array.isArray(line) ? line : [line]).forEach(function (sp, i) {
+      if (typeof sp === 'string') {
+        (colour ? classify(sp, i === 0) : [sp]).forEach(function (x) {
+          parent.appendChild(typeof x === 'string' ? doc.createTextNode(x) : node(doc, 'span', x.c, x.t));
+        });
+        return;
+      }
+      var h = sp.href ? hrefFor(sp.href, null) : null;
+      var n;
+      if (h) {
+        n = node(doc, 'a', sp.c, sp.t);
+        n.setAttribute('href', h);
+        n.setAttribute('rel', 'noopener noreferrer');
+      } else {
+        n = node(doc, 'span', sp.c, sp.t);
+      }
+      parent.appendChild(n);
+    });
+    return parent;
+  }
+
+  // One line without a frame (the command echo, an error, the Tab candidates).
+  function renderLine(doc, line) { return spansInto(doc, node(doc, 'div', 'ln'), line, false); }
+
+  // The numbered file: a header with the name, then one row per line, a gutter cell and the text. A gutter cell holds no text: it
+  // is hidden from assistive technology and not selectable, and the stylesheet draws the number from data-n, so the number is never
+  // part of the text that is read or copied. A line that wraps keeps its one gutter cell, so the rows it wraps onto have an empty
+  // gutter. opts: {name, lines}.
+  function renderFile(doc, opts) {
+    var lines = opts.lines;
+    var f = node(doc, 'div', 'file gw' + gutterWidth(lines.length));
+    f.setAttribute('role', 'group');
+    f.setAttribute('aria-label', opts.name + ', ' + lines.length + (lines.length === 1 ? ' line' : ' lines'));
+    var head = node(doc, 'div', 'file-head');
+    head.setAttribute('aria-hidden', 'true');
+    head.appendChild(node(doc, 'span', 'gut'));
+    var hn = node(doc, 'span', 'tx');
+    hn.appendChild(node(doc, 'span', 'file-label', 'File: '));
+    hn.appendChild(node(doc, 'span', 'file-name', opts.name));
+    head.appendChild(hn);
+    f.appendChild(head);
+    var body = node(doc, 'div', 'file-body');
+    for (var i = 0; i < lines.length; i++) {
+      var row = node(doc, 'div', 'fl');
+      var g = node(doc, 'span', 'gut');
+      g.setAttribute('aria-hidden', 'true');
+      g.setAttribute('data-n', String(i + 1));
+      row.appendChild(g);
+      row.appendChild(spansInto(doc, node(doc, 'span', 'tx'), lines[i], true));
+      body.appendChild(row);
+    }
+    f.appendChild(body);
+    return f;
+  }
+
+  var api = { run: run, complete: complete, suggest: suggest, md: md, hrefFor: hrefFor, COMMANDS: COMMANDS, HINT: HINT,
+    lineText: lineText, gutterWidth: gutterWidth,
+    classify: classify,
+    renderLine: renderLine, renderFile: renderFile };
   if (typeof module !== 'undefined' && module.exports) { module.exports = api; }
   root.rePsnTerminal = api;
 
@@ -403,6 +533,7 @@
       } catch (e) { /* storage is optional */ }
     }
     syncControls();
+    root.dispatchEvent(new Event('re-psn-theme-change'));
   }
 
   // A System / Light / Dark button group. The one in the page header is generated by tools/site.py; the interface makes its own.
@@ -429,24 +560,6 @@
     if (b) { applyTheme(b.getAttribute('data-theme-set'), true); }
   });
   syncControls();
-
-  function renderLine(line) {
-    var d = el('div', 'ln');
-    (Array.isArray(line) ? line : [line]).forEach(function (sp) {
-      if (typeof sp === 'string') { d.appendChild(document.createTextNode(sp)); return; }
-      var h = sp.href ? hrefFor(sp.href, null) : null;
-      var n;
-      if (h) {
-        n = el('a', sp.c, sp.t);
-        n.setAttribute('href', h);
-        n.setAttribute('rel', 'noopener noreferrer');
-      } else {
-        n = el('span', sp.c, sp.t);
-      }
-      d.appendChild(n);
-    });
-    return d;
-  }
 
   function mount(data) {
     var history = [];
@@ -504,6 +617,7 @@
     out.setAttribute('aria-live', 'polite');
     out.tabIndex = 0;
     content.appendChild(out);
+
     panes.appendChild(content);
     tui.appendChild(panes);
 
@@ -581,11 +695,21 @@
 
     function setView(v) { tui.setAttribute('data-view', v); }
 
+    // The answer drawn as a numbered file.
+    function drawFile(res) {
+      out.appendChild(renderFile(document, { name: res.file, lines: res.lines }));
+    }
+
     function paint(res, echo) {
-      if (res.clear) { out.textContent = ''; return; }
       out.textContent = '';
-      if (echo) { out.appendChild(renderLine([{ t: '$ ', c: 'ps' }, { t: echo, c: 'echo' }])); }
-      res.lines.forEach(function (l) { out.appendChild(renderLine(l)); });
+      out.setAttribute('aria-live', 'polite');
+      if (res.clear) { return; }
+      if (echo) { out.appendChild(renderLine(document, [{ t: '$ ', c: 'ps' }, { t: echo, c: 'echo' }])); }
+      if (res.file) {
+        drawFile(res);
+      } else {
+        res.lines.forEach(function (l) { out.appendChild(renderLine(document, l)); });
+      }
       out.scrollTop = 0;
     }
 
@@ -773,11 +897,13 @@
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) { return; }
+      if (e.altKey || e.ctrlKey || e.metaKey) { return; }
       if (document.documentElement.classList.contains('plain')) { return; }
-      if (FKEYS[e.key] && e.key !== 'F5') { e.preventDefault(); exec(FKEYS[e.key], false); return; }
       var t = e.target;
       var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      // Leave selection shortcuts to the browser.
+      if (e.shiftKey) { return; }
+      if (FKEYS[e.key] && e.key !== 'F5') { e.preventDefault(); exec(FKEYS[e.key], false); return; }
       if (e.key === '/' && !typing) { e.preventDefault(); input.focus(); }
       if (e.key === 'Escape' && !typing) { menuFocus(); }
     });

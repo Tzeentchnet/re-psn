@@ -33,11 +33,18 @@ jobs:
       - name: vet
         run: go vet ./...
       # On Linux this also builds client/test_psnr.c and runs it against the
-      # server (TestCClient); it skips where no C compiler is on PATH.
+      # server (TestCClient); it skips where no C compiler is on PATH. The release script tests skip when sh, awk or diff
+      # is missing, so they are required too: a skip on this runner would mean they no longer protect the release.
       # -race needs cgo, which the Windows runner has no C compiler for.
       - name: test
         if: runner.os == 'Linux'
-        run: go test -race -v ./...
+        run: >-
+          python3 tools/check_conformance.py
+          --require github.com/sp00nznet/psnr/server:TestCClient
+          --require github.com/sp00nznet/psnr/server:TestCheckReleaseAssets
+          --require github.com/sp00nznet/psnr/server:TestReleaseAssetListsAgree
+          --require github.com/sp00nznet/psnr/server:TestReleaseCheckWorkflow
+          -- go test -race -json ./...
       - name: test (Windows)
         if: runner.os == 'Windows'
         run: go test -v ./...
@@ -56,13 +63,14 @@ jobs:
       - name: features list
         if: runner.os == 'Linux'
         run: |
+          python3 tools/repo_check.py
           python3 tools/features.py --check
           python3 tools/site.py --check
           python3 -m unittest -v
       # The website's script: its command logic is tested with Node's own test runner (Node is on the runner image).
       - name: site script tests
         if: runner.os == 'Linux'
-        run: node --test tools/terminal.test.js
+        run: node --test tools/terminal.test.js tools/status.test.js
       # The README art: with the pinned Pillow and the fonts checked against their pinned SHA-256, a fresh render must
       # equal docs/img/*.png and tools/art/art.json byte for byte (tools/art/make_art.py).
       - name: art
@@ -102,10 +110,20 @@ jobs:
         run: go vet -mod=readonly ./...
       - name: test
         if: runner.os == 'Linux'
-        run: go test -mod=readonly -race -v ./...
+        run: >-
+          python ../tools/check_conformance.py
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRoomsAndScores
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRelayRoute
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceErrors
+          -- go test -mod=readonly -race -json ./...
       - name: test (Windows)
         if: runner.os == 'Windows'
-        run: go test -mod=readonly -v ./...
+        run: >-
+          python ../tools/check_conformance.py
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRoomsAndScores
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceRelayRoute
+          --require github.com/undecuple/re-psn/app/internal/client:TestConformanceErrors
+          -- go test -mod=readonly -json ./...
       - name: cross-build
         if: runner.os == 'Linux'
         run: |

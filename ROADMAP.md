@@ -41,10 +41,10 @@ and still unknown.
 
 ## Done
 
-Merged into main and released in v0.2.0, unless a line says otherwise.
+Merged into main. Items are in v0.2.0 or v0.3.0 unless a line says it is on main only.
 
 [Rooms and matchmaking](docs/features.md#rooms-and-matchmaking)
-- [rooms-basic] Create, search, join and leave rooms, with room messages and owner handoff.
+- [rooms-basic] Create, search, join and leave rooms, with room messages, owner kicks and owner handoff.
 - [rooms-data] Room and member data, and room flags that searchers see.
 - [rooms-codes] Invite-only rooms with an 8-character code, hidden from search and the status page.
 
@@ -56,12 +56,14 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 [Limits](docs/features.md#limits), [logging](docs/features.md#logging) and the [status page](docs/features.md#status-page)
 - [limits-requests] Limits on rooms, connections, request rate and room data size, each refusal logged.
 - [logs-levels] Log levels, text or JSON output, and an optional log file.
-- [status-page] A status page and `/api/stats`, off unless `-http` is set, with an optional token.
+- [status-page] A terminal-style status page and `/api/stats`, off unless `-http` is set, with an optional token. Main adds Rooms/Leaderboards tabs, System/Light/Dark and browser-local text size, spacing and custom colours; see docs/running.md.
 
 [Reverse proxy](docs/features.md#reverse-proxy), [deployment](docs/features.md#deployment) and [settings](docs/features.md#settings)
 - [proxy-support] PROXY protocol v1 and v2 and trusted proxies, so the real client address counts.
+- [ha-restart] A data-free health endpoint and bounded shutdown of client/relay sockets, with restart documentation; on main, not released. Rooms and scores remain in memory.
 - [deploy-examples] A settings file, a systemd unit and a Traefik example, shipped in the release archives.
 - [deploy-nginx-haproxy] nginx and HAProxy examples, not yet run against the server.
+- [deploy-caddy] A stock Caddy 2 status-page example on main, not released or run/validated with Caddy; game TCP and UDP stay direct.
 - [deploy-container] A Dockerfile and compose file, run under Podman.
 - [settings-env] Every flag as a `RE_PSN_*` variable, with the old `PSNR_*` names as aliases.
 
@@ -69,23 +71,26 @@ Merged into main and released in v0.2.0, unless a line says otherwise.
 - [net-punch] Address discovery and hole punching over UDP, reproduced in the NAT lab.
 - [net-relay] An optional relay for players who cannot reach each other directly.
 - [net-udp-guard] UDP packets accepted only from the address of the player's TCP connection.
+- [net-guardrails] Partial: bounded per-source UDP rate limits and aggregate drop counters on main, not released. Per-player relay byte/stream budgets, failed-token blocking and UDP fuzz coverage remain planned.
 - [client-c] A one-file C client with no dependencies.
-- [app-tui] The desktop app's terminal UI: first-run choice, Status with Rooms and Leaderboards tabs over the game protocol, Settings, dark and light; partial: no Host screen or joining yet.
+- [app-tui] The shared Windows/Linux terminal app: first-run choice, Rooms/Leaderboards, Settings, dark and light. Linux desktop starts can open a supported terminal; Windows uses its console. An optional HTTP status source adds native totals, public room members/age and board summaries, with game-protocol fallback. Partial: no Host screen or joining yet.
 
 [Testing and CI](docs/features.md#testing-and-ci), [release](docs/features.md#release) and [documentation](docs/features.md#documentation)
 - [test-fuzz] Fuzz tests for the frame parser, the request handlers and the PROXY header.
-- [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning.
+- [ci-checks] CI with the race detector, vulnerability and secret scans, the NAT lab and code scanning; a focused local loopback runner for the C and Go app clients.
 - [release-archives] Release archives with checksums, built by a workflow; partial: published in the v0.2.0 pre-release; the Windows and arm64 binaries are cross-built and not run.
 - [release-process] Written release steps and a dry run, then the first tag (v0.2.0, a pre-release); further pre-releases come with no fixed release day.
 - [release-appimage] A Linux x86_64 AppImage beside the archives; partial: published in the v0.2.0 pre-release, unsigned, and run on one machine.
-- [install-script] Install scripts for Linux and Windows that check SHA256SUMS; partial: on main, not yet release assets, and the PowerShell script tested only under PowerShell 7 on Linux.
+- [install-script] Install scripts for Linux and Windows that check SHA256SUMS; partial: on main and release assets from the next release (none has shipped them yet), PowerShell fake-release tests passed on Linux and Windows CI under PowerShell 7, and PowerShell 5.1 remains untested.
 - [docs-features] This features list, generated from one data file and checked in CI.
 - [docs-diagrams] Architecture and NAT lab diagrams in Mermaid.
 - [docs-markdown] Every doc in Markdown with one layout, and diagrams for deploy and Docker.
+- [docs-integration] A recomp developer guide covering ps3recomp and direct C integration, a required-tested minimal example, ownership/lifecycle and peer-transport checks; on main, not released.
+- [repo-check] An offline CI guard for tracked root/top-level layout, local Markdown links/anchors and static workflow/Dependabot input paths; available on main.
 - [docs-connecting] A page on the ways players connect, with Tailscale and ZeroTier links; neither overlay has been run.
 - [docs-readme] A rewritten README with an example from real runs, the features, the settings and credit to upstream.
 - [docs-art] A generator for the README banner and terminal images from real runs, in one palette, checked in CI.
-- [docs-website] A static project website built from the features list, version, settings table and changelog; partial: published at https://undecuple.github.io/re-psn/ with a terminal-style interface (commands, phone layout with scrolling tabs (a phone starts in the plain view), a System / Light / Dark switch) that is tested in a headless browser only, not yet with a real keyboard, a screen reader or a phone; a self-hosted font and ASCII diagrams are not done.
+- [docs-website] A static project website built from the features list, version, settings table and changelog; partial: published at https://undecuple.github.io/re-psn/ with a terminal-style interface (commands, numbered file output, phone tabs and a System / Light / Dark switch). Browser checks cover command entry, selection, themes and narrow layouts; a real keyboard, screen reader, physical phone, self-hosted font and animated diagrams remain unverified or unfinished. See docs/website.md for controls and contributor checks.
 
 On the ps3recomp side (upstream's work):
 - **Sockets:** real host sockets behind `PS3_NET_ONLINE`
@@ -104,18 +109,13 @@ Nothing is in progress at the moment; the items under Next come first.
 
 In about this order.
 
-### Releases and docs
-- [repo-check] A CI check of the repository layout, the Markdown links and the paths the workflows name.
-
 ### Storage, off unless a host turns it on
 - [store-sqlite] SQLite storage, so leaderboards survive a restart.
 - [store-backup] Backup and restore steps for each database.
 
 ### Running a server
-- [ha-restart] A health endpoint, a graceful shutdown, and docs on restarts and what players see.
 - [ha-failover] Docs and examples for a standby server that takes over the address.
-- [net-guardrails] UDP rate limits, relay budgets and counters of dropped packets.
-- [deploy-caddy] A Caddy example next to the other proxy examples.
+- Finish relay budgets and remaining UDP guardrails; see [Network](docs/features.md#network).
 - [ci-more] More CI checks, such as the C client outside Linux.
 
 ### Medius profiles

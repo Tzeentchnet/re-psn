@@ -12,23 +12,27 @@ import (
 
 // Query is what one refresh of the Status screen asks the server.
 type Query struct {
-	Server string // host:port
-	Title  string // the title's communication ID; empty means only HELLO
-	Board  uint32
-	Boards bool // read Board's ranking too
+	StatusURL       string // optional HTTP status page base URL
+	StatusTokenFile string // optional local Bearer token file
+	Server          string // host:port
+	Title           string // the title's communication ID; empty means only HELLO
+	Board           uint32
+	Boards          bool // read Board's ranking too
 }
 
 // Snapshot is what the server answered.
 type Snapshot struct {
-	Ack     client.HelloAck
-	Name    string        // the throwaway online ID the app said HELLO with
-	RTT     time.Duration // the HELLO round trip
-	Rooms   client.RoomList
-	Ranking client.Ranking
-	RankErr error // reading the board failed; the rooms are still good
+	HTTP            *HTTPStats // nil means the game-protocol snapshot
+	HTTPUnavailable bool       // configured HTTP failed; protocol fallback was attempted
+	Ack             client.HelloAck
+	Name            string        // the throwaway online ID the app said HELLO with
+	RTT             time.Duration // the HELLO round trip
+	Rooms           client.RoomList
+	Ranking         client.Ranking
+	RankErr         error // reading the board failed; the rooms are still good
 }
 
-// Fetcher reads a Snapshot. The real one speaks the game protocol; tests use a fake.
+// Fetcher reads a Snapshot. NativeStatus uses configured HTTP or the game protocol; tests use a fake.
 type Fetcher interface {
 	Fetch(ctx context.Context, q Query) (Snapshot, error)
 }

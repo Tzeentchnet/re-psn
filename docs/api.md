@@ -285,7 +285,8 @@ This is a separate listener, off unless `-http` names an address (for example
 | Path | Returns |
 |---|---|
 | `/` | status page: rooms and leaderboards, refreshes every 5 s |
-| `/api/stats` | the same data as JSON |
+| `/api/stats` | the same data as JSON, plus aggregate `udp_drops` counters; see [UDP guardrails](udp-guardrails.md#drop-counters) |
+| `/healthz` | data-free local TCP/UDP readiness: 200 when ready, 503 otherwise; GET/HEAD only |
 
-With `-http-token` set, both paths answer 401 unless the request carries the token
+With `-http-token` set, all paths answer 401 unless the request carries the token
 (`Authorization: Bearer <token>`, or `?token=<token>`).

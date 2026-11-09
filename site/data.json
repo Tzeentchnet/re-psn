@@ -4,11 +4,11 @@
  "repository": "https://github.com/undecuple/re-psn",
  "go": "1.22",
  "status_counts": {
-  "available": 26,
-  "unverified": 1,
-  "partial": 6,
+  "available": 29,
+  "unverified": 2,
+  "partial": 7,
   "in-progress": 0,
-  "planned": 19,
+  "planned": 15,
   "later": 9,
   "declined": 1
  },
@@ -17,11 +17,11 @@
    "id": "rooms-basic",
    "area": "Rooms and matchmaking",
    "feature": "Rooms and search",
-   "detail": "Create, search, join and leave rooms modelled on sceNpMatching2. A search sees only the rooms of its own title, with each room's external data. Room messages, owner handoff when the owner leaves, and member pushes with each peer's address and P2P port.",
+   "detail": "Create, search, join and leave rooms modelled on sceNpMatching2. A search sees only the rooms of its own title, with each room's external data. Room messages, owner kicks, owner handoff when the owner leaves, and member pushes with each peer's address and P2P port.",
    "status": "available",
    "since": "0.1.0",
-   "evidence": "server/rooms.go, TestRooms",
-   "note": "Upstream work. Kick (`KICK_MEMBER`) is in the server but no test covers it.",
+   "evidence": "server/rooms.go, TestRooms, TestRoomKick, TestRoomKickDispatchOrder",
+   "note": "Upstream work. `KICK_MEMBER` removes a member but does not prevent rejoining.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -117,7 +117,7 @@
    "status": "available",
    "since": "0.2.0",
    "evidence": "server/limits_test.go, TestBlobLimit, TestPlayerRoomLimit, TestConnLimitPerAddr, TestRequestRateLimit, TestLogHelloAndRefusals",
-   "note": "TCP only. UDP rate limits are planned (net-guardrails).",
+   "note": "These limits cover TCP. Main also has bounded UDP admission and drop counters; see the partial net-guardrails row.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -125,7 +125,7 @@
    "id": "logs-levels",
    "area": "Logging",
    "feature": "Log levels and formats",
-   "detail": "`-log-level` (debug, info, warn, error), `-v` as debug, `-log-format` text or json, and `-log-file` to append to a file (mode 0600). Every refusal is logged at warn level; tokens and query strings are never logged.",
+   "detail": "`-log-level` (debug, info, warn, error), `-v` as debug, `-log-format` text or json, and `-log-file` to append to a file (mode 0600). Connection and room refusals are logged at warn level; UDP drops use aggregate counters, with one warning per player for a mismatched probe. Tokens and query strings are never logged.",
    "status": "available",
    "since": "0.2.0",
    "evidence": "server/logging.go, TestLogHelloAndRefusals, TestLogLevelAndFormat, TestLogStatusRefusalKeepsTokenOut, #4",
@@ -137,10 +137,10 @@
    "id": "status-page",
    "area": "Status page",
    "feature": "Status page and /api/stats, with a token",
-   "detail": "A read-only page and JSON on a separate listener, off unless `-http` names an address (`127.0.0.1:36101` keeps it on localhost). `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one.",
+   "detail": "A read-only page and JSON on a separate listener, off unless `-http` names an address (`127.0.0.1:36101` keeps it on localhost). `-http-token` requires a token (`Authorization: Bearer`, or `?token=`), and the server warns at start when the page is reachable from elsewhere without one. On main the page uses gruvbox-material, Rooms/Leaderboards tabs, System/Light/Dark and browser-local text size, spacing and contrast-checked custom colours.",
    "status": "available",
    "since": "0.2.0",
-   "evidence": "server/api.go, TestStatusToken, TestReachable, TestStatusPageOff, TestStatusPageOn, docs/status.png",
+   "evidence": "server/api.go, TestStatusToken, TestReachable, TestStatusPageOff, TestStatusPageOn, docs/status.png, server/status_theme_test.go, TestStatusTerminalPage, TestStatusThemeAuthenticationAndHeaders, tools/status_browser_check.mjs, docs/running.md",
    "note": "The page and /api/stats are upstream work (0.1.0); the token is the fork's.",
    "status_label": "available",
    "status_class": "ok"
@@ -208,14 +208,14 @@
   {
    "id": "deploy-caddy",
    "area": "Deployment",
-   "feature": "Caddy example",
-   "detail": "A Caddy config next to the other examples in `deploy/`.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "feature": "Caddy status-page example",
+   "detail": "A stock Caddy 2 HTTP reverse-proxy example in `deploy/caddy/`, copied into future release archives with the other deployment examples. Defaults to loopback and leaves game TCP/UDP direct.",
+   "status": "unverified",
+   "since": "main",
+   "evidence": "deploy/caddy/Caddyfile, deploy/caddy/README.md, scripts/check-deploy.sh, docs/running.md",
+   "note": "Written from the official Caddy documentation; not run or validated with Caddy. No layer-4 plugin is included. The existing HTTP token check is preserved and client-supplied CF-Connecting-IP is removed before forwarding.",
+   "status_label": "not yet verified",
+   "status_class": "unv"
   },
   {
    "id": "deploy-container",
@@ -305,13 +305,13 @@
    "id": "ha-restart",
    "area": "High availability",
    "feature": "Health check and clean restarts",
-   "detail": "A `/healthz` endpoint on the status listener (200 when the server accepts connections, no player data), a graceful shutdown that closes connections so players reconnect at once, and a page on restart settings and what players see.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. The systemd unit and the compose file already restart the server; live rooms are lost on a restart.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "A data-free `/healthz` endpoint on the opt-in status listener, guarded by the existing HTTP token, and bounded shutdown that closes listeners and accepted client/relay sockets. A guide covers probe results, supervisors and what players lose on restart.",
+   "status": "available",
+   "since": "main",
+   "evidence": "server/lifecycle.go, server/lifecycle_test.go, server/api.go, server/main.go, docs/restarts.md",
+   "note": "Health is 200 only while both game serving loops are active, 503 during startup/shutdown or after a loop exits. Loopback and subprocess tests cover shutdown; systemd/container restarts and remote failover are not run. Rooms and scores remain in memory and are lost on restart. No database retry is needed until a network backend exists.",
+   "status_label": "available",
+   "status_class": "ok"
   },
   {
    "id": "ha-failover",
@@ -389,13 +389,13 @@
    "id": "net-guardrails",
    "area": "Network",
    "feature": "More UDP and relay guardrails",
-   "detail": "Per-source UDP rate limits and a failed-token counter, relay budgets (datagram size, per-player rates, idle streams), a 64-bit token, the limits written down, counters of dropped packets on /api/stats, and a test for each, with a fuzz test for the UDP packets.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. The 64-bit token changes the wire format and waits for a protocol version bump.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "Bounded per-source-IP UDP packet admission shared by probes, relay and invalid traffic, plus aggregate drop-reason counters in /api/stats. The token bucket tracks at most 4096 sources, expires idle entries and rejects new sources at capacity.",
+   "status": "partial",
+   "since": "main",
+   "evidence": "server/udp_guard.go, server/udp.go, server/relay.go, TestUDPLimiter, TestUDPAdmissionRealPackets, TestUDPCountersStatsAuthenticationAndConcurrency, docs/udp-guardrails.md",
+   "note": "Initial packet limiter only: default 1000 packets/second with the same burst, configurable with -max-udp-rate and 0 for off; players behind one NAT share it. Per-player relay byte/datagram budgets, payload and TCP stream limits, failed-token blocking and UDP fuzz coverage remain planned. A larger token needs a protocol version bump.",
+   "status_label": "partial",
+   "status_class": "warn"
   },
   {
    "id": "net-checks",
@@ -473,11 +473,11 @@
    "id": "client-c",
    "area": "Client",
    "feature": "C client",
-   "detail": "One file with no dependencies and no threads: `psnr_send` returns a request id, and `psnr_poll` hands out replies and pushes without blocking. It also builds the UDP probe and relay packets.",
+   "detail": "One file with no dependencies and no threads: `psnr_send` returns a request id, and `psnr_poll` hands out replies and pushes; sends and automatic heartbeat writes can wait for socket writability. It also builds the UDP probe and relay packets.",
    "status": "available",
    "since": "0.1.0",
    "evidence": "client/psnr.c, client/test_psnr.c, TestCClient",
-   "note": "Upstream work. `TestCClient` skips without a C compiler; CI runs it on Linux only.",
+   "note": "Upstream work. The integration guide documents ownership and timeout limits. `TestCClient` also compiles/runs the minimal example; it skips without a C compiler, and Linux CI requires execution.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -487,7 +487,7 @@
    "feature": "Go client package",
    "detail": "`app/internal/client`: a Go client for the TCP protocol, for the desktop app. HELLO, heartbeat, create, search, join and leave rooms, record and read scores, and the member and route pushes, with typed messages and errors. `re-psn-app check HOST:PORT` uses it.",
    "status": "partial",
-   "since": "main",
+   "since": "0.3.0",
    "evidence": "app/internal/client, TestConformanceRoomsAndScores, TestConformanceRelayRoute, TestConformanceErrors",
    "note": "Room data and messages, kicks, invite-only rooms, relay streams and UDP are not in it yet.",
    "status_label": "partial",
@@ -497,11 +497,11 @@
    "id": "app-tui",
    "area": "Client",
    "feature": "Desktop app, terminal UI",
-   "detail": "`re-psn-app` with no arguments: a first-run choice of Play, Host or Both with the online ID and the server, a menu and content pane (one at a time under 70 columns), a Status screen with Rooms and Leaderboards tabs filled over the game protocol only, a Settings screen that saves `re-psn.ini`, and a dark or light theme in the website colours. Built on Bubble Tea and Lip Gloss.",
+   "detail": "`re-psn-app` with no arguments: a first-run choice of Play, Host or Both with the online ID and the server, a menu and content pane (one at a time under 70 columns), a Status screen with Rooms and Leaderboards tabs over the game protocol or an explicitly configured HTTP status source, a Settings screen that saves `re-psn.ini`, and a dark or light theme in the website colours. Built on Bubble Tea and Lip Gloss.",
    "status": "partial",
-   "since": "main",
-   "evidence": "app/internal/tui, TestFirstRunChooser, TestStatusTabs, TestConnectionErrorsAreText, TestNarrowLayout, TestThemeToggle, TestSettings",
-   "note": "Partial: no Host screen, room joining, launch profiles or theme presets yet, and it does not open a terminal window when started without one. The server version, uptime, connection counts, room age and the list of boards are not available over the protocol. Driven in tmux on Linux; not tried on Windows or macOS terminals.",
+   "since": "0.3.0",
+   "evidence": "app/internal/tui, TestFirstRunChooser, TestStatusTabs, TestConnectionErrorsAreText, TestNarrowLayout, TestThemeToggle, TestSettings, app/internal/desktop, TestLaunchSyntheticTerminalProcess, app/internal/tui/http_status.go, TestHTTPStatusNativeViewsAndQuery, TestHTTPStatusFallbackUsesProtocol",
+   "note": "Partial: no Host screen, room joining, launch profiles or theme presets yet. Linux desktop starts without a TTY can open a supported terminal; Windows uses its console. Synthetic startup tests ran; physical desktops/emulators remain unverified. The optional HTTP source adds uptime, connection counts, public-room members/age and board leader summaries with bounded authenticated fetches and game-protocol fallback. The game protocol still lacks those extra fields; neither source reports server version. Driven in tmux on Linux; not tried on Windows or macOS terminals.",
    "status_label": "partial",
    "status_class": "warn"
   },
@@ -549,7 +549,7 @@
    "status": "planned",
    "since": "",
    "evidence": "",
-   "note": "Not started. Whether the status page follows the browser's setting too is not decided.",
+   "note": "Desktop presets and system-following remain planned. The server status page supports browser System/Light/Dark and local appearance controls; see status-page.",
    "status_label": "planned",
    "status_class": "plan"
   },
@@ -584,8 +584,8 @@
    "detail": "gofmt, go vet, `go test -race` on Linux (with the C client) and `go test` on Windows, govulncheck, gitleaks over the full history, the NAT lab in Docker, and CodeQL for Go and the workflows. Actions are pinned and permissions are read-only by default.",
    "status": "available",
    "since": "0.2.0",
-   "evidence": ".github/workflows/ci.yml, .github/workflows/codeql.yml, .github/dependabot.yml, #1, #6",
-   "note": "Dependabot proposes version updates.",
+   "evidence": ".github/workflows/ci.yml, .github/workflows/codeql.yml, .github/dependabot.yml, #1, #6, tools/loopback.py, docs/testing.md",
+   "note": "Dependabot proposes version updates. A focused local loopback runner requires native C-client and Go app-client conformance checks to execute; synthetic loopback only.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -632,8 +632,8 @@
    "detail": "`scripts/install.sh` (Linux amd64 and arm64, POSIX sh) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from a GitHub release, newest or pinned, after checking the download against SHA256SUMS. No sudo or administrator rights, no profile edits; `--dry-run`, `--dir`, `--appimage`, `-AddToPath`.",
    "status": "partial",
    "since": "main",
-   "evidence": "scripts/install.sh, scripts/install.ps1, scripts/test-install.sh, scripts/test-install.ps1, docs/installing.md",
-   "note": "Partial: not release assets yet, so SHA256SUMS does not list the scripts themselves. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a real release, and the PowerShell test (a fake release, 20 checks) has run under PowerShell 7 on Linux only, not on Windows or in PowerShell 5.1. No macOS builds, so no macOS support.",
+   "evidence": "scripts/install.sh, scripts/install.ps1, scripts/test-install.sh, scripts/test-install.ps1, TestCheckReleaseAssets, docs/installing.md",
+   "note": "Partial: release assets (`install.sh`, `install.ps1`, listed in SHA256SUMS) from the next release after v0.3.0; v0.3.0 does not carry them, and no release has shipped them yet. The Linux tests run under dash, bash and BusyBox ash with a fake release; neither script has installed from a published release. The PowerShell fake-release tests have passed under PowerShell 7 on Linux and Windows CI; PowerShell 5.1 remains untested. No macOS builds, so no macOS support.",
    "status_label": "partial",
    "status_class": "warn"
   },
@@ -693,7 +693,7 @@
    "status": "available",
    "since": "0.2.0",
    "evidence": "deploy/README.md, docker/README.md, docs/running.md, #20",
-   "note": "Links were checked once with a throwaway script; a CI link check is planned (repo-check).",
+   "note": "The offline repo-check guard validates tracked local Markdown links and anchors in CI.",
    "status_label": "available",
    "status_class": "ok"
   },
@@ -737,11 +737,11 @@
    "id": "docs-website",
    "area": "Documentation",
    "feature": "Project website",
-   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone (a phone starts in the plain view); the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages.",
+   "detail": "A static page built from the features list, the version, the settings table and the changelog by `tools/site.py`: overview, features with status tags, roadmap, settings, install, connect, docs and credits. With `site/terminal.js` (no dependencies) the page becomes a terminal-style interface: menu, content and a command line with the commands `features`, `roadmap`, `settings`, `install`, `connect`, `changelog`, `docs` and more, suggestions while typing (a dimmed completion and a list of up to eight matches, taken with Tab, Right arrow, Enter or a tap), Tab completion, history, a dark and a light theme chosen with a System / Light / Dark switch in the header or the `theme` command (the same choice, remembered in the browser), colour from the full gruvbox-material palette with every text colour checked at 4.5:1 or more, and scrolling tabs and tappable chips on a phone (a phone starts in the plain view); the same page works without script, and a plain view link switches the interface off. No third-party loads, a content security policy that allows only this site, and the colours of the README art. `pages.yml` deploys `site/` to GitHub Pages. Command output has a file header, line-number gutter, frame and syntax-style colours.",
    "status": "partial",
    "since": "main",
-   "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml",
-   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and redeployed on a push to main that touches `site/`, while the repository variable PAGES_ENABLED is true. The interface's commands are unit-tested with Node and driven in headless Chromium at 1200 and 390 px wide; no real keyboard, screen reader or phone has been tried, and the font is the visitor's own monospace (a self-hosted font is not added yet).",
+   "evidence": "tools/site.py, tools/test_site.py, site/index.html, site/style.css, .github/workflows/pages.yml, tools/terminal.test.js, tools/site_browser_check.mjs, docs/website.md",
+   "note": "Partial: the page is published at https://undecuple.github.io/re-psn/ and deploys from main while PAGES_ENABLED is true. Unit tests and optional headless-browser checks cover command typing, autocomplete/history, selection without gutter numbers, dark/light and system-theme changes, narrow layouts and static fallbacks. A real keyboard, screen reader and physical phone have not been tried. The font remains the visitor's monospace; self-hosting is not added.",
    "status_label": "partial",
    "status_class": "warn"
   },
@@ -749,13 +749,25 @@
    "id": "repo-check",
    "area": "Documentation",
    "feature": "Repository layout check",
-   "detail": "A CI check that the root and top-level folders hold only what is expected, that relative links and anchors in the Markdown files resolve, and that paths named in the workflows exist.",
-   "status": "planned",
-   "since": "",
-   "evidence": "",
-   "note": "Not started. After docs-markdown.",
-   "status_label": "planned",
-   "status_class": "plan"
+   "detail": "An offline CI check of tracked root filenames and top-level directories, local Markdown links and heading/explicit anchors, and static repository input paths in workflows and Dependabot.",
+   "status": "available",
+   "since": "main",
+   "evidence": "tools/repo_check.py, tools/test_repo_check.py, tools/repo_layout.json, .github/workflows/ci.yml, CONTRIBUTING.md",
+   "note": "Python standard library and Git only. Does not fetch external links, evaluate arbitrary shell/YAML expressions or validate generated artifact paths.",
+   "status_label": "available",
+   "status_class": "ok"
+  },
+  {
+   "id": "docs-integration",
+   "area": "Documentation",
+   "feature": "Recomp developer integration",
+   "detail": "A source-pinned guide for ps3recomp ports and direct C/C++ adapters: build/startup, callback ownership, message lifetime, failure handling and peer/relay boundaries. A synthetic minimal C example exercises HELLO and room search in the required native-client test.",
+   "status": "available",
+   "since": "main",
+   "evidence": "docs/integrating.md, client/examples/minimal.c, TestCClient",
+   "note": "Runtime integration was inspected at the linked upstream revision; no actual title was built or run for the guide. Native example/conformance checks are synthetic loopback evidence, not gameplay or NAT certification.",
+   "status_label": "available",
+   "status_class": "ok"
   }
  ],
  "roadmap": {
@@ -771,12 +783,15 @@
    "proxy-support",
    "deploy-examples",
    "deploy-nginx-haproxy",
+   "deploy-caddy",
    "deploy-container",
    "settings-env",
    "store-interface",
+   "ha-restart",
    "net-punch",
    "net-relay",
    "net-udp-guard",
+   "net-guardrails",
    "client-c",
    "app-client",
    "app-tui",
@@ -792,18 +807,17 @@
    "docs-connecting",
    "docs-readme",
    "docs-art",
-   "docs-website"
+   "docs-website",
+   "repo-check",
+   "docs-integration"
   ],
   "Now": [],
   "Next": [
    "rooms-private",
    "players-friends",
-   "deploy-caddy",
    "store-sqlite",
    "store-backup",
-   "ha-restart",
    "ha-failover",
-   "net-guardrails",
    "net-checks",
    "medius-transport",
    "medius-lobby",
@@ -813,8 +827,7 @@
    "app-themes",
    "app-appearance",
    "app-colours",
-   "ci-more",
-   "repo-check"
+   "ci-more"
   ],
   "Later": [
    "players-accounts",
@@ -885,6 +898,12 @@
    "variable": "RE_PSN_MAX_REQ_RATE",
    "default": "200",
    "description": "Requests per second per connection before it is closed (0: no limit)"
+  },
+  {
+   "flag": "-max-udp-rate",
+   "variable": "RE_PSN_MAX_UDP_RATE",
+   "default": "1000",
+   "description": "UDP packets per second per source (IPv4 address or IPv6 /64), shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0"
   },
   {
    "flag": "-v",
@@ -959,11 +978,29 @@
    "date": "",
    "sections": {
     "Added": [
-     "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ..."
+     "A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.",
+     "Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and leaderboard summaries, using a local Bearer-token file.",
+     "Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal arguments and a recursion guard.",
+     "Bounded per-source UDP admission (per IPv4 address, per IPv6 /64) with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.",
+     "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
+     "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
+     "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",
+     "An offline repository check for tracked root/top-level layout, local Markdown links and anchors, and static workflow/Dependabot input paths.",
+     "A focused loopback check: `python3 tools/loopback.py` runs the existing native C-client and Go app-client conformance tests against temporary loopback servers.",
+     "Numbered file-style output in the website's terminal view: a header, frame, line-number gutter, syntax-style colours and wrapped continuation rows with an empty gutter.",
+     "Optional install scripts: `scripts/install.sh` (POSIX sh; Linux amd64 and arm64) and `scripts/install.ps1` (Windows amd64; written for PowerShell 5.1 and 7, tested on 7 only) install the server for the current user from ...",
+     "`.github/FUNDING.yml`, which gives the repository a sponsor link (Ko-fi).",
+     "Tests for room kick behavior, contributed by Tzeentchnet."
+    ],
+    "Changed": [
+     "The website's pager trial is removed: the `pager` command, its keys, buttons and status bar, and the saved pager setting are gone, and long output is shown in full in the scrolling output pane.",
+     "The README install section recommends the release archives and shows an optional quick install: the installer is fetched from a pinned revision of the repository, its hash is checked, and it is read before it is run.",
+     "The release carries seven assets: the three archives, the AppImage, `SHA256SUMS`, and the two install scripts as `install.sh` and `install.ps1`, byte for byte the tagged `scripts/` files, with their checksums in ..."
     ]
    },
    "counts": {
-    "Added": 1
+    "Added": 13,
+    "Changed": 3
    }
   },
   "latest": {
@@ -1045,6 +1082,12 @@
   }
  ],
  "docs": [
+  {
+   "path": "docs/website.md",
+   "title": "Website controls",
+   "summary": "Numbered terminal output, keyboard controls and contributor checks",
+   "url": "https://github.com/undecuple/re-psn/blob/main/docs/website.md"
+  },
   {
    "path": "docs/architecture.md",
    "title": "Architecture",

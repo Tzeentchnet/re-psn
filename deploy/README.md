@@ -1,8 +1,8 @@
 # Deployment examples
 
 Example files for running re-psn as a service and behind a reverse proxy: a settings file, a systemd unit, and Traefik,
-nginx and HAProxy configs. They are text files; nothing here runs by itself. The release archives carry this folder as
-`examples/`. The full text is [docs/running.md](../docs/running.md) in the repository.
+nginx, HAProxy and Caddy configs. They are text files; nothing here runs by itself. The release archives carry this folder as
+`examples/` (the `caddy/` example is on main only; archives up to v0.3.0 do not contain it). The full text is [docs/running.md](../docs/running.md) in the repository.
 
 ## Contents
 
@@ -20,6 +20,7 @@ nginx and HAProxy configs. They are text files; nothing here runs by itself. The
 | `traefik/` | Traefik, a TCP router with PROXY protocol v2. Tested with Traefik 3.1 under Podman. |
 | `nginx/psnr.conf` | nginx `stream` with PROXY protocol v1. Not run. |
 | `haproxy/haproxy.cfg` | HAProxy with `send-proxy-v2`. Not run. |
+| [`caddy/`](caddy/README.md) | Stock Caddy 2 for the HTTP status page only, bound to loopback; game TCP and UDP stay direct. Not run or validated with Caddy. |
 
 ## Which file to use
 
@@ -45,7 +46,8 @@ flowchart TD
 
 ## Behind a reverse proxy
 
-Behind a proxy you need, on re-psn:
+For the Traefik, nginx and HAProxy game TCP examples, set these on re-psn. The
+[Caddy HTTP-only example](caddy/README.md) uses different settings: game traffic stays direct and PROXY protocol stays off.
 
 | Setting | Value |
 |---|---|
@@ -81,7 +83,8 @@ flowchart LR
 
 ## Ports
 
-Ports in these files are the defaults:
+Ports in the game TCP proxy examples are the defaults below. Caddy's status-only example binds `127.0.0.1:36101`,
+forwards to `127.0.0.1:36201`, and leaves game TCP and UDP directly on re-psn's `:36100`.
 
 | Port | Protocol | Who listens |
 |---|---|---|

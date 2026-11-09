@@ -179,7 +179,7 @@ test('the autocomplete markup is built with DOM calls and carries the combobox a
   }
 });
 
-test('the script has no dynamic code, no HTML strings, one network call and no other storage', () => {
+test('the script has no dynamic code or HTML strings, one network call and only theme storage', () => {
   for (const bad of ['eval(', 'new Function', 'innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write', 'XMLHttpRequest',
     'WebSocket', 'sendBeacon', 'document.cookie', 'sessionStorage', 'indexedDB', 'import(', 'importScripts', "setAttribute('style'"]) {
     assert.ok(!source.includes(bad), bad);
@@ -205,4 +205,115 @@ test('the script keeps the theme in one place shared by the command and the swit
   assert.ok(source.includes("var STORE = 're-psn-theme'"));
   assert.ok(source.includes('applyTheme(res.theme, true)'));
   assert.ok(source.includes('[data-theme-set]'));
+});
+
+// ---------------------------------------------------------------- the numbered file
+
+test('each answer has a file name; errors and clear have none', () => {
+  assert.strictEqual(T.run('features', data).file, 'features');
+  assert.strictEqual(T.run('features --status planned', data).file, 'features/planned');
+  assert.strictEqual(T.run('features ' + data.features[0].id, data).file, 'features/' + data.features[0].id);
+  assert.strictEqual(T.run('settings', data).file, 'settings');
+  assert.strictEqual(T.run('settings -addr', data).file, 'settings/addr');
+  assert.strictEqual(T.run('help', data).file, 'help');
+  assert.strictEqual(T.run('--help', data).file, 'help');
+  assert.strictEqual(T.run('features nope', data).file, undefined);
+  assert.strictEqual(T.run('nonsense', data).file, undefined);
+  assert.strictEqual(T.run('clear', data).file, undefined);
+});
+
+
+
+test('gutter width follows the digits of the line count', () => {
+  assert.strictEqual(T.gutterWidth(0), 1);
+  assert.strictEqual(T.gutterWidth(9), 1);
+  assert.strictEqual(T.gutterWidth(10), 2);
+  assert.strictEqual(T.gutterWidth(99), 2);
+  assert.strictEqual(T.gutterWidth(100), 3);
+  assert.strictEqual(T.gutterWidth(999), 3);
+  assert.strictEqual(T.gutterWidth(12345), 4);
+});
+
+
+test('classify: options, variables, numbers and a leading label; the text is unchanged', () => {
+  const t = (spans) => spans.map((s) => (typeof s === 'string' ? s : s.t)).join('');
+  const c = (spans) => spans.filter((s) => typeof s === 'object').map((s) => s.c + ':' + s.t);
+  const s = 'Evidence: use -addr or --status with RE_PSN_ADDR on :36100, v0.3.0 and 1.5 but not ps3 or a-b';
+  const r = T.classify(s, true);
+  assert.strictEqual(t(r), s);
+  assert.deepStrictEqual(c(r), ['label:Evidence:', 'opt:-addr', 'opt:--status', 'env:RE_PSN_ADDR', 'num:36100', 'num:v0.3.0', 'num:1.5']);
+  assert.deepStrictEqual(c(T.classify('Evidence: x', false)), []);
+  assert.deepStrictEqual(c(T.classify('each is also a RE_PSN_<FLAG> variable', false)), ['env:RE_PSN_<FLAG>']);
+  assert.deepStrictEqual(T.classify('', true), []);
+});
+
+// A small stand-in for the document: elements with children, attributes and textContent, enough for renderFile.
+function fakeDoc() {
+  function Text(t) { this.data = String(t); }
+  Object.defineProperty(Text.prototype, 'textContent', { get() { return this.data; } });
+  function El(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.className = ''; }
+  El.prototype.appendChild = function (c) { this.children.push(c); return c; };
+  El.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); };
+  El.prototype.getAttribute = function (k) { return k in this.attrs ? this.attrs[k] : null; };
+  Object.defineProperty(El.prototype, 'textContent', {
+    get() { return this.children.map((c) => c.textContent).join(''); },
+    set(v) { this.children = [new Text(v)]; },
+  });
+  El.prototype.all = function (cls) {
+    const out = [];
+    const walk = (n) => { if (n.children) { if (n.className.split(' ').includes(cls)) out.push(n); n.children.forEach(walk); } };
+    walk(this);
+    return out;
+  };
+  return { createElement: (t) => new El(t), createTextNode: (t) => new Text(t) };
+}
+
+test('copy: the gutter is not part of the text of the output, and has no text of its own', () => {
+  const doc = fakeDoc();
+  const lines = ['alpha beta', ['gamma ', { t: 'delta', c: 'id' }], '', 'epsilon'];
+  const f = T.renderFile(doc, { name: 'demo', lines });
+  const body = f.all('file-body')[0];
+  assert.strictEqual(body.textContent, 'alpha betagamma deltaepsilon');
+  assert.ok(!/\d/.test(f.textContent), f.textContent);
+  const rows = f.all('fl');
+  assert.strictEqual(rows.length, 4);
+  rows.forEach((row, i) => {
+    const g = row.children[0];
+    assert.strictEqual(g.className, 'gut');
+    assert.strictEqual(g.children.length, 0);
+    assert.strictEqual(g.getAttribute('aria-hidden'), 'true');
+    assert.strictEqual(g.getAttribute('data-n'), String(i + 1));
+    assert.strictEqual(row.children[1].textContent, T.lineText(lines[i]));
+  });
+  const head = f.all('file-head')[0];
+  assert.strictEqual(head.getAttribute('aria-hidden'), 'true');
+  assert.strictEqual(head.textContent, 'File: demo');
+  assert.strictEqual(f.getAttribute('aria-label'), 'demo, 4 lines');
+  assert.strictEqual(f.className, 'file gw1');
+});
+
+test('renderFile: every line is numbered and the gutter width follows the line count', () => {
+  const doc = fakeDoc();
+  const lines = Array.from({ length: 120 }, (_, i) => 'line ' + String.fromCharCode(97 + (i % 26)));
+  const f = T.renderFile(doc, { name: 'long', lines });
+  const rows = f.all('fl');
+  assert.strictEqual(rows.length, 120);
+  assert.strictEqual(rows[0].children[0].getAttribute('data-n'), '1');
+  assert.strictEqual(rows[119].children[0].getAttribute('data-n'), '120');
+  assert.strictEqual(f.className, 'file gw3');
+  assert.ok(!f.all('file-body')[0].textContent.includes('101'));
+});
+
+test('renderFile colours the plain text and keeps span classes and safe links', () => {
+  const doc = fakeDoc();
+  const res = T.run('settings', data);
+  const f = T.renderFile(doc, { name: res.file, lines: res.lines });
+  assert.ok(f.all('flag').length > 0);
+  assert.ok(f.all('env').length > 0);
+  assert.strictEqual(f.all('file-body')[0].textContent, res.lines.map(T.lineText).join(''));
+  const a = T.renderFile(doc, { name: 'x', lines: [[{ t: 'bad', href: 'javascript:alert(1)' }, { t: 'ok', href: 'docs/api.md' }]] });
+  const spans = a.all('fl')[0].children[1].children;
+  assert.strictEqual(spans[0].tagName, 'SPAN');
+  assert.strictEqual(spans[1].tagName, 'A');
+  assert.strictEqual(spans[1].getAttribute('rel'), 'noopener noreferrer');
 });

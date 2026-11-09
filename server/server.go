@@ -29,6 +29,16 @@ type Server struct {
 
 	httpToken string // -http-token: required by the status page when set (api.go)
 
+	lifeMu   sync.Mutex
+	tcp      net.Listener
+	udp      net.PacketConn
+	tcpReady bool
+	udpReady bool
+	stopping bool
+	stopped  chan struct{}
+	owned    map[*ownedConn]struct{}
+	handlers sync.WaitGroup
+
 	// ponytail: one lock for everything; per-title locks if one server ever
 	// carries enough titles for it to show.
 	mu       sync.Mutex
@@ -48,7 +58,9 @@ type Server struct {
 	maxReqRate     int            // requests per second per connection
 	addrConns      map[string]int // open connections by remote host
 
-	udpAnySource   bool           // accept UDP probes and relay packets from an address other than the player's TCP address (udp.go)
+	udpAnySource   bool // accept UDP probes and relay packets from an address other than the player's TCP address (udp.go)
+	maxUDPRate     int  // datagrams per second per source IP; zero disables admission limiting
+	udpDrops       udpDropCounters
 	trustedProxies []netip.Prefix // peers allowed to name the real client (proxy.go)
 	proxyProto     bool           // require a PROXY header from a trusted peer
 
@@ -96,17 +108,48 @@ func NewServer(maxRooms int, verbose bool) *Server {
 		maxPlayerRooms: 8,
 		maxPerAddr:     32,
 		maxReqRate:     200,
+		maxUDPRate:     defaultUDPRate,
 		addrConns:      map[string]int{},
+		stopped:        make(chan struct{}),
+		owned:          map[*ownedConn]struct{}{},
 	}
 }
 
 func (s *Server) Serve(ln net.Listener) error {
+	s.lifeMu.Lock()
+	if s.stopping || s.tcp != nil {
+		s.lifeMu.Unlock()
+		ln.Close()
+		return net.ErrClosed
+	}
+	s.tcp, s.tcpReady = ln, true
+	s.handlers.Add(1)
+	s.lifeMu.Unlock()
+	defer func() {
+		s.lifeMu.Lock()
+		s.tcpReady = false
+		s.lifeMu.Unlock()
+		s.handlers.Done()
+	}()
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			return err
 		}
-		go s.admit(conn)
+		s.lifeMu.Lock()
+		if s.stopping {
+			s.lifeMu.Unlock()
+			conn.Close()
+			return net.ErrClosed
+		}
+		owned := &ownedConn{Conn: conn, server: s}
+		s.owned[owned] = struct{}{}
+		s.handlers.Add(1)
+		s.lifeMu.Unlock()
+		go func() {
+			defer s.handlers.Done()
+			s.admit(owned)
+		}()
 	}
 }
 

@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
+	"math/rand"
 	"net"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -17,21 +20,7 @@ func startTCPUDPWith(t *testing.T, setup func(*Server)) (*Server, string) {
 	if setup != nil {
 		setup(s)
 	}
-	// UDP picks the port, because that is the protocol with excluded ranges (Windows runners reserve some); the same number
-	// must then be free for TCP, so try again with another port when it is not.
-	var ln net.Listener
-	var pc net.PacketConn
-	var err error
-	for try := 0; try < 20; try++ {
-		pc, err = net.ListenPacket("udp", "127.0.0.1:0")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if ln, err = net.Listen("tcp", pc.LocalAddr().String()); err == nil {
-			break
-		}
-		pc.Close()
-	}
+	ln, pc, err := listenTestTCPUDP(randomTestPort, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,6 +28,31 @@ func startTCPUDPWith(t *testing.T, setup func(*Server)) (*Server, string) {
 	go s.Serve(ln)
 	go s.ServeUDP(pc)
 	return s, ln.Addr().String()
+}
+
+func randomTestPort() int { return 1024 + rand.Intn(65536-1024) }
+
+// Choose independent candidates across the nonprivileged range. Asking either
+// protocol for port zero can keep returning adjacent ports inside a range that
+// Windows excludes for the other protocol. Bind both explicitly and release a
+// partial pair before trying the next candidate.
+func listenTestTCPUDP(nextPort func() int, attempts int) (net.Listener, net.PacketConn, error) {
+	var last error
+	for try := 0; try < attempts; try++ {
+		addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(nextPort()))
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			last = err
+			continue
+		}
+		pc, err := net.ListenPacket("udp", addr)
+		if err == nil {
+			return ln, pc, nil
+		}
+		ln.Close()
+		last = err
+	}
+	return nil, nil, fmt.Errorf("bind test TCP and UDP after %d candidates: %w", attempts, last)
 }
 
 // helloToken says HELLO and returns the user id and probe token.

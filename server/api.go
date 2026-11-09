@@ -1,14 +1,14 @@
 package main
 
 // Read-only HTTP view of the server: JSON for scripts, one HTML page for
-// people. Bind it to localhost or a LAN address; it has no auth and shows
-// every player's online ID.
+// people. It is opt-in, supports a status token, and lists public-room
+// members. Invite-only rooms are counted without exposing their members.
 
 import (
 	"crypto/subtle"
 	"encoding/json"
 	"fmt"
-	"html/template"
+	"io"
 	"net"
 	"net/http"
 	"sort"
@@ -33,12 +33,13 @@ type boardJSON struct {
 }
 
 type statsJSON struct {
-	Uptime      string      `json:"uptime"`
-	Clients     int         `json:"clients"`
-	Connections uint64      `json:"connections_total"`
-	Rooms       []roomJSON  `json:"rooms"`
-	Unlisted    int         `json:"unlisted_rooms"`
-	Boards      []boardJSON `json:"boards"`
+	Uptime      string       `json:"uptime"`
+	Clients     int          `json:"clients"`
+	Connections uint64       `json:"connections_total"`
+	Rooms       []roomJSON   `json:"rooms"`
+	Unlisted    int          `json:"unlisted_rooms"`
+	Boards      []boardJSON  `json:"boards"`
+	UDPDrops    udpDropStats `json:"udp_drops"`
 }
 
 // boardStats lists the leaderboards, sorted by title and board. A store
@@ -76,6 +77,7 @@ func (s *Server) snapshot() statsJSON {
 		Connections: s.conns,
 		Rooms:       []roomJSON{},
 		Boards:      boards,
+		UDPDrops:    s.udpDrops.snapshot(),
 	}
 	for _, r := range s.rooms {
 		if r.code != "" { // invite-only rooms are counted, not listed
@@ -92,17 +94,6 @@ func (s *Server) snapshot() statsJSON {
 	sort.Slice(st.Rooms, func(i, j int) bool { return st.Rooms[i].ID < st.Rooms[j].ID })
 	return st
 }
-
-var page = template.Must(template.New("p").Parse(`<!doctype html>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<meta http-equiv="refresh" content="5"><title>psnr</title>
-<style>body{font:14px system-ui;margin:16px;max-width:900px}table{border-collapse:collapse;width:100%;margin-bottom:24px}
-td,th{text-align:left;padding:4px 8px;border-bottom:1px solid #8884}</style>
-<h1>psnr</h1><p>up {{.Uptime}} · {{.Clients}} connected · {{.Connections}} connections total{{if .Unlisted}} · {{.Unlisted}} unlisted rooms{{end}}</p>
-<h2>Rooms</h2><table><tr><th>ID<th>Title<th>Members<th>Age</tr>
-{{range .Rooms}}<tr><td>{{.ID}}<td>{{.Title}}<td>{{len .Members}}/{{.Max}} {{range .Members}}{{.}} {{end}}<td>{{.Age}}</tr>{{else}}<tr><td colspan=4>none</tr>{{end}}</table>
-<h2>Leaderboards</h2><table><tr><th>Title<th>Board<th>Entries<th>Leader</tr>
-{{range .Boards}}<tr><td>{{.Title}}<td>{{.Board}}<td>{{.Entries}}<td>{{.Leader}} ({{.Best}})</tr>{{else}}<tr><td colspan=4>none</tr>{{end}}</table>`))
 
 // reachable reports whether an -http address listens beyond this machine.
 func reachable(addr string) bool {
@@ -132,11 +123,30 @@ func (s *Server) authorized(r *http.Request) bool {
 
 func (s *Server) HTTP() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		body := "ok\n"
+		if !s.ready() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			body = "not ready\n"
+		}
+		if r.Method != http.MethodHead {
+			io.WriteString(w, body)
+		}
+	})
 	mux.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(s.snapshot())
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Security-Policy", statusPolicy)
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return
@@ -146,6 +156,9 @@ func (s *Server) HTTP() http.Handler {
 		}
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		if !s.authorized(r) {
 			// the path only: the token may be in the query string
 			s.log.Warn("status page refused", "addr", s.clientAddr(r), "path", r.URL.Path, "reason", "token missing or wrong")

@@ -15,6 +15,7 @@ optional relay.
 - [Example](#example)
 - [Features](#features)
 - [Desktop app](#desktop-app)
+- [For recomp developers](#for-recomp-developers)
 - [Install](#install)
 - [Configuration](#configuration)
 - [Security and privacy](#security-and-privacy)
@@ -143,11 +144,15 @@ $ curl -s http://127.0.0.1:36101/api/stats
 
 </details>
 
-With `-http 127.0.0.1:36101`, http://127.0.0.1:36101/ shows the same as a page: below, alice hosting and waiting, with the score the test left, from a real run
-([tools/art/capture-status.sh](tools/art/capture-status.sh) takes it). Routers and the relay are tested in Docker by the
+With `-http 127.0.0.1:36101`, http://127.0.0.1:36101/ shows a terminal-style status page. Overview shows both tables;
+Rooms and Leaderboards open either table separately. Below, alice is hosting a room and leads the leaderboard with 100.
+The screenshot uses the old image's 1000 px width, with enough height to show both tables, and comes from a real loopback server
+and protocol clients ([tools/art/capture-status.sh](tools/art/capture-status.sh) can capture another).
+System/Light/Dark, text size, spacing and custom colours are [browser-local appearance settings](docs/running.md#status-page-appearance).
+Routers and the relay are tested in Docker by the
 [NAT lab](lab/README.md).
 
-![The status page of a local server: one room, alice waiting alone, and a leaderboard with one entry](docs/status.png)
+![Terminal-style server status in dark mode: alice's room and her leaderboard score of 100, shown together in Overview](docs/status.png)
 
 ## Features
 
@@ -171,15 +176,45 @@ real server, a settings file reader, `re-psn-app check HOST:PORT`, which connect
 and a terminal UI (`re-psn-app` with no arguments). The UI asks on first start whether this machine plays, hosts or both, then
 shows the server's rooms and one leaderboard at a time over the game protocol, and edits the settings; dark or light theme in the
 website's colours. The server's version, uptime and connection counts are not available over the protocol, so the UI says so.
+An explicitly configured [HTTP status source](app/README.md#optional-native-http-status) adds uptime, connection totals,
+public-room members and board summaries natively, with the existing token rules and no browser. It falls back to the
+game protocol when HTTP is unavailable; the server version remains unshared.
+The app has no release binary: build it from source (see [app/README.md](app/README.md)). On Linux desktops, starting without a terminal can open a supported terminal; the Windows build uses its console.
+See the [desktop startup instructions](app/README.md#starting-from-the-desktop) and the limits of local testing.
 The terminal UI uses [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lip Gloss](https://github.com/charmbracelet/lipgloss)
 (MIT); the server module stays standard-library only. The app module needs Go 1.26 or newer; the server and the C client keep
 their own requirements.
 
+## For recomp developers
+
+Start with [Integrating re-psn into a recompiled game](docs/integrating.md): existing ps3recomp bridge setup, direct
+C/C++ integration, callback ownership, peer/relay transport and failure handling. The [minimal C example](client/examples/minimal.c)
+is compiled and exercised against a loopback server by the required native-client check. Source-level runtime findings
+are pinned; synthetic checks do not certify a title's gameplay or NAT behavior.
+
 ## Install
+
+**Recommended:** download an official [release archive or AppImage](#release-archives) from the
+[releases page](https://github.com/undecuple/re-psn/releases) and verify it against `SHA256SUMS`.
 
 Releases are pre-releases for now: the newest, [v0.3.0](https://github.com/undecuple/re-psn/releases/tag/v0.3.0), is on the [releases page](https://github.com/undecuple/re-psn/releases) (see [Release archives](#release-archives)). Its container image is `ghcr.io/undecuple/re-psn:0.3.0` (see [Container](#container)).
 
-Optional install scripts for Linux and Windows download a release and check it against `SHA256SUMS`: see [docs/installing.md](docs/installing.md).
+### Optional quick install (Linux)
+
+The installer downloads the packaged release and checks it against `SHA256SUMS`. Download this pinned script, verify
+its hash and read it before running it. Each `&&` stops the sequence if the previous command fails:
+
+```sh
+curl -fsSL --proto '=https' --proto-redir '=https' --tlsv1.2 \
+  -o install.sh https://raw.githubusercontent.com/undecuple/re-psn/dc0238c2407570837ab4e14b803fb260ff77742e/scripts/install.sh &&
+printf '%s  install.sh\n' 'fef1f7f9a424275e45cbca80398477b4440c82b87c106ce6aa7626f3bbce1772' | sha256sum -c - &&
+less install.sh &&
+sh install.sh --version v0.3.0
+```
+
+This installs into `~/.local/bin` for the current user. The script comes from the pinned repository revision because
+v0.3.0 has no installer assets; future releases will include the scripts and their checksums. See
+[docs/installing.md](docs/installing.md) for options and the Windows installer.
 
 ### From source
 
@@ -225,8 +260,9 @@ It is configured only by `RE_PSN_*` variables.
 
 Each release carries `re-psn-vX.Y.Z-windows-amd64.zip`, `re-psn-vX.Y.Z-linux-amd64.tar.gz` and
 `re-psn-vX.Y.Z-linux-arm64.tar.gz` (built by [scripts/release-build.sh](scripts/release-build.sh)): a static `re-psn` binary
-(`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. `SHA256SUMS` lists them
-and the AppImage. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
+(`re-psn.exe` on Windows), `LICENSE`, `NOTICE.md` and the deployment examples in `examples/`. From the next release after
+v0.3.0 it also carries the install scripts `install.sh` and `install.ps1` ([docs/installing.md](docs/installing.md)), seven
+assets in all. `SHA256SUMS` lists the archives and the AppImage, and from that release the scripts. Check a download with `sha256sum -c SHA256SUMS --ignore-missing` on Linux, or compare the output of
 `Get-FileHash <archive>` with the line in `SHA256SUMS` on Windows.
 
 Linux x86_64 also gets `re-psn-vX.Y.Z-x86_64.AppImage`, the same binary as one runnable file (unsigned): check it with
@@ -243,7 +279,7 @@ re-psn runs with no settings at all. [docs/running.md](docs/running.md) has the 
 
 ### Settings
 
-Each of the 20 flags can also be set as a `RE_PSN_<FLAG>` variable. A flag on the command line wins, then the variable; a value
+Each of the 21 flags can also be set as a `RE_PSN_<FLAG>` variable. A flag on the command line wins, then the variable; a value
 that does not parse stops the server at start.
 
 <details>
@@ -262,6 +298,7 @@ Variables are upper case, with dashes as underscores. Defaults are those of `./r
 | `-max-player-rooms` | `RE_PSN_MAX_PLAYER_ROOMS` | `8` | Rooms one player may be in at once (0: no limit) |
 | `-max-conns-per-addr` | `RE_PSN_MAX_CONNS_PER_ADDR` | `32` | Open connections per remote address (0: no limit) |
 | `-max-req-rate` | `RE_PSN_MAX_REQ_RATE` | `200` | Requests per second per connection before it is closed (0: no limit) |
+| `-max-udp-rate` | `RE_PSN_MAX_UDP_RATE` | `1000` | UDP packets per second per source (IPv4 address or IPv6 /64), shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0 |
 | `-v` | `RE_PSN_V` | off | Same as `-log-level debug` |
 | `-log-level` | `RE_PSN_LOG_LEVEL` | `info` | `debug` (room events), `info`, `warn` or `error` |
 | `-log-format` | `RE_PSN_LOG_FORMAT` | `text` | `text` or `json` |
@@ -321,7 +358,9 @@ What to set before the server goes behind a proxy or on the internet.
   HAProxy not yet run).
 - **Status page:** off by default; `-http 127.0.0.1:36101` turns it on. Set `-http-token` whenever `-http` is not on localhost;
   the server warns at start if it is reachable without one.
-- **Limits:** room data is capped at 4096 bytes; the four `-max-*` settings above cover the rest. Each refusal is logged at warn level.
+- **Limits:** room data is capped at 4096 bytes; the `-max-*` settings above also bound rooms, connections and request rates.
+  UDP admission uses a bounded per-source-IP packet allowance, shared by players behind one NAT; see
+  [UDP guardrails](docs/udp-guardrails.md). UDP drops are counted in `/api/stats` without per-packet refusal logs.
 - **Storage:** `-db` accepts only `off` (the default) and `memory`, which both keep scores in memory; a restart empties every
   board. Database backends are planned ([docs/features.md](docs/features.md#storage)); a database setting stops the server at start.
 
@@ -347,6 +386,7 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 
 | Document | What is in it |
 |---|---|
+| [docs/integrating.md](docs/integrating.md) | Developer integration paths, a tested C example, runtime startup/callback details and acceptance checks |
 | [docs/architecture.md](docs/architecture.md) | The parts, the threadless client, why game traffic is peer to peer, the relay |
 | [docs/api.md](docs/api.md) | The protocol: framing, session, rooms, leaderboards, UDP, relay, HTTP |
 | [docs/running.md](docs/running.md) | Flags, variables, UDP source check, reverse proxy, logging, ports, firewall, storage |
@@ -362,6 +402,8 @@ welcome; [CONTRIBUTING.md](CONTRIBUTING.md) has the ground rules and the tests t
 
 The project page is built from `site/` by [tools/site.py](tools/site.py) out of the features list, `VERSION`, the settings table above and
 [CHANGELOG.md](CHANGELOG.md). It works without script; `site/terminal.js` (no dependencies) adds a terminal-style interface with commands such as `features`, `settings` and `install`, and the `plain view` link switches it off. Nothing is loaded from another site, and the only request is for `data.json` on the same site. It is published at <https://undecuple.github.io/re-psn/>.
+
+Command output has a file header, line-number gutter and syntax-style colours. See [docs/website.md](docs/website.md) for controls and contributor browser checks.
 
 ## Credits
 

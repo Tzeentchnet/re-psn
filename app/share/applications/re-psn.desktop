@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=re-psn
+Comment=Rooms, leaderboards and connection status for re-psn
+Exec=re-psn-app
+Icon=re-psn
+Terminal=true
+Categories=Game;Network;
+StartupNotify=false
