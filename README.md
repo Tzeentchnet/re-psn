@@ -298,7 +298,7 @@ Variables are upper case, with dashes as underscores. Defaults are those of `./r
 | `-max-player-rooms` | `RE_PSN_MAX_PLAYER_ROOMS` | `8` | Rooms one player may be in at once (0: no limit) |
 | `-max-conns-per-addr` | `RE_PSN_MAX_CONNS_PER_ADDR` | `32` | Open connections per remote address (0: no limit) |
 | `-max-req-rate` | `RE_PSN_MAX_REQ_RATE` | `200` | Requests per second per connection before it is closed (0: no limit) |
-| `-max-udp-rate` | `RE_PSN_MAX_UDP_RATE` | `1000` | UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0 |
+| `-max-udp-rate` | `RE_PSN_MAX_UDP_RATE` | `1000` | UDP packets per second per source (IPv4 address or IPv6 /64), shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0 |
 | `-v` | `RE_PSN_V` | off | Same as `-log-level debug` |
 | `-log-level` | `RE_PSN_LOG_LEVEL` | `info` | `debug` (room events), `info`, `warn` or `error` |
 | `-log-format` | `RE_PSN_LOG_FORMAT` | `text` | `text` or `json` |

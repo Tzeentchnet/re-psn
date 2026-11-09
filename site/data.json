@@ -851,7 +851,7 @@
    "flag": "-max-udp-rate",
    "variable": "RE_PSN_MAX_UDP_RATE",
    "default": "1000",
-   "description": "UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0"
+   "description": "UDP packets per second per source (IPv4 address or IPv6 /64), shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0"
   },
   {
    "flag": "-v",
@@ -929,7 +929,7 @@
      "A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.",
      "Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and leaderboard summaries, using a local Bearer-token file.",
      "Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal arguments and a recursion guard.",
-     "Bounded per-source-IP UDP admission with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.",
+     "Bounded per-source UDP admission (per IPv4 address, per IPv6 /64) with `-max-udp-rate` / `RE_PSN_MAX_UDP_RATE` (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.",
      "`/healthz` on the opt-in status listener, protected by the existing HTTP token.",
      "A stock Caddy 2 example for the HTTP status page, included with the deployment examples.",
      "The opt-in server status page now matches the website and terminal app's gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...",

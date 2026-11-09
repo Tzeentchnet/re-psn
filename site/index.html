@@ -287,7 +287,7 @@
 <li>A recomp developer integration guide with pinned runtime sources, callback/lifecycle and peer-transport guidance.</li>
 <li>Native optional HTTP status in the shared Windows/Linux terminal app: server totals, public-room members/age and leaderboard summaries, using a local Bearer-token file.</li>
 <li>Linux desktop startup for the shared terminal app: open an installed terminal when no TTY is attached, with literal arguments and a recursion guard.</li>
-<li>Bounded per-source-IP UDP admission with <code>-max-udp-rate</code> / <code>RE_PSN_MAX_UDP_RATE</code> (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.</li>
+<li>Bounded per-source UDP admission (per IPv4 address, per IPv6 /64) with <code>-max-udp-rate</code> / <code>RE_PSN_MAX_UDP_RATE</code> (default 1000 packets/second, same-size burst; 0 disables it), shared by probes and relay datagrams.</li>
 <li><code>/healthz</code> on the opt-in status listener, protected by the existing HTTP token.</li>
 <li>A stock Caddy 2 example for the HTTP status page, included with the deployment examples.</li>
 <li>The opt-in server status page now matches the website and terminal app&#x27;s gruvbox-material palette and monospace framing, with Overview/Rooms/Leaderboards tabs, System/Light/Dark, text size, spacing and contrast-checked ...</li>
@@ -323,7 +323,7 @@
 <tr><td data-label="Flag"><code>-max-player-rooms</code></td><td data-label="Variable"><code>RE_PSN_MAX_PLAYER_ROOMS</code></td><td data-label="Default"><code>8</code></td><td data-label="What it does">Rooms one player may be in at once (0: no limit)</td></tr>
 <tr><td data-label="Flag"><code>-max-conns-per-addr</code></td><td data-label="Variable"><code>RE_PSN_MAX_CONNS_PER_ADDR</code></td><td data-label="Default"><code>32</code></td><td data-label="What it does">Open connections per remote address (0: no limit)</td></tr>
 <tr><td data-label="Flag"><code>-max-req-rate</code></td><td data-label="Variable"><code>RE_PSN_MAX_REQ_RATE</code></td><td data-label="Default"><code>200</code></td><td data-label="What it does">Requests per second per connection before it is closed (0: no limit)</td></tr>
-<tr><td data-label="Flag"><code>-max-udp-rate</code></td><td data-label="Variable"><code>RE_PSN_MAX_UDP_RATE</code></td><td data-label="Default"><code>1000</code></td><td data-label="What it does">UDP packets per second per source IP, shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0</td></tr>
+<tr><td data-label="Flag"><code>-max-udp-rate</code></td><td data-label="Variable"><code>RE_PSN_MAX_UDP_RATE</code></td><td data-label="Default"><code>1000</code></td><td data-label="What it does">UDP packets per second per source (IPv4 address or IPv6 /64), shared by probes and relay traffic; same-size burst (0: no limit); on main, not in v0.3.0</td></tr>
 <tr><td data-label="Flag"><code>-v</code></td><td data-label="Variable"><code>RE_PSN_V</code></td><td data-label="Default"><code>off</code></td><td data-label="What it does">Same as -log-level debug</td></tr>
 <tr><td data-label="Flag"><code>-log-level</code></td><td data-label="Variable"><code>RE_PSN_LOG_LEVEL</code></td><td data-label="Default"><code>info</code></td><td data-label="What it does">debug (room events), info, warn or error</td></tr>
 <tr><td data-label="Flag"><code>-log-format</code></td><td data-label="Variable"><code>RE_PSN_LOG_FORMAT</code></td><td data-label="Default"><code>text</code></td><td data-label="What it does">text or json</td></tr>

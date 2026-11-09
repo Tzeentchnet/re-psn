@@ -2,7 +2,7 @@
 
 This page describes the server on `main`; v0.3.0 does not have the limiter or the counters.
 
-The server applies one packet allowance per UDP source IP before decoding a datagram or taking the room/client state
+The server applies one packet allowance per UDP source (an IPv4 address, or an IPv6 /64 network) before decoding a datagram or taking the room/client state
 lock. PROBE, RELAY and invalid datagrams share this allowance. The wire format, tokens, source-address check and
 shared-room requirement are unchanged. Game traffic sent directly between players does not pass through this limiter.
 
@@ -34,7 +34,7 @@ needs protection outside the process.
 
 ## Bounded source state
 
-At most **4096 source IPs** are tracked. Entries idle for **one minute** expire, with cleanup at most once per second
+At most **4096 sources** are tracked. All addresses in one IPv6 /64 count as one source, so a single network cannot fill the table with different addresses or restart its allowance by changing address. Entries idle for **one minute** expire, with cleanup at most once per second
 of incoming traffic. No background cleanup goroutine is created. When the table is full, a previously unseen source
 is dropped until cleanup frees space; existing sources keep their allowance. Active entries are never evicted to
 make room for another address, so address churn cannot repeatedly reset their buckets.
