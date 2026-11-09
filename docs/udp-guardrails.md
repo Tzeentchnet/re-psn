@@ -1,5 +1,7 @@
 # UDP rate limits and drop counters
 
+This page describes the server on `main`; v0.3.0 does not have the limiter or the counters.
+
 The server applies one packet allowance per UDP source IP before decoding a datagram or taking the room/client state
 lock. PROBE, RELAY and invalid datagrams share this allowance. The wire format, tokens, source-address check and
 shared-room requirement are unchanged. Game traffic sent directly between players does not pass through this limiter.
@@ -39,7 +41,9 @@ make room for another address, so address churn cannot repeatedly reset their bu
 
 Spoofed or distributed traffic can fill the table and temporarily exclude new sources. These bounds control memory
 and admission work; they do not authenticate a source or provide DDoS protection. The rate check runs before token
-validation, so rejected tokens and malformed packets use the same allowance as valid traffic from that address.
+validation, so rejected tokens and malformed packets use the same allowance as valid traffic from that address. For
+the same reason, spoofed packets that carry another player's source address use up that address's allowance, and the
+player's own probes and relay datagrams are dropped as `rate_limit` until it refills.
 
 ## Drop counters
 
@@ -57,7 +61,8 @@ The rest of the status response still contains the usual room/player data and ne
 | `source_mismatch` | An otherwise authorized packet's source differs from the player's TCP source and `-udp-any-source` is off. |
 | `write_error` | Writing an otherwise accepted probe reply or relay forward fails or is short. |
 
-A rejected packet increments one counter, at the first applicable check in the order above. Successful replies and
+A rejected packet increments one counter, at the first applicable check in the order above, except that an unusable source
+address is counted as `malformed` before the allowance is applied. Successful replies and
 forwards do not increment a drop counter. Invalid traffic rejected by admission increments the admission reason rather
 than its later parse/authentication reason. The existing one-time warning for a player's mismatched probe remains;
 new drop paths add no per-packet log messages. Counters are cumulative across all sources and are sampled independently.
@@ -67,7 +72,7 @@ new drop paths add no per-packet log messages. Counters are cumulative across al
 Deterministic bucket tests cover burst/refill, source independence, expiry, bounded capacity and disabling. Real
 loopback tests exercise valid probes, rate rejection, invalid-traffic charging, relay admission and drop counters.
 Existing native C-client and Go app-client conformance remain required. No game or production flood measurement is
-claimed; see the PR validation for the actual environments exercised.
+claimed; only loopback was exercised.
 
 The broader roadmap item is partial. Per-player relay byte/datagram budgets, maximum relay payload size, TCP relay
 idle/stream limits, repeated-failed-token blocking and a UDP fuzz target remain planned. A larger token would change
